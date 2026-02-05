@@ -1,0 +1,33 @@
+[project]
+name = "borrowdale"
+version = "0.1.0"
+description = "Python RISC-V functional model"
+readme = "README.md"
+license = "MIT"
+dependencies = [
+    "pre-commit",
+    "pykwalify",
+    "PyYAML",
+]
+authors = [
+    "Stuart Alldred <stuartalldred@gmail.com>",
+]
+requires-python = ">= 3.13"
+
+[project.optional-dependencies]
+dev = ["pytest", "pytest-cov"]
+
+[tool.pytest.ini_options]
+pythonpath = ["riscv_model"]
+testpaths = ["tests"]
+
+[tool.coverage.run]
+source = ["riscv_model"]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+]
