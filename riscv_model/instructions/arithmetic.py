@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: MIT
-# Copyright (c) 2026 Stuart Alldred. All Rights Reserved
+# Copyright (c) 2026 Stuart Alldred.
 
 """Arithmetic instruction implementations: ADD, ADDI, SUB, ADDW, ADDIW, SUBW."""
 

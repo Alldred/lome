@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: MIT
-# Copyright (c) 2026 Stuart Alldred. All Rights Reserved
+# Copyright (c) 2026 Stuart Alldred.
 
 """Compare instruction implementations: SLT, SLTI, SLTU, SLTIU."""
 
@@ -16,8 +16,12 @@ def execute_slt(operand_values: dict, state: State, pc: int) -> ChangeRecord:
     rs1_val = state.get_gpr(rs1_idx)
     rs2_val = state.get_gpr(rs2_idx)
     # Signed comparison: treat as signed integers
-    rs1_signed = rs1_val if rs1_val < 0x8000000000000000 else rs1_val - 0x10000000000000000
-    rs2_signed = rs2_val if rs2_val < 0x8000000000000000 else rs2_val - 0x10000000000000000
+    rs1_signed = (
+        rs1_val if rs1_val < 0x8000000000000000 else rs1_val - 0x10000000000000000
+    )
+    rs2_signed = (
+        rs2_val if rs2_val < 0x8000000000000000 else rs2_val - 0x10000000000000000
+    )
     result = 1 if rs1_signed < rs2_signed else 0
 
     changes = ChangeRecord()
@@ -34,7 +38,9 @@ def execute_slti(operand_values: dict, state: State, pc: int) -> ChangeRecord:
 
     rs1_val = state.get_gpr(rs1_idx)
     # Signed comparison: treat as signed integers
-    rs1_signed = rs1_val if rs1_val < 0x8000000000000000 else rs1_val - 0x10000000000000000
+    rs1_signed = (
+        rs1_val if rs1_val < 0x8000000000000000 else rs1_val - 0x10000000000000000
+    )
     imm_signed = imm if imm < 0x8000000000000000 else imm - 0x10000000000000000
     result = 1 if rs1_signed < imm_signed else 0
 

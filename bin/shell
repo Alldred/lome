@@ -1,6 +1,6 @@
 #!/bin/zsh
 # SPDX-License-Identifier: MIT
-# Copyright (c) 2025 Stuart Alldred. All Rights Reserved
+# Copyright (c) 2025 Stuart Alldred.
 
 # Check for LOME_ROOT already being set in the shell
 if [[ "$LOME_ROOT" != "" ]]; then

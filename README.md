@@ -1,6 +1,6 @@
 <!--
   ~ SPDX-License-Identifier: MIT
-  ~ Copyright (c) 2026 Stuart Alldred. All Rights Reserved
+  ~ Copyright (c) 2026 Stuart Alldred.
   -->
 
 # Borrowdale
@@ -47,7 +47,7 @@ changes = model.execute(addi_instr)
 
 # Check results
 print(f"x1 = {model.get_gpr(1)}")  # 42
-print(f"Changes: {model.query_changes('simple')}")
+print(f"Changes: {model.get_changes().to_simple_dict()}")
 
 # Speculate (execute without modifying state)
 spec_changes = model.speculate(addi_instr)
@@ -67,7 +67,7 @@ if branch_info:
 
 Summary:
 
-- **RISCVModel**: `execute()`, `speculate()`, `get_gpr()`, `get_csr()`, `get_pc()`, `set_pc()`, `reset()`, `get_changes()`, `get_branch_info()`, `query_changes()`
+- **RISCVModel**: `execute()`, `speculate()`, `get_gpr()`, `get_csr()`, `get_pc()`, `set_pc()`, `reset()`, `get_changes()`, `get_branch_info()`
 - **Change tracking**: GPR/CSR writes, PC updates, memory accesses, branch info, exceptions. `ChangeRecord.to_simple_dict()` / `to_detailed_dict()`; see [API docs](docs/API.md).
 
 ## Supported Instructions

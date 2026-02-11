@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: MIT
-# Copyright (c) 2026 Stuart Alldred. All Rights Reserved
+# Copyright (c) 2026 Stuart Alldred.
 
 """Load/store instruction implementations: LB, LH, LW, LBU, LHU, LD, LWU, SB, SH, SW, SD.
 
@@ -34,7 +34,9 @@ def execute_lb(operand_values: dict, state: State, pc: int) -> ChangeRecord:
     result = _sign_extend(value, 8)
 
     changes = ChangeRecord()
-    changes.memory_accesses.append(MemoryAccess(address=addr, value=None, size=1, is_write=False))
+    changes.memory_accesses.append(
+        MemoryAccess(address=addr, value=None, size=1, is_write=False)
+    )
     old_value = state.set_gpr(rd, result)
     changes.gpr_writes.append(GPRWrite(register=rd, value=result, old_value=old_value))
     return changes
@@ -54,7 +56,9 @@ def execute_lh(operand_values: dict, state: State, pc: int) -> ChangeRecord:
     result = _sign_extend(value, 16)
 
     changes = ChangeRecord()
-    changes.memory_accesses.append(MemoryAccess(address=addr, value=None, size=2, is_write=False))
+    changes.memory_accesses.append(
+        MemoryAccess(address=addr, value=None, size=2, is_write=False)
+    )
     old_value = state.set_gpr(rd, result)
     changes.gpr_writes.append(GPRWrite(register=rd, value=result, old_value=old_value))
     return changes
@@ -74,7 +78,9 @@ def execute_lw(operand_values: dict, state: State, pc: int) -> ChangeRecord:
     result = _sign_extend(value, 32)
 
     changes = ChangeRecord()
-    changes.memory_accesses.append(MemoryAccess(address=addr, value=None, size=4, is_write=False))
+    changes.memory_accesses.append(
+        MemoryAccess(address=addr, value=None, size=4, is_write=False)
+    )
     old_value = state.set_gpr(rd, result)
     changes.gpr_writes.append(GPRWrite(register=rd, value=result, old_value=old_value))
     return changes
@@ -94,7 +100,9 @@ def execute_lbu(operand_values: dict, state: State, pc: int) -> ChangeRecord:
     result = value & 0xFF  # Zero extend
 
     changes = ChangeRecord()
-    changes.memory_accesses.append(MemoryAccess(address=addr, value=None, size=1, is_write=False))
+    changes.memory_accesses.append(
+        MemoryAccess(address=addr, value=None, size=1, is_write=False)
+    )
     old_value = state.set_gpr(rd, result)
     changes.gpr_writes.append(GPRWrite(register=rd, value=result, old_value=old_value))
     return changes
@@ -114,7 +122,9 @@ def execute_lhu(operand_values: dict, state: State, pc: int) -> ChangeRecord:
     result = value & 0xFFFF  # Zero extend
 
     changes = ChangeRecord()
-    changes.memory_accesses.append(MemoryAccess(address=addr, value=None, size=2, is_write=False))
+    changes.memory_accesses.append(
+        MemoryAccess(address=addr, value=None, size=2, is_write=False)
+    )
     old_value = state.set_gpr(rd, result)
     changes.gpr_writes.append(GPRWrite(register=rd, value=result, old_value=old_value))
     return changes
@@ -133,7 +143,9 @@ def execute_ld(operand_values: dict, state: State, pc: int) -> ChangeRecord:
     result = 0  # Placeholder
 
     changes = ChangeRecord()
-    changes.memory_accesses.append(MemoryAccess(address=addr, value=None, size=8, is_write=False))
+    changes.memory_accesses.append(
+        MemoryAccess(address=addr, value=None, size=8, is_write=False)
+    )
     old_value = state.set_gpr(rd, result)
     changes.gpr_writes.append(GPRWrite(register=rd, value=result, old_value=old_value))
     return changes
@@ -153,7 +165,9 @@ def execute_lwu(operand_values: dict, state: State, pc: int) -> ChangeRecord:
     result = value & 0xFFFFFFFF  # Zero extend
 
     changes = ChangeRecord()
-    changes.memory_accesses.append(MemoryAccess(address=addr, value=None, size=4, is_write=False))
+    changes.memory_accesses.append(
+        MemoryAccess(address=addr, value=None, size=4, is_write=False)
+    )
     old_value = state.set_gpr(rd, result)
     changes.gpr_writes.append(GPRWrite(register=rd, value=result, old_value=old_value))
     return changes
@@ -172,7 +186,9 @@ def execute_sb(operand_values: dict, state: State, pc: int) -> ChangeRecord:
 
     # Memory model not yet implemented - track access
     changes = ChangeRecord()
-    changes.memory_accesses.append(MemoryAccess(address=addr, value=value, size=1, is_write=True))
+    changes.memory_accesses.append(
+        MemoryAccess(address=addr, value=value, size=1, is_write=True)
+    )
     return changes
 
 
@@ -189,7 +205,9 @@ def execute_sh(operand_values: dict, state: State, pc: int) -> ChangeRecord:
 
     # Memory model not yet implemented - track access
     changes = ChangeRecord()
-    changes.memory_accesses.append(MemoryAccess(address=addr, value=value, size=2, is_write=True))
+    changes.memory_accesses.append(
+        MemoryAccess(address=addr, value=value, size=2, is_write=True)
+    )
     return changes
 
 
@@ -206,7 +224,9 @@ def execute_sw(operand_values: dict, state: State, pc: int) -> ChangeRecord:
 
     # Memory model not yet implemented - track access
     changes = ChangeRecord()
-    changes.memory_accesses.append(MemoryAccess(address=addr, value=value, size=4, is_write=True))
+    changes.memory_accesses.append(
+        MemoryAccess(address=addr, value=value, size=4, is_write=True)
+    )
     return changes
 
 
@@ -223,5 +243,7 @@ def execute_sd(operand_values: dict, state: State, pc: int) -> ChangeRecord:
 
     # Memory model not yet implemented - track access
     changes = ChangeRecord()
-    changes.memory_accesses.append(MemoryAccess(address=addr, value=value, size=8, is_write=True))
+    changes.memory_accesses.append(
+        MemoryAccess(address=addr, value=value, size=8, is_write=True)
+    )
     return changes

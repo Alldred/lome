@@ -1,6 +1,6 @@
 <!--
   ~ SPDX-License-Identifier: MIT
-  ~ Copyright (c) 2026 Stuart Alldred. All Rights Reserved
+  ~ Copyright (c) 2026 Stuart Alldred.
   -->
 
 # RISC-V Model API Reference
@@ -34,7 +34,6 @@ Main interface for instruction execution, speculation, and state access.
 | **reset** | `reset() -> None` | Reset all state (GPRs, CSRs, PC) to initial values; clears last changes. |
 | **get_changes** | `get_changes() -> Optional[ChangeRecord]` | Get the change record from the last execution (or `None`). |
 | **get_branch_info** | `get_branch_info()` | Get branch information from last execution, or `None`. |
-| **query_changes** | `query_changes(mode: str = "simple") -> dict` | Query changes from last execution. `mode="simple"` returns a summary dict; `"detailed"` returns the full change record. |
 
 ---
 
@@ -63,7 +62,7 @@ Returned by `execute()`, `speculate()`, and `get_changes()`. Defined in `riscv_m
 - **`to_simple_dict() -> Dict`** — compact summary (new values only, no old values).
 - **`to_detailed_dict() -> Dict`** — full change record as a dict (same as `get_all_changes()`).
 
-The model’s `query_changes("simple")` / `query_changes("detailed")` call these when there is a last execution.
+Use the return value of `execute()` or `get_changes()` then call `.to_simple_dict()` or `.to_detailed_dict()`.
 
 ---
 
