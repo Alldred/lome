@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: MIT
-# Copyright (c) 2026 Stuart Alldred. All Rights Reserved
+# Copyright (c) 2026 Stuart Alldred.
 
 """System instruction implementations: CSRRW, CSRRS, CSRRC, CSRRWI, CSRRSI, CSRRCI, ECALL, EBREAK, MRET, FENCE, FENCE.TSO, LUI, AUIPC."""
 
@@ -23,12 +23,16 @@ def execute_csrrw(operand_values: dict, state: State, pc: int) -> ChangeRecord:
         csr_def = state.get_csr_def(csr_addr)
         csr_name = csr_def.name if csr_def else None
         changes.csr_writes.append(
-            CSRWrite(address=csr_addr, name=csr_name, value=rs1_val, old_value=old_csr_val)
+            CSRWrite(
+                address=csr_addr, name=csr_name, value=rs1_val, old_value=old_csr_val
+            )
         )
     # Write old CSR value to rd
     if csr_val is not None:
         old_value = state.set_gpr(rd, csr_val)
-        changes.gpr_writes.append(GPRWrite(register=rd, value=csr_val, old_value=old_value))
+        changes.gpr_writes.append(
+            GPRWrite(register=rd, value=csr_val, old_value=old_value)
+        )
     return changes
 
 
@@ -50,12 +54,19 @@ def execute_csrrs(operand_values: dict, state: State, pc: int) -> ChangeRecord:
             csr_def = state.get_csr_def(csr_addr)
             csr_name = csr_def.name if csr_def else None
             changes.csr_writes.append(
-                CSRWrite(address=csr_addr, name=csr_name, value=new_csr_val, old_value=old_csr_val)
+                CSRWrite(
+                    address=csr_addr,
+                    name=csr_name,
+                    value=new_csr_val,
+                    old_value=old_csr_val,
+                )
             )
     # Write old CSR value to rd
     if csr_val is not None:
         old_value = state.set_gpr(rd, csr_val)
-        changes.gpr_writes.append(GPRWrite(register=rd, value=csr_val, old_value=old_value))
+        changes.gpr_writes.append(
+            GPRWrite(register=rd, value=csr_val, old_value=old_value)
+        )
     return changes
 
 
@@ -77,12 +88,19 @@ def execute_csrrc(operand_values: dict, state: State, pc: int) -> ChangeRecord:
             csr_def = state.get_csr_def(csr_addr)
             csr_name = csr_def.name if csr_def else None
             changes.csr_writes.append(
-                CSRWrite(address=csr_addr, name=csr_name, value=new_csr_val, old_value=old_csr_val)
+                CSRWrite(
+                    address=csr_addr,
+                    name=csr_name,
+                    value=new_csr_val,
+                    old_value=old_csr_val,
+                )
             )
     # Write old CSR value to rd
     if csr_val is not None:
         old_value = state.set_gpr(rd, csr_val)
-        changes.gpr_writes.append(GPRWrite(register=rd, value=csr_val, old_value=old_value))
+        changes.gpr_writes.append(
+            GPRWrite(register=rd, value=csr_val, old_value=old_value)
+        )
     return changes
 
 
@@ -102,12 +120,16 @@ def execute_csrrwi(operand_values: dict, state: State, pc: int) -> ChangeRecord:
         csr_def = state.get_csr_def(csr_addr)
         csr_name = csr_def.name if csr_def else None
         changes.csr_writes.append(
-            CSRWrite(address=csr_addr, name=csr_name, value=zimm_val, old_value=old_csr_val)
+            CSRWrite(
+                address=csr_addr, name=csr_name, value=zimm_val, old_value=old_csr_val
+            )
         )
     # Write old CSR value to rd
     if csr_val is not None:
         old_value = state.set_gpr(rd, csr_val)
-        changes.gpr_writes.append(GPRWrite(register=rd, value=csr_val, old_value=old_value))
+        changes.gpr_writes.append(
+            GPRWrite(register=rd, value=csr_val, old_value=old_value)
+        )
     return changes
 
 
@@ -129,12 +151,19 @@ def execute_csrrsi(operand_values: dict, state: State, pc: int) -> ChangeRecord:
             csr_def = state.get_csr_def(csr_addr)
             csr_name = csr_def.name if csr_def else None
             changes.csr_writes.append(
-                CSRWrite(address=csr_addr, name=csr_name, value=new_csr_val, old_value=old_csr_val)
+                CSRWrite(
+                    address=csr_addr,
+                    name=csr_name,
+                    value=new_csr_val,
+                    old_value=old_csr_val,
+                )
             )
     # Write old CSR value to rd
     if csr_val is not None:
         old_value = state.set_gpr(rd, csr_val)
-        changes.gpr_writes.append(GPRWrite(register=rd, value=csr_val, old_value=old_value))
+        changes.gpr_writes.append(
+            GPRWrite(register=rd, value=csr_val, old_value=old_value)
+        )
     return changes
 
 
@@ -156,12 +185,19 @@ def execute_csrrci(operand_values: dict, state: State, pc: int) -> ChangeRecord:
             csr_def = state.get_csr_def(csr_addr)
             csr_name = csr_def.name if csr_def else None
             changes.csr_writes.append(
-                CSRWrite(address=csr_addr, name=csr_name, value=new_csr_val, old_value=old_csr_val)
+                CSRWrite(
+                    address=csr_addr,
+                    name=csr_name,
+                    value=new_csr_val,
+                    old_value=old_csr_val,
+                )
             )
     # Write old CSR value to rd
     if csr_val is not None:
         old_value = state.set_gpr(rd, csr_val)
-        changes.gpr_writes.append(GPRWrite(register=rd, value=csr_val, old_value=old_value))
+        changes.gpr_writes.append(
+            GPRWrite(register=rd, value=csr_val, old_value=old_value)
+        )
     return changes
 
 

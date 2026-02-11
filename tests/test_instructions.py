@@ -1,9 +1,7 @@
 # SPDX-License-Identifier: MIT
-# Copyright (c) 2026 Stuart Alldred. All Rights Reserved
+# Copyright (c) 2026 Stuart Alldred.
 
 """Tests for instruction implementations."""
-
-import pytest
 
 from riscv_model import RISCVModel
 
@@ -91,14 +89,14 @@ def test_jump_instructions():
     # JAL: x2 = pc + 4; pc = pc + imm (eumos decoder outputs byte offset)
     # J-type: encode so decoded imm = 0x100; use imm[10:1] = 0x40 -> value 0x80, *2 = 0x100
     jal_instr = 0x6F | (2 << 7) | (0x40 << 21)
-    changes = model.execute(jal_instr)
+    model.execute(jal_instr)
     assert model.get_gpr(2) == 0x1004  # return address
     assert model.get_pc() == 0x1100  # pc + 0x100
 
     # JALR: x3 = pc + 4; pc = (x1 + imm) & ~1
     model._state.set_pc(0x1000)
     jalr_instr = 0x67 | (3 << 7) | (0 << 12) | (1 << 15) | (0 << 20)
-    changes = model.execute(jalr_instr)
+    model.execute(jalr_instr)
     assert model.get_gpr(3) == 0x1004  # return address
     assert model.get_pc() == 0x2000  # (x1 + 0) & ~1
 
@@ -127,14 +125,14 @@ def test_csr_instructions():
 
     # CSRRS: x2 = mstatus; mstatus = mstatus | x1
     csrrs_instr = 0x73 | (2 << 7) | (2 << 12) | (1 << 15) | (0x300 << 20)
-    changes = model.execute(csrrs_instr)
+    model.execute(csrrs_instr)
     assert model.get_gpr(2) == 0x1234  # old value
     assert model.get_csr(0x300) == (0x1234 | 0xABCD)
 
     # CSRRC: x3 = mstatus; mstatus = mstatus & ~x1
     model._state.set_gpr(1, 0x00FF)
     csrrc_instr = 0x73 | (3 << 7) | (3 << 12) | (1 << 15) | (0x300 << 20)
-    changes = model.execute(csrrc_instr)
+    model.execute(csrrc_instr)
     old_val = model.get_csr(0x300)
     assert model.get_csr(0x300) == (old_val & ~0x00FF)
 

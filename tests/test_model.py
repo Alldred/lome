@@ -1,9 +1,7 @@
 # SPDX-License-Identifier: MIT
-# Copyright (c) 2026 Stuart Alldred. All Rights Reserved
+# Copyright (c) 2026 Stuart Alldred.
 
 """Tests for RISCVModel."""
-
-import pytest
 
 from riscv_model import RISCVModel
 
@@ -87,28 +85,32 @@ def test_branch_not_taken():
     assert model.get_pc() == 4  # PC advances normally
 
 
-def test_query_changes_simple():
-    """Test simple change query."""
+def test_get_changes_simple_dict():
+    """Test get_changes().to_simple_dict()."""
     model = RISCVModel()
     # addi x1, x0, 100
     addi_instr = 0x13 | (1 << 7) | (0 << 12) | (0 << 15) | (100 << 20)
     model.execute(addi_instr)
-    changes = model.query_changes("simple")
-    assert "gpr_changes" in changes
-    assert changes["gpr_changes"][1] == 100
+    changes = model.get_changes()
+    assert changes is not None
+    d = changes.to_simple_dict()
+    assert "gpr_changes" in d
+    assert d["gpr_changes"][1] == 100
 
 
-def test_query_changes_detailed():
-    """Test detailed change query."""
+def test_get_changes_detailed_dict():
+    """Test get_changes().to_detailed_dict()."""
     model = RISCVModel()
     # addi x1, x0, 100
     addi_instr = 0x13 | (1 << 7) | (0 << 12) | (0 << 15) | (100 << 20)
     model.execute(addi_instr)
-    changes = model.query_changes("detailed")
-    assert "gpr_writes" in changes
-    assert len(changes["gpr_writes"]) == 1
-    assert changes["gpr_writes"][0]["register"] == 1
-    assert changes["gpr_writes"][0]["value"] == 100
+    changes = model.get_changes()
+    assert changes is not None
+    d = changes.to_detailed_dict()
+    assert "gpr_writes" in d
+    assert len(d["gpr_writes"]) == 1
+    assert d["gpr_writes"][0]["register"] == 1
+    assert d["gpr_writes"][0]["value"] == 100
 
 
 def test_reset():

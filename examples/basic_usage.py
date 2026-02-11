@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: MIT
-# Copyright (c) 2026 Stuart Alldred. All Rights Reserved
+# Copyright (c) 2026 Stuart Alldred.
 
 """Example usage of RISC-V functional model."""
 
@@ -25,9 +25,9 @@ def main():
     # 0x13 | (1 << 7) | (0 << 12) | (0 << 15) | (42 << 20)
     addi_instr = 0x13 | (1 << 7) | (0 << 12) | (0 << 15) | (42 << 20)
     changes = model.execute(addi_instr)
-    print(f"   Executed ADDI x1, x0, 42")
+    print("   Executed ADDI x1, x0, 42")
     print(f"   x1 = {model.get_gpr(1)}")
-    print(f"   Changes: {model.query_changes('simple')}\n")
+    print(f"   Changes: {changes.to_simple_dict()}\n")
 
     # Example 2: Register-to-register operation
     print("2. Register operation (ADD)")
@@ -35,9 +35,9 @@ def main():
     # Encoding: opcode=0x33, rd=2, funct3=0, rs1=1, rs2=1, funct7=0
     add_instr = 0x33 | (2 << 7) | (0 << 12) | (1 << 15) | (1 << 20) | (0 << 25)
     changes = model.execute(add_instr)
-    print(f"   Executed ADD x2, x1, x1")
+    print("   Executed ADD x2, x1, x1")
     print(f"   x1 = {model.get_gpr(1)}, x2 = {model.get_gpr(2)}")
-    print(f"   Changes: {model.query_changes('simple')}\n")
+    print(f"   Changes: {changes.to_simple_dict()}\n")
 
     # Example 3: Speculation
     print("3. Speculation (what would happen if we execute SUB?)")
@@ -45,10 +45,14 @@ def main():
     # Encoding: opcode=0x33, rd=3, funct3=0, rs1=2, rs2=1, funct7=0x20
     sub_instr = 0x33 | (3 << 7) | (0 << 12) | (2 << 15) | (1 << 20) | (0x20 << 25)
     spec_changes = model.speculate(sub_instr)
-    print(f"   Speculated SUB x3, x2, x1")
-    print(f"   Would write x3 = {spec_changes.gpr_writes[0].value if spec_changes and spec_changes.gpr_writes else 'N/A'}")
+    print("   Speculated SUB x3, x2, x1")
+    print(
+        f"   Would write x3 = {spec_changes.gpr_writes[0].value if spec_changes and spec_changes.gpr_writes else 'N/A'}"
+    )
     print(f"   Current x3 = {model.get_gpr(3)} (unchanged)")
-    print(f"   Speculation changes: {model.query_changes('simple')}\n")
+    print(
+        f"   Speculation changes: {spec_changes.to_simple_dict() if spec_changes else {}}\n"
+    )
 
     # Example 4: Branch instruction
     print("4. Branch instruction (BEQ)")
@@ -57,22 +61,21 @@ def main():
     # imm bits: [12|10:5|4:1|11] = -8 = 0xFF8
     beq_instr = 0x63 | (0 << 12) | (1 << 15) | (2 << 20) | (0xFF8 << 7) | (1 << 31)
     changes = model.execute(beq_instr)
-    print(f"   Executed BEQ x1, x2, -8")
-    branch_info = model.get_branch_info()
-    if branch_info:
-        print(f"   Branch taken: {branch_info.taken}")
-        print(f"   Branch target: 0x{branch_info.target:x}")
+    print("   Executed BEQ x1, x2, -8")
+    if changes and changes.branch_info:
+        print(f"   Branch taken: {changes.branch_info.taken}")
+        print(f"   Branch target: 0x{changes.branch_info.target:x}")
     print(f"   PC = 0x{model.get_pc():x}")
-    print(f"   Changes: {model.query_changes('simple')}\n")
+    print(f"   Changes: {changes.to_simple_dict() if changes else {}}\n")
 
-    # Example 5: Detailed change query
-    print("5. Detailed change query")
+    # Example 5: get_changes() after execute (alternative to using return value)
+    print("5. get_changes() after execute")
     # addi x4, x0, 100
     addi2_instr = 0x13 | (4 << 7) | (0 << 12) | (0 << 15) | (100 << 20)
-    changes = model.execute(addi2_instr)
-    print(f"   Executed ADDI x4, x0, 100")
-    detailed = model.query_changes("detailed")
-    print(f"   Detailed changes: {detailed}\n")
+    model.execute(addi2_instr)
+    print("   Executed ADDI x4, x0, 100")
+    last = model.get_changes()
+    print(f"   Detailed changes: {last.to_detailed_dict() if last else {}}\n")
 
     # Example 6: CSR operation
     print("6. CSR operation (CSRRW)")
@@ -80,15 +83,15 @@ def main():
     # Encoding: opcode=0x73, funct3=1, rd=5, rs1=1, imm=0x300 (mstatus)
     csrrw_instr = 0x73 | (5 << 7) | (1 << 12) | (1 << 15) | (0x300 << 20)
     changes = model.execute(csrrw_instr)
-    print(f"   Executed CSRRW x5, mstatus, x1")
+    print("   Executed CSRRW x5, mstatus, x1")
     print(f"   x5 = {model.get_gpr(5)}")
     print(f"   mstatus = 0x{model.get_csr('mstatus'):x}")
-    print(f"   Changes: {model.query_changes('simple')}\n")
+    print(f"   Changes: {changes.to_simple_dict() if changes else {}}\n")
 
     # Example 7: Reset
     print("7. Reset state")
     model.reset()
-    print(f"   After reset:")
+    print("   After reset:")
     print(f"   x1 = {model.get_gpr(1)}")
     print(f"   x2 = {model.get_gpr(2)}")
     print(f"   PC = 0x{model.get_pc():x}\n")

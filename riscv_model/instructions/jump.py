@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: MIT
-# Copyright (c) 2026 Stuart Alldred. All Rights Reserved
+# Copyright (c) 2026 Stuart Alldred.
 
 """Jump instruction implementations: JAL, JALR."""
 
@@ -18,7 +18,9 @@ def execute_jal(operand_values: dict, state: State, pc: int) -> ChangeRecord:
     changes = ChangeRecord()
     # Write return address to rd
     old_value = state.set_gpr(rd, return_addr)
-    changes.gpr_writes.append(GPRWrite(register=rd, value=return_addr, old_value=old_value))
+    changes.gpr_writes.append(
+        GPRWrite(register=rd, value=return_addr, old_value=old_value)
+    )
     # Update PC
     changes.pc_change = (target, pc)
     return changes
@@ -37,7 +39,9 @@ def execute_jalr(operand_values: dict, state: State, pc: int) -> ChangeRecord:
     changes = ChangeRecord()
     # Write return address to rd
     old_value = state.set_gpr(rd, return_addr)
-    changes.gpr_writes.append(GPRWrite(register=rd, value=return_addr, old_value=old_value))
+    changes.gpr_writes.append(
+        GPRWrite(register=rd, value=return_addr, old_value=old_value)
+    )
     # Update PC
     changes.pc_change = (target, pc)
     return changes

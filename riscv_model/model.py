@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: MIT
-# Copyright (c) 2026 Stuart Alldred. All Rights Reserved
+# Copyright (c) 2026 Stuart Alldred.
 
 """Main RISC-V functional model interface."""
 
@@ -102,19 +102,3 @@ class RISCVModel:
         if self._last_changes and self._last_changes.branch_info:
             return self._last_changes.branch_info
         return None
-
-    def query_changes(self, mode: str = "simple") -> dict:
-        """Query changes from last execution.
-
-        Args:
-            mode: 'simple' for summary (to_simple_dict), 'detailed' for complete
-                  record (to_detailed_dict)
-
-        Returns:
-            Dictionary with change information
-        """
-        if self._last_changes is None:
-            return {}
-        if mode == "detailed":
-            return self._last_changes.to_detailed_dict()
-        return self._last_changes.to_simple_dict()

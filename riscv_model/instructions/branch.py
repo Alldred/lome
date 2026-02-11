@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: MIT
-# Copyright (c) 2026 Stuart Alldred. All Rights Reserved
+# Copyright (c) 2026 Stuart Alldred.
 
 """Branch instruction implementations: BEQ, BNE, BLT, BGE, BLTU, BGEU."""
 
@@ -50,8 +50,12 @@ def execute_blt(operand_values: dict, state: State, pc: int) -> ChangeRecord:
     rs1_val = state.get_gpr(rs1_idx)
     rs2_val = state.get_gpr(rs2_idx)
     # Signed comparison
-    rs1_signed = rs1_val if rs1_val < 0x8000000000000000 else rs1_val - 0x10000000000000000
-    rs2_signed = rs2_val if rs2_val < 0x8000000000000000 else rs2_val - 0x10000000000000000
+    rs1_signed = (
+        rs1_val if rs1_val < 0x8000000000000000 else rs1_val - 0x10000000000000000
+    )
+    rs2_signed = (
+        rs2_val if rs2_val < 0x8000000000000000 else rs2_val - 0x10000000000000000
+    )
     taken = rs1_signed < rs2_signed
     target = pc + imm if taken else pc + 4
 
@@ -70,8 +74,12 @@ def execute_bge(operand_values: dict, state: State, pc: int) -> ChangeRecord:
     rs1_val = state.get_gpr(rs1_idx)
     rs2_val = state.get_gpr(rs2_idx)
     # Signed comparison
-    rs1_signed = rs1_val if rs1_val < 0x8000000000000000 else rs1_val - 0x10000000000000000
-    rs2_signed = rs2_val if rs2_val < 0x8000000000000000 else rs2_val - 0x10000000000000000
+    rs1_signed = (
+        rs1_val if rs1_val < 0x8000000000000000 else rs1_val - 0x10000000000000000
+    )
+    rs2_signed = (
+        rs2_val if rs2_val < 0x8000000000000000 else rs2_val - 0x10000000000000000
+    )
     taken = rs1_signed >= rs2_signed
     target = pc + imm if taken else pc + 4
 
