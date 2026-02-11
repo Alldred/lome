@@ -15,7 +15,7 @@ Python-based RISC-V functional model for the core instruction set (extension I).
 - **Two-Level Access**: Architectural `get`/`set` (with side effects) and raw `peek`/`poke` (for testing & debug)
 - **CSR Side Effects**: Architectural writes trigger registered hooks (e.g. mstatus → sstatus mirroring)
 - **JSON Serialisation**: Export and restore complete model state via JSON
-- **CSR Support**: Full CSR state management with all necessary CSRs
+- **CSR Support**: Full CSR state management including read-only machine ID registers (mvendorid, marchid, mimpid, mhartid)
 - **Instruction Generator Support**: Designed for use with instruction generators
 
 ## Requirements
@@ -119,6 +119,14 @@ All instructions currently defined in Eumos:
 - **Load/Store**: LB, LH, LW, LBU, LHU, LD, LWU, SB, SH, SW, SD
 - **System**: LUI, AUIPC, CSRRW, CSRRS, CSRRC, CSRRWI, CSRRSI, CSRRCI, ECALL, EBREAK, MRET, FENCE, FENCE.TSO
 
+## Supported CSRs
+
+All CSRs currently defined in Eumos:
+
+- **Machine Information**: mvendorid, marchid, mimpid, mhartid (read-only)
+- **Machine Trap Setup**: mstatus, misa, medeleg, mideleg, mie, mtvec, mcounteren
+- **Machine Trap Handling**: mscratch, mepc, mcause, mtval, mip
+
 ## Testing
 
 ```bash
@@ -131,7 +139,7 @@ uv run pytest --cov=riscv_model --cov-report=term-missing
 
 ## Examples
 
-See `examples/basic_usage.py` for comprehensive usage examples including peek/poke, JSON round-trips, and CSR side effects.
+See `examples/basic_usage.py` for comprehensive usage examples including peek/poke, JSON round-trips, CSR side effects, and read-only machine ID CSRs.
 
 ## Future Extensions
 

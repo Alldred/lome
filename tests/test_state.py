@@ -531,6 +531,113 @@ class TestJSONExportRestore:
 # ====================================================================
 
 
+class TestReadOnlyIDCSRs:
+    """Tests for read-only machine ID CSRs: mvendorid, marchid, mimpid, mhartid."""
+
+    _ID_CSRS = {
+        "mvendorid": 0xF11,
+        "marchid": 0xF12,
+        "mimpid": 0xF13,
+        "mhartid": 0xF14,
+    }
+
+    def test_id_csrs_exist(self, state):
+        """All four ID CSRs are present and readable."""
+        s = state
+        for name, addr in self._ID_CSRS.items():
+            assert s.peek_csr(addr) is not None, f"{name} (0x{addr:03x}) missing"
+            assert s.peek_csr_by_name(name) is not None, f"{name} not found by name"
+
+    def test_id_csrs_reset_to_zero(self, state):
+        """ID CSRs should have a reset value of zero."""
+        s = state
+        for name, addr in self._ID_CSRS.items():
+            assert s.peek_csr(addr) == 0, f"{name} reset value should be 0"
+
+    def test_id_csrs_are_read_only(self, state):
+        """Architectural set_csr should not modify read-only ID CSRs."""
+        s = state
+        for name, addr in self._ID_CSRS.items():
+            result = s.set_csr(addr, 0xDEAD)
+            assert result == 0, f"set_csr({name}) should return old value"
+            assert s.get_csr(addr) == 0, f"{name} should not be modified by set_csr"
+
+    def test_id_csrs_read_only_by_name(self, state):
+        """Architectural set_csr_by_name should not modify read-only ID CSRs."""
+        s = state
+        for name in self._ID_CSRS:
+            result = s.set_csr_by_name(name, 0xBEEF)
+            assert result == 0, f"set_csr_by_name({name}) should return old value"
+            assert (
+                s.get_csr_by_name(name) == 0
+            ), f"{name} should not be modified by set_csr_by_name"
+
+    def test_id_csrs_poke_bypasses_read_only(self, state):
+        """poke_csr should write even though these CSRs are read-only."""
+        s = state
+        for name, addr in self._ID_CSRS.items():
+            old = s.poke_csr(addr, 0x42)
+            assert old == 0, f"poke_csr({name}) should return old value"
+            assert s.peek_csr(addr) == 0x42, f"poke_csr should write {name}"
+
+    def test_id_csrs_poke_by_name_bypasses_read_only(self, state):
+        """poke_csr_by_name should write even though these CSRs are read-only."""
+        s = state
+        for name in self._ID_CSRS:
+            old = s.poke_csr_by_name(name, 0x99)
+            assert old == 0
+            assert s.peek_csr_by_name(name) == 0x99
+
+    def test_id_csrs_definitions(self, state):
+        """ID CSRs should have correct definitions from Eumos."""
+        s = state
+        for name, addr in self._ID_CSRS.items():
+            csr_def = s.get_csr_def(addr)
+            assert csr_def is not None, f"{name} def not found by address"
+            assert csr_def.access == "read-only", f"{name} should be read-only"
+            assert csr_def.width == 64, f"{name} should be 64-bit"
+
+            csr_def_by_name = s.get_csr_def_by_name(name)
+            assert csr_def_by_name is not None, f"{name} def not found by name"
+            assert csr_def_by_name.address == addr
+
+    def test_id_csrs_in_json_export(self, state):
+        """ID CSRs should appear in JSON export with their values."""
+        s = state
+        for name, addr in self._ID_CSRS.items():
+            s.poke_csr(addr, addr)  # write a distinguishable value
+
+        data = s.export_state()
+        for name, addr in self._ID_CSRS.items():
+            key = str(addr)
+            assert key in data["csrs"], f"{name} missing from exported csrs"
+            assert data["csrs"][key] == addr
+            assert key in data["metadata"]["csr_names"]
+            assert data["metadata"]["csr_names"][key] == name
+
+    def test_id_csrs_json_round_trip(self, state, eumos):
+        """ID CSRs should survive a JSON export/restore round-trip."""
+        s = state
+        for name, addr in self._ID_CSRS.items():
+            s.poke_csr(addr, 0xCAFE + addr)
+
+        data = s.export_state()
+        s2 = State(eumos)
+        s2.restore_state(data)
+
+        for name, addr in self._ID_CSRS.items():
+            assert s2.peek_csr(addr) == 0xCAFE + addr, f"{name} not restored correctly"
+
+    def test_id_csrs_reset(self, state):
+        """After reset, ID CSRs should return to their reset values (0)."""
+        s = state
+        for name, addr in self._ID_CSRS.items():
+            s.poke_csr(addr, 0xFF)
+        s.reset()
+        for name, addr in self._ID_CSRS.items():
+            assert s.peek_csr(addr) == 0, f"{name} not reset to 0"
+
+
 class TestDefinitionLookups:
     """Tests for get_gpr_def, get_csr_def, get_csr_def_by_name."""
 
