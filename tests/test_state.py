@@ -251,39 +251,25 @@ class TestCSRSideEffects:
         assert log1 == [0x99]
         assert log2 == [0x99]
 
-    def test_mstatus_sstatus_mirror(self, state):
-        """Writing mstatus should mirror S-mode bits to sstatus."""
+    def test_custom_hook_propagates_write(self, state):
+        """A custom hook can propagate a write from one CSR to another."""
         s = state
-        if s.peek_csr(0x100) is None:
-            pytest.skip("sstatus (0x100) not present in Eumos definitions")
-        # Write a value with S-mode bits set
-        s.set_csr(0x300, 0x0000_0000_0000_0002)  # SIE bit
-        sstatus = s.peek_csr(0x100)
-        assert sstatus is not None
-        assert sstatus & 0x2 == 0x2  # SIE mirrored
 
-    def test_sstatus_to_mstatus_mirror(self, state):
-        """Writing sstatus should merge S-mode bits back into mstatus."""
-        s = state
-        if s.peek_csr(0x100) is None:
-            pytest.skip("sstatus (0x100) not present in Eumos definitions")
-        # Set mstatus to a known value first
-        s.poke_csr(0x300, 0x0000_0000_0000_1800)  # MPP bits (M-mode only)
-        # Write sstatus with SIE
-        s.set_csr(0x100, 0x0000_0000_0000_0002)
-        mstatus = s.peek_csr(0x300)
-        assert mstatus is not None
-        # M-mode-only bits should be preserved, SIE should be merged
-        assert mstatus & 0x2 == 0x2
+        # Hook: when mstatus is written, copy low byte into mscratch
+        def mirror_low_byte(st, addr, old_val, new_val):
+            st.poke_csr(0x340, new_val & 0xFF)  # mscratch
 
-    def test_poke_does_not_mirror(self, state):
-        """poke_csr should NOT trigger the mstatus/sstatus mirror."""
+        s.register_csr_write_hook(0x300, mirror_low_byte)
+        s.set_csr(0x300, 0xABCD)
+        assert s.peek_csr(0x340) == 0xCD  # low byte mirrored
+
+    def test_poke_does_not_fire_hooks(self, state):
+        """poke_csr should NOT trigger any registered hooks."""
         s = state
-        if s.peek_csr(0x100) is None:
-            pytest.skip("sstatus (0x100) not present in Eumos definitions")
+        fired = []
+        s.register_csr_write_hook(0x300, lambda st, a, o, n: fired.append(n))
         s.poke_csr(0x300, 0x0000_0000_0000_0002)
-        sstatus = s.peek_csr(0x100)
-        assert sstatus == 0  # no mirroring because poke was used
+        assert fired == []  # no hook fired
 
 
 # ====================================================================
