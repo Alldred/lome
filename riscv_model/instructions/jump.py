@@ -3,12 +3,30 @@
 
 """Jump instruction implementations: JAL, JALR."""
 
+from __future__ import annotations
+
 from riscv_model.changes import ChangeRecord, GPRWrite
 from riscv_model.state import State
 
 
 def execute_jal(operand_values: dict, state: State, pc: int) -> ChangeRecord:
-    """Execute JAL: rd = pc + 4; pc = pc + imm"""
+    """Execute JAL: rd = pc + 4; pc = pc + imm
+
+    Jump to *pc + imm* and store the return address (*pc + 4*) in rd.
+    Used for direct function calls and unconditional jumps.
+
+    Parameters:
+        operand_values: dict with keys ``rd`` and ``imm``.
+        state: Current architectural state.
+        pc: Program counter of this instruction.
+
+    Returns:
+        ChangeRecord containing the GPR write to rd and pc change.
+
+    Example::
+
+        # jal x1, 0x100  — jump to pc+0x100, save return addr in x1
+    """
     rd = operand_values.get("rd")
     imm = operand_values.get("imm")
 
@@ -27,7 +45,23 @@ def execute_jal(operand_values: dict, state: State, pc: int) -> ChangeRecord:
 
 
 def execute_jalr(operand_values: dict, state: State, pc: int) -> ChangeRecord:
-    """Execute JALR: rd = pc + 4; pc = (rs1 + imm) & ~1"""
+    """Execute JALR: rd = pc + 4; pc = (rs1 + imm) & ~1
+
+    Jump to *(rs1 + imm)* with the LSB cleared and store the return
+    address (*pc + 4*) in rd.  Used for indirect jumps and function returns.
+
+    Parameters:
+        operand_values: dict with keys ``rd``, ``rs1``, and ``imm``.
+        state: Current architectural state.
+        pc: Program counter of this instruction.
+
+    Returns:
+        ChangeRecord containing the GPR write to rd and pc change.
+
+    Example::
+
+        # jalr x0, x1, 0  — jump to address in x1 (function return)
+    """
     rd = operand_values.get("rd")
     rs1_idx = operand_values.get("rs1")
     imm = operand_values.get("imm")

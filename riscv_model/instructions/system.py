@@ -3,12 +3,30 @@
 
 """System instruction implementations: CSRRW, CSRRS, CSRRC, CSRRWI, CSRRSI, CSRRCI, ECALL, EBREAK, MRET, FENCE, FENCE.TSO, LUI, AUIPC."""
 
+from __future__ import annotations
+
 from riscv_model.changes import ChangeRecord, CSRWrite, GPRWrite
 from riscv_model.state import State
 
 
 def execute_csrrw(operand_values: dict, state: State, pc: int) -> ChangeRecord:
-    """Execute CSRRW: rd = CSR[imm]; CSR[imm] = rs1"""
+    """Execute CSRRW: rd = CSR[imm]; CSR[imm] = rs1
+
+    Atomically read the CSR into rd and write the value of rs1 into the
+    CSR.  CSR Read/Write.
+
+    Parameters:
+        operand_values: dict with keys ``rd``, ``rs1``, and ``imm`` (CSR address).
+        state: Current architectural state.
+        pc: Program counter of this instruction.
+
+    Returns:
+        ChangeRecord containing CSR write and GPR write.
+
+    Example::
+
+        # csrrw x1, mstatus, x2  — x1 = mstatus; mstatus = x2
+    """
     rd = operand_values.get("rd")
     rs1_idx = operand_values.get("rs1")
     csr_addr = operand_values.get("imm")
@@ -37,7 +55,23 @@ def execute_csrrw(operand_values: dict, state: State, pc: int) -> ChangeRecord:
 
 
 def execute_csrrs(operand_values: dict, state: State, pc: int) -> ChangeRecord:
-    """Execute CSRRS: rd = CSR[imm]; CSR[imm] = CSR[imm] | rs1"""
+    """Execute CSRRS: rd = CSR[imm]; CSR[imm] = CSR[imm] | rs1
+
+    Read the CSR into rd, then set bits in the CSR that are set in rs1.
+    If rs1 is x0 this is a pure read (``csrr``).
+
+    Parameters:
+        operand_values: dict with keys ``rd``, ``rs1``, and ``imm`` (CSR address).
+        state: Current architectural state.
+        pc: Program counter of this instruction.
+
+    Returns:
+        ChangeRecord containing CSR write (if any) and GPR write.
+
+    Example::
+
+        # csrrs x1, mstatus, x2  — x1 = mstatus; mstatus |= x2
+    """
     rd = operand_values.get("rd")
     rs1_idx = operand_values.get("rs1")
     csr_addr = operand_values.get("imm")
@@ -71,7 +105,23 @@ def execute_csrrs(operand_values: dict, state: State, pc: int) -> ChangeRecord:
 
 
 def execute_csrrc(operand_values: dict, state: State, pc: int) -> ChangeRecord:
-    """Execute CSRRC: rd = CSR[imm]; CSR[imm] = CSR[imm] & ~rs1"""
+    """Execute CSRRC: rd = CSR[imm]; CSR[imm] = CSR[imm] & ~rs1
+
+    Read the CSR into rd, then clear bits in the CSR that are set in rs1.
+    If rs1 is x0 this is a pure read.
+
+    Parameters:
+        operand_values: dict with keys ``rd``, ``rs1``, and ``imm`` (CSR address).
+        state: Current architectural state.
+        pc: Program counter of this instruction.
+
+    Returns:
+        ChangeRecord containing CSR write (if any) and GPR write.
+
+    Example::
+
+        # csrrc x1, mstatus, x2  — x1 = mstatus; mstatus &= ~x2
+    """
     rd = operand_values.get("rd")
     rs1_idx = operand_values.get("rs1")
     csr_addr = operand_values.get("imm")
@@ -105,7 +155,24 @@ def execute_csrrc(operand_values: dict, state: State, pc: int) -> ChangeRecord:
 
 
 def execute_csrrwi(operand_values: dict, state: State, pc: int) -> ChangeRecord:
-    """Execute CSRRWI: rd = CSR[imm]; CSR[imm] = zimm (zero-extended immediate)"""
+    """Execute CSRRWI: rd = CSR[imm]; CSR[imm] = zimm (zero-extended immediate)
+
+    Atomically read the CSR into rd and write the zero-extended 5-bit
+    immediate into the CSR.
+
+    Parameters:
+        operand_values: dict with keys ``rd``, ``rs1`` (contains zimm), and
+            ``imm`` (CSR address).
+        state: Current architectural state.
+        pc: Program counter of this instruction.
+
+    Returns:
+        ChangeRecord containing CSR write and GPR write.
+
+    Example::
+
+        # csrrwi x1, mstatus, 3  — x1 = mstatus; mstatus = 3
+    """
     rd = operand_values.get("rd")
     zimm = operand_values.get("rs1")  # In immediate variant, rs1 field contains zimm
     csr_addr = operand_values.get("imm")
@@ -134,7 +201,24 @@ def execute_csrrwi(operand_values: dict, state: State, pc: int) -> ChangeRecord:
 
 
 def execute_csrrsi(operand_values: dict, state: State, pc: int) -> ChangeRecord:
-    """Execute CSRRSI: rd = CSR[imm]; CSR[imm] = CSR[imm] | zimm"""
+    """Execute CSRRSI: rd = CSR[imm]; CSR[imm] = CSR[imm] | zimm
+
+    Read the CSR into rd, then set bits in the CSR corresponding to the
+    zero-extended 5-bit immediate.  No write if zimm is zero.
+
+    Parameters:
+        operand_values: dict with keys ``rd``, ``rs1`` (contains zimm), and
+            ``imm`` (CSR address).
+        state: Current architectural state.
+        pc: Program counter of this instruction.
+
+    Returns:
+        ChangeRecord containing CSR write (if any) and GPR write.
+
+    Example::
+
+        # csrrsi x1, mstatus, 2  — x1 = mstatus; mstatus |= 2
+    """
     rd = operand_values.get("rd")
     zimm = operand_values.get("rs1")  # In immediate variant, rs1 field contains zimm
     csr_addr = operand_values.get("imm")
@@ -168,7 +252,24 @@ def execute_csrrsi(operand_values: dict, state: State, pc: int) -> ChangeRecord:
 
 
 def execute_csrrci(operand_values: dict, state: State, pc: int) -> ChangeRecord:
-    """Execute CSRRCI: rd = CSR[imm]; CSR[imm] = CSR[imm] & ~zimm"""
+    """Execute CSRRCI: rd = CSR[imm]; CSR[imm] = CSR[imm] & ~zimm
+
+    Read the CSR into rd, then clear bits in the CSR corresponding to the
+    zero-extended 5-bit immediate.  No write if zimm is zero.
+
+    Parameters:
+        operand_values: dict with keys ``rd``, ``rs1`` (contains zimm), and
+            ``imm`` (CSR address).
+        state: Current architectural state.
+        pc: Program counter of this instruction.
+
+    Returns:
+        ChangeRecord containing CSR write (if any) and GPR write.
+
+    Example::
+
+        # csrrci x1, mstatus, 2  — x1 = mstatus; mstatus &= ~2
+    """
     rd = operand_values.get("rd")
     zimm = operand_values.get("rs1")  # In immediate variant, rs1 field contains zimm
     csr_addr = operand_values.get("imm")
@@ -202,7 +303,23 @@ def execute_csrrci(operand_values: dict, state: State, pc: int) -> ChangeRecord:
 
 
 def execute_lui(operand_values: dict, state: State, pc: int) -> ChangeRecord:
-    """Execute LUI: rd = imm << 12"""
+    """Execute LUI: rd = imm << 12
+
+    Load the 20-bit immediate into the upper bits of rd (bits 31:12),
+    zeroing bits 11:0 and sign-extending to 64 bits.
+
+    Parameters:
+        operand_values: dict with keys ``rd`` and ``imm``.
+        state: Current architectural state.
+        pc: Program counter of this instruction.
+
+    Returns:
+        ChangeRecord containing the GPR write to rd.
+
+    Example::
+
+        # lui x1, 0x12345  — x1 = 0x12345000
+    """
     rd = operand_values.get("rd")
     imm = operand_values.get("imm")
 
@@ -215,7 +332,23 @@ def execute_lui(operand_values: dict, state: State, pc: int) -> ChangeRecord:
 
 
 def execute_auipc(operand_values: dict, state: State, pc: int) -> ChangeRecord:
-    """Execute AUIPC: rd = pc + (imm << 12)"""
+    """Execute AUIPC: rd = pc + (imm << 12)
+
+    Add the upper immediate (shifted left 12 bits) to the PC and store
+    the result in rd.  Used for PC-relative addressing.
+
+    Parameters:
+        operand_values: dict with keys ``rd`` and ``imm``.
+        state: Current architectural state.
+        pc: Program counter of this instruction.
+
+    Returns:
+        ChangeRecord containing the GPR write to rd.
+
+    Example::
+
+        # auipc x1, 0x10  — x1 = pc + 0x10000
+    """
     rd = operand_values.get("rd")
     imm = operand_values.get("imm")
 
@@ -228,7 +361,23 @@ def execute_auipc(operand_values: dict, state: State, pc: int) -> ChangeRecord:
 
 
 def execute_ecall(operand_values: dict, state: State, pc: int) -> ChangeRecord:
-    """Execute ECALL: Environment call"""
+    """Execute ECALL: Environment call
+
+    Raise an environment-call exception to request a service from the
+    execution environment (e.g. OS syscall).
+
+    Parameters:
+        operand_values: dict (unused — ECALL has no operands).
+        state: Current architectural state.
+        pc: Program counter of this instruction.
+
+    Returns:
+        ChangeRecord with exception set to ``"environment_call"``.
+
+    Example::
+
+        # ecall  — trigger environment call (syscall)
+    """
     changes = ChangeRecord()
     changes.exception = "environment_call"
     # ECALL doesn't update PC in normal execution (trap handler does)
@@ -238,7 +387,22 @@ def execute_ecall(operand_values: dict, state: State, pc: int) -> ChangeRecord:
 
 
 def execute_ebreak(operand_values: dict, state: State, pc: int) -> ChangeRecord:
-    """Execute EBREAK: Environment breakpoint"""
+    """Execute EBREAK: Environment breakpoint
+
+    Raise a breakpoint exception, typically used by debuggers.
+
+    Parameters:
+        operand_values: dict (unused — EBREAK has no operands).
+        state: Current architectural state.
+        pc: Program counter of this instruction.
+
+    Returns:
+        ChangeRecord with exception set to ``"breakpoint"``.
+
+    Example::
+
+        # ebreak  — trigger breakpoint for debugger
+    """
     changes = ChangeRecord()
     changes.exception = "breakpoint"
     # EBREAK doesn't update PC in normal execution (debugger handles it)
@@ -247,7 +411,23 @@ def execute_ebreak(operand_values: dict, state: State, pc: int) -> ChangeRecord:
 
 
 def execute_mret(operand_values: dict, state: State, pc: int) -> ChangeRecord:
-    """Execute MRET: Return from machine mode trap handler"""
+    """Execute MRET: Return from machine mode trap handler
+
+    Restore the PC from the ``mepc`` CSR and return to the interrupted
+    context.
+
+    Parameters:
+        operand_values: dict (unused — MRET has no operands).
+        state: Current architectural state.
+        pc: Program counter of this instruction.
+
+    Returns:
+        ChangeRecord containing the pc change (jump to mepc).
+
+    Example::
+
+        # mret  — return from M-mode trap, pc = mepc
+    """
     # MRET restores PC from mepc CSR
     mepc = state.get_csr_by_name("mepc")
     target = mepc if mepc is not None else pc + 4
@@ -258,14 +438,47 @@ def execute_mret(operand_values: dict, state: State, pc: int) -> ChangeRecord:
 
 
 def execute_fence(operand_values: dict, state: State, pc: int) -> ChangeRecord:
-    """Execute FENCE: Memory and I/O ordering"""
+    """Execute FENCE: Memory and I/O ordering
+
+    Ensure that all memory and I/O operations before the fence are
+    observed before those after it.  This is a no-op in the functional
+    model since memory ordering is not modeled.
+
+    Parameters:
+        operand_values: dict (fence fields are not currently decoded).
+        state: Current architectural state.
+        pc: Program counter of this instruction.
+
+    Returns:
+        ChangeRecord (empty — no architectural state changes).
+
+    Example::
+
+        # fence rw, rw  — order prior reads/writes before subsequent ones
+    """
     # FENCE is a no-op in functional model (ordering is not modeled)
     changes = ChangeRecord()
     return changes
 
 
 def execute_fence_tso(operand_values: dict, state: State, pc: int) -> ChangeRecord:
-    """Execute FENCE.TSO: Total Store Ordering"""
+    """Execute FENCE.TSO: Total Store Ordering
+
+    A stricter fence that enforces total-store-order semantics.  This is
+    a no-op in the functional model since memory ordering is not modeled.
+
+    Parameters:
+        operand_values: dict (unused).
+        state: Current architectural state.
+        pc: Program counter of this instruction.
+
+    Returns:
+        ChangeRecord (empty — no architectural state changes).
+
+    Example::
+
+        # fence.tso  — enforce total store ordering
+    """
     # FENCE.TSO is a no-op in functional model (ordering is not modeled)
     changes = ChangeRecord()
     return changes

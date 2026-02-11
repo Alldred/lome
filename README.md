@@ -3,7 +3,7 @@
   ~ Copyright (c) 2026 Stuart Alldred.
   -->
 
-# Borrowdale
+# Lome
 
 Python-based RISC-V functional model for the core instruction set (extension I).
 
@@ -12,7 +12,9 @@ Python-based RISC-V functional model for the core instruction set (extension I).
 - **Instruction Execution**: Execute all RISC-V I extension instructions currently defined in Eumos
 - **Speculation**: Execute instructions without modifying state to see what would change
 - **Change Tracking**: Track all state modifications (GPRs, CSRs, PC, memory accesses, branches)
-- **State Queries**: Easy access to register values and execution results
+- **Two-Level Access**: Architectural `get`/`set` (with side effects) and raw `peek`/`poke` (for testing & debug)
+- **CSR Side Effects**: Architectural writes trigger registered hooks (e.g. mstatus → sstatus mirroring)
+- **JSON Serialisation**: Export and restore complete model state via JSON
 - **CSR Support**: Full CSR state management with all necessary CSRs
 - **Instruction Generator Support**: Designed for use with instruction generators
 
@@ -26,49 +28,83 @@ Python-based RISC-V functional model for the core instruction set (extension I).
 ```bash
 # Clone repository
 git clone <repository-url>
-cd borrowdale
+cd lome
 
 # Install dependencies (uv will fetch eumos from GitHub)
 uv sync --extra dev
 ```
 
-## Usage
+## Quick Start
 
 ```python
+from eumos import Eumos
 from riscv_model import RISCVModel
 
-# Create model
-model = RISCVModel()
+# Load Eumos once -- share with the model, ISG, or any other component
+isa   = Eumos()
+model = RISCVModel(isa)
 
 # Execute instruction (32-bit integer or bytes)
 # addi x1, x0, 42
-addi_instr = 0x13 | (1 << 7) | (0 << 12) | (0 << 15) | (42 << 20)
-changes = model.execute(addi_instr)
+addi = 0x13 | (1 << 7) | (0 << 12) | (0 << 15) | (42 << 20)
+changes = model.execute(addi)
 
-# Check results
 print(f"x1 = {model.get_gpr(1)}")  # 42
-print(f"Changes: {model.get_changes().to_simple_dict()}")
+print(changes.to_simple_dict())     # {'gpr_changes': {1: 42}}
+```
 
-# Speculate (execute without modifying state)
-spec_changes = model.speculate(addi_instr)
-print(f"Would write x1 = {spec_changes.gpr_writes[0].value}")
-print(f"Current x1 = {model.get_gpr(1)}")  # Still 0
+## Access Levels: get/set vs peek/poke
 
-# Query branch information
-branch_info = model.get_branch_info()
-if branch_info:
-    print(f"Branch taken: {branch_info.taken}")
-    print(f"Target: 0x{branch_info.target:x}")
+The model provides two access levels for every register kind:
+
+| Level | Methods | Side Effects | x0 / Read-Only | Use Case |
+|-------|---------|-------------|-----------------|----------|
+| **Architectural** | `get_*` / `set_*` | Yes — CSR hooks fire | Enforced | Normal operation, instruction execution |
+| **Raw** | `peek_*` / `poke_*` | None | Bypassed | Test setup, debugging, checkpoint restore |
+
+```python
+# Architectural access
+model.set_gpr(1, 42)         # x0 writes silently ignored
+model.set_csr("mstatus", x)  # triggers mstatus→sstatus mirror
+
+# Raw access
+model.poke_gpr(1, 42)        # identical storage write, no hooks
+model.poke_csr(0x300, x)     # bypasses read-only, no hooks
+model.poke_gpr(0, 0xDEAD)    # even x0 can be written (peek sees it)
+```
+
+## JSON Serialisation
+
+```python
+# Export
+data = model.export_state()            # dict
+json_str = model.export_state_json()   # formatted JSON string
+
+# Restore
+model.restore_state(data)
+# or
+model2 = RISCVModel.from_json(json_str, isa)
+```
+
+## Speculation
+
+```python
+spec = model.speculate(instruction)
+print(spec.gpr_writes[0].value)  # what would happen
+print(model.get_gpr(1))          # state unchanged
 ```
 
 ## API
 
-**[Full API reference →](docs/API.md)** — signatures, return types, and change-tracking types.
+**[Full API reference →](docs/API.md)** — signatures, return types, change-tracking types, CSR side effects, and examples.
 
 Summary:
 
-- **RISCVModel**: `execute()`, `speculate()`, `get_gpr()`, `get_csr()`, `get_pc()`, `set_pc()`, `reset()`, `get_changes()`, `get_branch_info()`
-- **Change tracking**: GPR/CSR writes, PC updates, memory accesses, branch info, exceptions. `ChangeRecord.to_simple_dict()` / `to_detailed_dict()`; see [API docs](docs/API.md).
+- **Architectural access**: `get_gpr()`, `set_gpr()`, `get_csr()`, `set_csr()`, `get_pc()`, `set_pc()`
+- **Raw access**: `peek_gpr()`, `poke_gpr()`, `peek_csr()`, `poke_csr()`, `peek_pc()`, `poke_pc()`
+- **Execution**: `execute()`, `speculate()`
+- **State management**: `reset()`, `export_state()`, `restore_state()`, `export_state_json()`, `from_json()`
+- **Change tracking**: `get_changes()`, `get_branch_info()` → `ChangeRecord.to_simple_dict()` / `.to_detailed_dict()`
 
 ## Supported Instructions
 
@@ -95,7 +131,7 @@ uv run pytest --cov=riscv_model --cov-report=term-missing
 
 ## Examples
 
-See `examples/basic_usage.py` for comprehensive usage examples.
+See `examples/basic_usage.py` for comprehensive usage examples including peek/poke, JSON round-trips, and CSR side effects.
 
 ## Future Extensions
 
