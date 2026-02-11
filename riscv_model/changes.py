@@ -69,11 +69,15 @@ class ChangeRecord:
 
     def get_gpr_changes(self) -> Dict[int, Tuple[int, int]]:
         """Get GPR changes as dict: register -> (new_value, old_value)."""
-        return {write.register: (write.value, write.old_value) for write in self.gpr_writes}
+        return {
+            write.register: (write.value, write.old_value) for write in self.gpr_writes
+        }
 
     def get_csr_changes(self) -> Dict[int, Tuple[int, int]]:
         """Get CSR changes as dict: address -> (new_value, old_value)."""
-        return {write.address: (write.value, write.old_value) for write in self.csr_writes}
+        return {
+            write.address: (write.value, write.old_value) for write in self.csr_writes
+        }
 
     def get_pc_change(self) -> Optional[Tuple[int, int]]:
         """Get PC change as (new_pc, old_pc) or None."""
@@ -129,9 +133,41 @@ class ChangeRecord:
             "exception": self.exception,
         }
 
+    def to_simple_dict(self) -> Dict:
+        """Return a compact summary dict (new values only, no old values)."""
+        result: Dict = {}
+        if self.gpr_writes:
+            result["gpr_changes"] = {
+                reg: new_val for reg, (new_val, _) in self.get_gpr_changes().items()
+            }
+        if self.csr_writes:
+            result["csr_changes"] = {
+                addr: new_val for addr, (new_val, _) in self.get_csr_changes().items()
+            }
+        if self.pc_change:
+            result["pc_change"] = self.pc_change[0]  # new PC only
+        if self.branch_info:
+            result["branch"] = {
+                "taken": self.branch_info.taken,
+                "target": self.branch_info.target,
+            }
+        if self.memory_accesses:
+            result["memory_accesses"] = len(self.memory_accesses)
+        if self.exception:
+            result["exception"] = self.exception
+        return result
+
+    def to_detailed_dict(self) -> Dict:
+        """Return the full change record as a dictionary (same as get_all_changes())."""
+        return self.get_all_changes()
+
 
 class ChangeQuery:
-    """Interface for querying changes in simple or detailed mode."""
+    """Interface for querying changes in simple or detailed mode.
+
+    Delegates to ChangeRecord.to_simple_dict() / to_detailed_dict(). Prefer using
+    those methods directly on the change record.
+    """
 
     def __init__(self, change_record: ChangeRecord):
         """Initialize with a change record."""
@@ -139,33 +175,11 @@ class ChangeQuery:
 
     def simple(self) -> Dict:
         """Return simple summary of changes."""
-        result = {}
-        if self._record.gpr_writes:
-            result["gpr_changes"] = {
-                reg: new_val
-                for reg, (new_val, _) in self._record.get_gpr_changes().items()
-            }
-        if self._record.csr_writes:
-            result["csr_changes"] = {
-                addr: new_val
-                for addr, (new_val, _) in self._record.get_csr_changes().items()
-            }
-        if self._record.pc_change:
-            result["pc_change"] = self._record.pc_change[0]  # new PC only
-        if self._record.branch_info:
-            result["branch"] = {
-                "taken": self._record.branch_info.taken,
-                "target": self._record.branch_info.target,
-            }
-        if self._record.memory_accesses:
-            result["memory_accesses"] = len(self._record.memory_accesses)
-        if self._record.exception:
-            result["exception"] = self._record.exception
-        return result
+        return self._record.to_simple_dict()
 
     def detailed(self) -> Dict:
         """Return detailed change record."""
-        return self._record.get_all_changes()
+        return self._record.to_detailed_dict()
 
     def has_changes(self) -> bool:
         """Check if there are any changes."""

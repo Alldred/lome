@@ -1,3 +1,8 @@
+<!--
+  ~ SPDX-License-Identifier: MIT
+  ~ Copyright (c) 2026 Stuart Alldred. All Rights Reserved
+  -->
+
 # Borrowdale
 
 Python-based RISC-V functional model for the core instruction set (extension I).
@@ -58,30 +63,12 @@ if branch_info:
 
 ## API
 
-### RISCVModel
+**[Full API reference →](docs/API.md)** — signatures, return types, and change-tracking types.
 
-Main interface for the functional model.
+Summary:
 
-- `execute(instruction_bytes, speculate=False)`: Execute instruction
-- `speculate(instruction_bytes)`: Execute in speculation mode
-- `get_gpr(reg)`: Get GPR value (x0 always returns 0)
-- `get_csr(csr)`: Get CSR value (by address or name)
-- `get_pc()`: Get program counter
-- `set_pc(value)`: Set program counter
-- `reset()`: Reset all state
-- `get_changes()`: Get change record from last execution
-- `get_branch_info()`: Get branch information
-- `query_changes(mode='simple')`: Query changes (simple or detailed)
-
-### Change Tracking
-
-Changes are tracked for:
-- GPR writes (register, value, old_value)
-- CSR writes (address, name, value, old_value)
-- PC updates (new_pc, old_pc)
-- Memory accesses (address, value, size, read/write)
-- Branch information (taken, target, condition)
-- Exceptions
+- **RISCVModel**: `execute()`, `speculate()`, `get_gpr()`, `get_csr()`, `get_pc()`, `set_pc()`, `reset()`, `get_changes()`, `get_branch_info()`, `query_changes()`
+- **Change tracking**: GPR/CSR writes, PC updates, memory accesses, branch info, exceptions. `ChangeRecord.to_simple_dict()` / `to_detailed_dict()`; see [API docs](docs/API.md).
 
 ## Supported Instructions
 
