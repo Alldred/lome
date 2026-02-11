@@ -7,7 +7,7 @@ from typing import Optional, Union
 
 from eumos.decoder import Decoder
 
-from riscv_model.changes import ChangeQuery, ChangeRecord
+from riscv_model.changes import ChangeRecord
 from riscv_model.executor import execute_instruction
 from riscv_model.state import State
 
@@ -107,14 +107,14 @@ class RISCVModel:
         """Query changes from last execution.
 
         Args:
-            mode: 'simple' for summary, 'detailed' for complete record
+            mode: 'simple' for summary (to_simple_dict), 'detailed' for complete
+                  record (to_detailed_dict)
 
         Returns:
             Dictionary with change information
         """
         if self._last_changes is None:
             return {}
-        query = ChangeQuery(self._last_changes)
         if mode == "detailed":
-            return query.detailed()
-        return query.simple()
+            return self._last_changes.to_detailed_dict()
+        return self._last_changes.to_simple_dict()
