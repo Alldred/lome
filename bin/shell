@@ -1,0 +1,19 @@
+#!/bin/zsh
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025 Stuart Alldred. All Rights Reserved
+
+# Check for LOME_ROOT already being set in the shell
+if [[ "$LOME_ROOT" != "" ]]; then
+    echo "[\033[0;31mERROR\033[0m] Lome shell is already activated!"
+    exit 1
+fi
+
+# Work out where the repository is located
+LOME_ROOT=$(readlink -f ${0:a:h}/..)
+
+USER_HISTFILE=${HISTFILE:-$HOME/.zsh_history}
+
+LOME_ROOT=$LOME_ROOT \
+    USER_HISTFILE=$USER_HISTFILE \
+    ZDOTDIR=$LOME_ROOT/bin/zsh \
+    /bin/zsh -i $@
