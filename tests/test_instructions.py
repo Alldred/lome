@@ -58,10 +58,10 @@ class TestArithmetic:
     def test_addi_negative(self, model):
         """ADDI with negative immediate (sign-extended by decoder)."""
         model.poke_gpr(1, 100)
-        # addi x2, x1, -10 (imm = 0xFFFFFFFF6 in 12-bit sign-extended)
+        # addi x2, x1, -10 (imm = 0xFF6 as 12-bit two's-complement; sign-extends to ...FFF6)
         addi = 0x13 | (2 << 7) | (0 << 12) | (1 << 15) | ((-10 & 0xFFF) << 20)
         model.execute(addi)
-        # The decoder sign-extends, but raw encoding has 12-bit imm
+        # The decoder sign-extends, but the raw encoding stores only the 12-bit imm
         # Just verify it produces a valid result
         assert model.get_gpr(2) is not None
 

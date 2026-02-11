@@ -187,8 +187,8 @@ class TestShiftVariants:
         sra = _r_type(0x33, 3, 5, 1, 2, 0x20)  # SRA (funct7=0x20)
         m.execute(sra)
         result = m.get_gpr(3)
-        # -256 >> 4 = -16
-        assert result == ((-256) & 0xFFFFFFFFFFFFFFFF) >> 4 | 0xFFFFFFFFFFFFFFF0
+        # -256 >> 4 = -16, which is 0xFFFFFFFFFFFFFFF0 in 64-bit two's complement
+        assert result == 0xFFFFFFFFFFFFFFF0
 
     def test_srai(self, model):
         m = model
