@@ -7,12 +7,22 @@ Note: Memory model is external and coming soon. These instructions track memory 
 but do not actually read/write memory yet.
 """
 
+from __future__ import annotations
+
 from riscv_model.changes import ChangeRecord, GPRWrite, MemoryAccess
 from riscv_model.state import State
 
 
 def _sign_extend(value: int, bits: int) -> int:
-    """Sign extend value from bits to 64 bits."""
+    """Sign extend *value* from *bits* width to 64 bits.
+
+    Parameters:
+        value: The narrow value to extend.
+        bits: Original bit-width of *value* (e.g. 8, 16, 32).
+
+    Returns:
+        The 64-bit sign-extended integer.
+    """
     sign_bit = 1 << (bits - 1)
     if value & sign_bit:
         return value | (0xFFFFFFFFFFFFFFFF << bits)
@@ -20,7 +30,23 @@ def _sign_extend(value: int, bits: int) -> int:
 
 
 def execute_lb(operand_values: dict, state: State, pc: int) -> ChangeRecord:
-    """Execute LB: rd = sign_extend(mem[rs1 + imm][7:0])"""
+    """Execute LB: rd = sign_extend(mem[rs1 + imm][7:0])
+
+    Load a byte from memory at address *rs1 + imm*, sign-extend it to
+    64 bits, and write the result to rd.
+
+    Parameters:
+        operand_values: dict with keys ``rd``, ``rs1``, and ``imm``.
+        state: Current architectural state.
+        pc: Program counter of this instruction.
+
+    Returns:
+        ChangeRecord containing the memory access and GPR write.
+
+    Example::
+
+        # lb x1, 0(x2)  — load sign-extended byte from address in x2
+    """
     rd = operand_values.get("rd")
     rs1_idx = operand_values.get("rs1")
     imm = operand_values.get("imm")
@@ -43,7 +69,23 @@ def execute_lb(operand_values: dict, state: State, pc: int) -> ChangeRecord:
 
 
 def execute_lh(operand_values: dict, state: State, pc: int) -> ChangeRecord:
-    """Execute LH: rd = sign_extend(mem[rs1 + imm][15:0])"""
+    """Execute LH: rd = sign_extend(mem[rs1 + imm][15:0])
+
+    Load a halfword (2 bytes) from memory at address *rs1 + imm*,
+    sign-extend it to 64 bits, and write the result to rd.
+
+    Parameters:
+        operand_values: dict with keys ``rd``, ``rs1``, and ``imm``.
+        state: Current architectural state.
+        pc: Program counter of this instruction.
+
+    Returns:
+        ChangeRecord containing the memory access and GPR write.
+
+    Example::
+
+        # lh x1, 4(x2)  — load sign-extended halfword from x2+4
+    """
     rd = operand_values.get("rd")
     rs1_idx = operand_values.get("rs1")
     imm = operand_values.get("imm")
@@ -65,7 +107,23 @@ def execute_lh(operand_values: dict, state: State, pc: int) -> ChangeRecord:
 
 
 def execute_lw(operand_values: dict, state: State, pc: int) -> ChangeRecord:
-    """Execute LW: rd = sign_extend(mem[rs1 + imm][31:0])"""
+    """Execute LW: rd = sign_extend(mem[rs1 + imm][31:0])
+
+    Load a word (4 bytes) from memory at address *rs1 + imm*, sign-extend
+    it to 64 bits, and write the result to rd.
+
+    Parameters:
+        operand_values: dict with keys ``rd``, ``rs1``, and ``imm``.
+        state: Current architectural state.
+        pc: Program counter of this instruction.
+
+    Returns:
+        ChangeRecord containing the memory access and GPR write.
+
+    Example::
+
+        # lw x1, 8(x2)  — load sign-extended word from x2+8
+    """
     rd = operand_values.get("rd")
     rs1_idx = operand_values.get("rs1")
     imm = operand_values.get("imm")
@@ -87,7 +145,23 @@ def execute_lw(operand_values: dict, state: State, pc: int) -> ChangeRecord:
 
 
 def execute_lbu(operand_values: dict, state: State, pc: int) -> ChangeRecord:
-    """Execute LBU: rd = zero_extend(mem[rs1 + imm][7:0])"""
+    """Execute LBU: rd = zero_extend(mem[rs1 + imm][7:0])
+
+    Load a byte from memory at address *rs1 + imm*, zero-extend it to
+    64 bits, and write the result to rd.
+
+    Parameters:
+        operand_values: dict with keys ``rd``, ``rs1``, and ``imm``.
+        state: Current architectural state.
+        pc: Program counter of this instruction.
+
+    Returns:
+        ChangeRecord containing the memory access and GPR write.
+
+    Example::
+
+        # lbu x1, 0(x2)  — load zero-extended byte from address in x2
+    """
     rd = operand_values.get("rd")
     rs1_idx = operand_values.get("rs1")
     imm = operand_values.get("imm")
@@ -109,7 +183,23 @@ def execute_lbu(operand_values: dict, state: State, pc: int) -> ChangeRecord:
 
 
 def execute_lhu(operand_values: dict, state: State, pc: int) -> ChangeRecord:
-    """Execute LHU: rd = zero_extend(mem[rs1 + imm][15:0])"""
+    """Execute LHU: rd = zero_extend(mem[rs1 + imm][15:0])
+
+    Load a halfword (2 bytes) from memory at address *rs1 + imm*,
+    zero-extend it to 64 bits, and write the result to rd.
+
+    Parameters:
+        operand_values: dict with keys ``rd``, ``rs1``, and ``imm``.
+        state: Current architectural state.
+        pc: Program counter of this instruction.
+
+    Returns:
+        ChangeRecord containing the memory access and GPR write.
+
+    Example::
+
+        # lhu x1, 2(x2)  — load zero-extended halfword from x2+2
+    """
     rd = operand_values.get("rd")
     rs1_idx = operand_values.get("rs1")
     imm = operand_values.get("imm")
@@ -131,7 +221,23 @@ def execute_lhu(operand_values: dict, state: State, pc: int) -> ChangeRecord:
 
 
 def execute_ld(operand_values: dict, state: State, pc: int) -> ChangeRecord:
-    """Execute LD: rd = mem[rs1 + imm][63:0]"""
+    """Execute LD: rd = mem[rs1 + imm][63:0]
+
+    Load a doubleword (8 bytes) from memory at address *rs1 + imm* and
+    write the result to rd.  RV64 only.
+
+    Parameters:
+        operand_values: dict with keys ``rd``, ``rs1``, and ``imm``.
+        state: Current architectural state.
+        pc: Program counter of this instruction.
+
+    Returns:
+        ChangeRecord containing the memory access and GPR write.
+
+    Example::
+
+        # ld x1, 16(x2)  — load doubleword from x2+16
+    """
     rd = operand_values.get("rd")
     rs1_idx = operand_values.get("rs1")
     imm = operand_values.get("imm")
@@ -152,7 +258,23 @@ def execute_ld(operand_values: dict, state: State, pc: int) -> ChangeRecord:
 
 
 def execute_lwu(operand_values: dict, state: State, pc: int) -> ChangeRecord:
-    """Execute LWU: rd = zero_extend(mem[rs1 + imm][31:0])"""
+    """Execute LWU: rd = zero_extend(mem[rs1 + imm][31:0])
+
+    Load a word (4 bytes) from memory at address *rs1 + imm*, zero-extend
+    it to 64 bits, and write the result to rd.  RV64 only.
+
+    Parameters:
+        operand_values: dict with keys ``rd``, ``rs1``, and ``imm``.
+        state: Current architectural state.
+        pc: Program counter of this instruction.
+
+    Returns:
+        ChangeRecord containing the memory access and GPR write.
+
+    Example::
+
+        # lwu x1, 4(x2)  — load zero-extended word from x2+4
+    """
     rd = operand_values.get("rd")
     rs1_idx = operand_values.get("rs1")
     imm = operand_values.get("imm")
@@ -174,7 +296,22 @@ def execute_lwu(operand_values: dict, state: State, pc: int) -> ChangeRecord:
 
 
 def execute_sb(operand_values: dict, state: State, pc: int) -> ChangeRecord:
-    """Execute SB: mem[rs1 + imm] = rs2[7:0]"""
+    """Execute SB: mem[rs1 + imm] = rs2[7:0]
+
+    Store the lowest byte of rs2 to memory at address *rs1 + imm*.
+
+    Parameters:
+        operand_values: dict with keys ``rs1``, ``rs2``, and ``imm``.
+        state: Current architectural state.
+        pc: Program counter of this instruction.
+
+    Returns:
+        ChangeRecord containing the memory access.
+
+    Example::
+
+        # sb x3, 0(x2)  — store low byte of x3 to address in x2
+    """
     rs1_idx = operand_values.get("rs1")
     rs2_idx = operand_values.get("rs2")
     imm = operand_values.get("imm")
@@ -193,7 +330,23 @@ def execute_sb(operand_values: dict, state: State, pc: int) -> ChangeRecord:
 
 
 def execute_sh(operand_values: dict, state: State, pc: int) -> ChangeRecord:
-    """Execute SH: mem[rs1 + imm] = rs2[15:0]"""
+    """Execute SH: mem[rs1 + imm] = rs2[15:0]
+
+    Store the lowest halfword (2 bytes) of rs2 to memory at address
+    *rs1 + imm*.
+
+    Parameters:
+        operand_values: dict with keys ``rs1``, ``rs2``, and ``imm``.
+        state: Current architectural state.
+        pc: Program counter of this instruction.
+
+    Returns:
+        ChangeRecord containing the memory access.
+
+    Example::
+
+        # sh x3, 2(x2)  — store low halfword of x3 to x2+2
+    """
     rs1_idx = operand_values.get("rs1")
     rs2_idx = operand_values.get("rs2")
     imm = operand_values.get("imm")
@@ -212,7 +365,23 @@ def execute_sh(operand_values: dict, state: State, pc: int) -> ChangeRecord:
 
 
 def execute_sw(operand_values: dict, state: State, pc: int) -> ChangeRecord:
-    """Execute SW: mem[rs1 + imm] = rs2[31:0]"""
+    """Execute SW: mem[rs1 + imm] = rs2[31:0]
+
+    Store the lowest word (4 bytes) of rs2 to memory at address
+    *rs1 + imm*.
+
+    Parameters:
+        operand_values: dict with keys ``rs1``, ``rs2``, and ``imm``.
+        state: Current architectural state.
+        pc: Program counter of this instruction.
+
+    Returns:
+        ChangeRecord containing the memory access.
+
+    Example::
+
+        # sw x3, 8(x2)  — store low word of x3 to x2+8
+    """
     rs1_idx = operand_values.get("rs1")
     rs2_idx = operand_values.get("rs2")
     imm = operand_values.get("imm")
@@ -231,7 +400,23 @@ def execute_sw(operand_values: dict, state: State, pc: int) -> ChangeRecord:
 
 
 def execute_sd(operand_values: dict, state: State, pc: int) -> ChangeRecord:
-    """Execute SD: mem[rs1 + imm] = rs2[63:0]"""
+    """Execute SD: mem[rs1 + imm] = rs2[63:0]
+
+    Store the full doubleword (8 bytes) of rs2 to memory at address
+    *rs1 + imm*.  RV64 only.
+
+    Parameters:
+        operand_values: dict with keys ``rs1``, ``rs2``, and ``imm``.
+        state: Current architectural state.
+        pc: Program counter of this instruction.
+
+    Returns:
+        ChangeRecord containing the memory access.
+
+    Example::
+
+        # sd x3, 16(x2)  — store doubleword x3 to x2+16
+    """
     rs1_idx = operand_values.get("rs1")
     rs2_idx = operand_values.get("rs2")
     imm = operand_values.get("imm")

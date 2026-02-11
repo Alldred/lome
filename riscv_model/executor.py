@@ -1,9 +1,25 @@
 # SPDX-License-Identifier: MIT
 # Copyright (c) 2026 Stuart Alldred.
 
-"""Instruction executor: routes decoded instructions to appropriate handlers."""
+"""Instruction executor: routes decoded instructions to their handler functions.
 
-from typing import Optional
+The :func:`execute_instruction` function is the central dispatch point.  Given
+a decoded :class:`InstructionInstance` (from Eumos), it looks up the mnemonic
+in a handler table and delegates execution.  Unknown mnemonics produce a
+``ChangeRecord`` with an ``illegal_instruction`` exception.
+
+Speculation is handled transparently: the executor snapshots state before
+execution and restores it afterwards so the caller sees no mutations.
+
+Example -- direct use (normally called by :class:`RISCVModel`)::
+
+    from riscv_model.executor import execute_instruction
+    changes = execute_instruction(instance, state, pc, speculate=False)
+"""
+
+from __future__ import annotations
+
+from typing import Any, Optional
 
 from riscv_model.changes import ChangeRecord
 from riscv_model.instructions import (
@@ -18,8 +34,11 @@ from riscv_model.instructions import (
 )
 from riscv_model.state import State
 
-# Instruction handler mapping: mnemonic -> function
-_INSTRUCTION_HANDLERS = {
+# ---------------------------------------------------------------------------
+# Handler table
+# ---------------------------------------------------------------------------
+
+_INSTRUCTION_HANDLERS: dict[str, Any] = {
     # Arithmetic
     "add": arithmetic.execute_add,
     "addi": arithmetic.execute_addi,
@@ -91,51 +110,85 @@ _INSTRUCTION_HANDLERS = {
 }
 
 
+# ---------------------------------------------------------------------------
+# Public API
+# ---------------------------------------------------------------------------
+
+
 def execute_instruction(
-    instruction_instance, state: State, pc: int, speculate: bool = False
+    instruction_instance: Any,
+    state: State,
+    pc: int,
+    *,
+    speculate: bool = False,
 ) -> Optional[ChangeRecord]:
-    """Execute an instruction instance.
+    """Execute a decoded instruction instance.
 
-    Args:
-        instruction_instance: InstructionInstance from eumos decoder
-        state: State object to read/write
-        pc: Current program counter
-        speculate: If True, don't modify state, just return changes
+    Parameters
+    ----------
+    instruction_instance
+        An :class:`InstructionInstance` from the Eumos decoder, or ``None``
+        if decoding failed.
+    state : State
+        The architectural state to read from and (unless speculating) write to.
+    pc : int
+        Current program counter value.
+    speculate : bool, optional
+        If ``True``, snapshot state before execution and restore it
+        afterwards so the caller sees no mutations (default ``False``).
 
-    Returns:
-        ChangeRecord with all changes, or None if instruction unknown
+    Returns
+    -------
+    ChangeRecord or None
+        A record of all changes the instruction made (or would make).
+        Returns ``None`` only if *instruction_instance* is ``None``.
+
+    Examples
+    --------
+    This function is normally called internally by
+    :meth:`RISCVModel.execute`, but can be used directly for low-level
+    testing::
+
+        from eumos import load_all_gprs, load_all_csrs
+        from riscv_model.executor import execute_instruction
+        from riscv_model.state import State
+
+        gprs = load_all_gprs()
+        csrs = load_all_csrs()
+        state = State(gpr_defs=gprs, csr_defs=csrs)
+        # (decode an instruction with Eumos to get instance)
+        changes = execute_instruction(instance, state, pc=0)
     """
     if instruction_instance is None:
         return None
 
-    mnemonic = instruction_instance.instruction.mnemonic
+    mnemonic: str = instruction_instance.instruction.mnemonic
     handler = _INSTRUCTION_HANDLERS.get(mnemonic)
 
     if handler is None:
-        # Unknown instruction
+        # Unknown / unsupported instruction
         changes = ChangeRecord()
         changes.exception = f"illegal_instruction: {mnemonic}"
         return changes
 
     if speculate:
-        # Create snapshot, execute, restore
+        # Snapshot → execute → restore
         snapshot = state.snapshot()
         try:
             changes = handler(instruction_instance.operand_values, state, pc)
-            state.restore(snapshot)
             return changes
-        except Exception as e:
-            state.restore(snapshot)
+        except Exception as exc:
             changes = ChangeRecord()
-            changes.exception = f"execution_error: {str(e)}"
+            changes.exception = f"execution_error: {exc}"
             return changes
+        finally:
+            state.restore(snapshot)
     else:
-        # Normal execution - modify state
-        # Note: PC update is handled by the model, not here
+        # Normal execution -- state is mutated in-place
+        # Note: PC advancement is handled by the model, not here.
         try:
-            changes = handler(instruction_instance.operand_values, state, pc)
-            return changes
-        except Exception as e:
+            return handler(instruction_instance.operand_values, state, pc)
+        except Exception as exc:
             changes = ChangeRecord()
-            changes.exception = f"execution_error: {str(e)}"
+            changes.exception = f"execution_error: {exc}"
             return changes

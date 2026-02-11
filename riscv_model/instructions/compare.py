@@ -3,12 +3,30 @@
 
 """Compare instruction implementations: SLT, SLTI, SLTU, SLTIU."""
 
+from __future__ import annotations
+
 from riscv_model.changes import ChangeRecord, GPRWrite
 from riscv_model.state import State
 
 
 def execute_slt(operand_values: dict, state: State, pc: int) -> ChangeRecord:
-    """Execute SLT: rd = (rs1 < rs2) ? 1 : 0 (signed comparison)"""
+    """Execute SLT: rd = (rs1 < rs2) ? 1 : 0 (signed comparison)
+
+    Set rd to 1 if the signed value in rs1 is less than the signed value
+    in rs2, otherwise set rd to 0.
+
+    Parameters:
+        operand_values: dict with keys ``rd``, ``rs1``, and ``rs2``.
+        state: Current architectural state.
+        pc: Program counter of this instruction.
+
+    Returns:
+        ChangeRecord containing the GPR write to rd.
+
+    Example::
+
+        # slt x1, x2, x3  — x1 = 1 if x2 < x3 (signed), else 0
+    """
     rd = operand_values.get("rd")
     rs1_idx = operand_values.get("rs1")
     rs2_idx = operand_values.get("rs2")
@@ -31,7 +49,23 @@ def execute_slt(operand_values: dict, state: State, pc: int) -> ChangeRecord:
 
 
 def execute_slti(operand_values: dict, state: State, pc: int) -> ChangeRecord:
-    """Execute SLTI: rd = (rs1 < imm) ? 1 : 0 (signed comparison)"""
+    """Execute SLTI: rd = (rs1 < imm) ? 1 : 0 (signed comparison)
+
+    Set rd to 1 if the signed value in rs1 is less than the sign-extended
+    immediate, otherwise set rd to 0.
+
+    Parameters:
+        operand_values: dict with keys ``rd``, ``rs1``, and ``imm``.
+        state: Current architectural state.
+        pc: Program counter of this instruction.
+
+    Returns:
+        ChangeRecord containing the GPR write to rd.
+
+    Example::
+
+        # slti x1, x2, 10  — x1 = 1 if x2 < 10 (signed), else 0
+    """
     rd = operand_values.get("rd")
     rs1_idx = operand_values.get("rs1")
     imm = operand_values.get("imm")
@@ -51,7 +85,23 @@ def execute_slti(operand_values: dict, state: State, pc: int) -> ChangeRecord:
 
 
 def execute_sltu(operand_values: dict, state: State, pc: int) -> ChangeRecord:
-    """Execute SLTU: rd = (rs1 < rs2) ? 1 : 0 (unsigned comparison)"""
+    """Execute SLTU: rd = (rs1 < rs2) ? 1 : 0 (unsigned comparison)
+
+    Set rd to 1 if the unsigned value in rs1 is less than the unsigned
+    value in rs2, otherwise set rd to 0.
+
+    Parameters:
+        operand_values: dict with keys ``rd``, ``rs1``, and ``rs2``.
+        state: Current architectural state.
+        pc: Program counter of this instruction.
+
+    Returns:
+        ChangeRecord containing the GPR write to rd.
+
+    Example::
+
+        # sltu x1, x2, x3  — x1 = 1 if x2 < x3 (unsigned), else 0
+    """
     rd = operand_values.get("rd")
     rs1_idx = operand_values.get("rs1")
     rs2_idx = operand_values.get("rs2")
@@ -68,7 +118,23 @@ def execute_sltu(operand_values: dict, state: State, pc: int) -> ChangeRecord:
 
 
 def execute_sltiu(operand_values: dict, state: State, pc: int) -> ChangeRecord:
-    """Execute SLTIU: rd = (rs1 < imm) ? 1 : 0 (unsigned comparison)"""
+    """Execute SLTIU: rd = (rs1 < imm) ? 1 : 0 (unsigned comparison)
+
+    Set rd to 1 if the unsigned value in rs1 is less than the
+    zero-extended immediate, otherwise set rd to 0.
+
+    Parameters:
+        operand_values: dict with keys ``rd``, ``rs1``, and ``imm``.
+        state: Current architectural state.
+        pc: Program counter of this instruction.
+
+    Returns:
+        ChangeRecord containing the GPR write to rd.
+
+    Example::
+
+        # sltiu x1, x2, 5  — x1 = 1 if x2 < 5 (unsigned), else 0
+    """
     rd = operand_values.get("rd")
     rs1_idx = operand_values.get("rs1")
     imm = operand_values.get("imm")
