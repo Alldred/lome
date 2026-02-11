@@ -170,6 +170,25 @@ model.register_csr_write_hook(
 
 ---
 
+## Read-Only Machine ID CSRs
+
+The following read-only CSRs are defined by Eumos and available in the model:
+
+| CSR | Address | Description |
+|-----|---------|-------------|
+| **mvendorid** | `0xF11` | Vendor ID — manufacturer identifier |
+| **marchid** | `0xF12` | Architecture ID — base architecture identifier |
+| **mimpid** | `0xF13` | Implementation ID — processor implementation version |
+| **mhartid** | `0xF14` | Hart ID — hardware thread identifier |
+
+These CSRs are **read-only** architecturally:
+
+- `set_csr("mhartid", x)` is a no-op (returns the current value without modifying it)
+- `poke_csr("mhartid", x)` bypasses read-only — useful for test setup (e.g. setting hart IDs in multi-hart scenarios)
+- All four reset to 0 and are included in JSON export/restore
+
+---
+
 ## Examples
 
 ### Basic Execution

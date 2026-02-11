@@ -183,3 +183,69 @@ class TestModelJSONExportRestore:
         m2 = RISCVModel(eumos)
         m2.restore_state(data)
         assert m2.get_csr(0x300) == 0xCAFE
+
+
+# ====================================================================
+# Read-only ID CSRs via model
+# ====================================================================
+
+
+class TestModelReadOnlyIDCSRs:
+    """Tests for read-only machine ID CSRs through the model API."""
+
+    _ID_CSRS = {
+        "mvendorid": 0xF11,
+        "marchid": 0xF12,
+        "mimpid": 0xF13,
+        "mhartid": 0xF14,
+    }
+
+    def test_id_csrs_accessible_by_name(self, model):
+        """ID CSRs should be readable by name through the model."""
+        m = model
+        for name in self._ID_CSRS:
+            val = m.get_csr(name)
+            assert val is not None, f"{name} not accessible by name"
+            assert val == 0
+
+    def test_id_csrs_accessible_by_address(self, model):
+        """ID CSRs should be readable by address through the model."""
+        m = model
+        for name, addr in self._ID_CSRS.items():
+            val = m.get_csr(addr)
+            assert val is not None, f"{name} (0x{addr:03x}) not accessible"
+            assert val == 0
+
+    def test_set_csr_respects_read_only(self, model):
+        """Architectural set_csr should not modify read-only ID CSRs."""
+        m = model
+        for name, addr in self._ID_CSRS.items():
+            m.set_csr(name, 0xDEAD)
+            assert m.get_csr(name) == 0, f"{name} should be immutable via set_csr"
+            m.set_csr(addr, 0xDEAD)
+            assert m.get_csr(addr) == 0, f"{name} should be immutable via set_csr(addr)"
+
+    def test_poke_csr_bypasses_read_only(self, model):
+        """poke_csr should write ID CSRs even though they are read-only."""
+        m = model
+        for name, addr in self._ID_CSRS.items():
+            m.poke_csr(name, 0x42)
+            assert m.peek_csr(name) == 0x42, f"poke_csr({name}) failed"
+            m.poke_csr(addr, 0x99)
+            assert m.peek_csr(addr) == 0x99, f"poke_csr(0x{addr:03x}) failed"
+
+    def test_id_csrs_in_csr_defs(self, model):
+        """ID CSRs should appear in the model's csr_defs property."""
+        m = model
+        for name in self._ID_CSRS:
+            assert name in m.csr_defs, f"{name} missing from csr_defs"
+
+    def test_id_csrs_round_trip(self, model, eumos):
+        """ID CSRs should survive JSON export/restore through the model."""
+        m = model
+        for name, addr in self._ID_CSRS.items():
+            m.poke_csr(addr, addr)  # distinguishable values
+
+        m2 = RISCVModel.from_json(m.export_state_json(), eumos)
+        for name, addr in self._ID_CSRS.items():
+            assert m2.peek_csr(addr) == addr, f"{name} not preserved in round-trip"

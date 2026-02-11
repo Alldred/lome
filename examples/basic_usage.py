@@ -12,7 +12,8 @@ Demonstrates:
   6. Change tracking (simple and detailed dicts)
   7. CSR operations (CSRRW)
   8. JSON export / restore round-trip
-  9. Reset
+  9. Read-only machine ID CSRs
+  10. Reset
 """
 
 import sys
@@ -148,9 +149,27 @@ def main():
     print(f"   from_json: x1 = {model_from_json.get_gpr(1)}\n")
 
     # ------------------------------------------------------------------
-    # 9. Reset
+    # 9. Read-only machine ID CSRs
     # ------------------------------------------------------------------
-    print("9. Reset state")
+    print("9. Read-only machine ID CSRs")
+    model3 = RISCVModel(isa)
+    id_csrs = ["mvendorid", "marchid", "mimpid", "mhartid"]
+    for name in id_csrs:
+        val = model3.get_csr(name)
+        print(f"   {name} = 0x{val:x}" if val is not None else f"   {name} = N/A")
+
+    # Architectural writes are rejected (read-only)
+    model3.set_csr("mhartid", 0xFF)
+    print(f"   After set_csr('mhartid', 0xFF): mhartid = {model3.get_csr('mhartid')}")
+
+    # poke bypasses read-only for test setup
+    model3.poke_csr("mhartid", 1)
+    print(f"   After poke_csr('mhartid', 1): peek = {model3.peek_csr('mhartid')}\n")
+
+    # ------------------------------------------------------------------
+    # 10. Reset
+    # ------------------------------------------------------------------
+    print("10. Reset state")
     model.reset()
     print("   After reset:")
     print(f"   x1 = {model.get_gpr(1)}")
