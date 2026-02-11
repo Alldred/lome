@@ -135,9 +135,11 @@ class State:
     @staticmethod
     def _mask_to_width(value: int, width: Optional[int]) -> int:
         """Mask *value* to the given bit *width* (default 64)."""
-        if width:
-            return value & ((1 << width) - 1)
-        return value & _MASK_64
+        if width is None:
+            return value & _MASK_64
+        if width <= 0:
+            raise ValueError(f"width must be a positive integer, got {width}")
+        return value & ((1 << width) - 1)
 
     # ====================================================================
     # GPR access
