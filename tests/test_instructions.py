@@ -88,12 +88,12 @@ def test_jump_instructions():
     model._state.set_pc(0x1000)
     model._state.set_gpr(1, 0x2000)
 
-    # JAL: x2 = pc + 4; pc = pc + imm
-    # imm = 0x100
-    jal_instr = 0x6F | (2 << 7) | (0x100 << 12)
+    # JAL: x2 = pc + 4; pc = pc + imm (eumos decoder outputs byte offset)
+    # J-type: encode so decoded imm = 0x100; use imm[10:1] = 0x40 -> value 0x80, *2 = 0x100
+    jal_instr = 0x6F | (2 << 7) | (0x40 << 21)
     changes = model.execute(jal_instr)
     assert model.get_gpr(2) == 0x1004  # return address
-    assert model.get_pc() == 0x1100  # pc + imm
+    assert model.get_pc() == 0x1100  # pc + 0x100
 
     # JALR: x3 = pc + 4; pc = (x1 + imm) & ~1
     model._state.set_pc(0x1000)

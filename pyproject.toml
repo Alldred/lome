@@ -5,6 +5,7 @@ description = "Python RISC-V functional model"
 readme = "README.md"
 license = "MIT"
 dependencies = [
+    "eumos @ git+ssh://git@github.com/Alldred/eumos.git",
     "pre-commit",
     "pykwalify",
     "PyYAML",

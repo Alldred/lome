@@ -3,16 +3,9 @@
 
 """Main RISC-V functional model interface."""
 
-import os
-import sys
 from typing import Optional, Union
 
-# Add slate to path
-_slate_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "slate", "python")
-if _slate_path not in sys.path:
-    sys.path.insert(0, _slate_path)
-
-from decoder import Decoder
+from eumos.decoder import Decoder
 
 from riscv_model.changes import ChangeQuery, ChangeRecord
 from riscv_model.executor import execute_instruction
@@ -23,17 +16,9 @@ class RISCVModel:
     """RISC-V functional model for instruction execution, speculation, and change tracking."""
 
     def __init__(self):
-        """Initialize the RISC-V model with state and decoder."""
+        """Initialize the RISC-V model with state and decoder (Eumos from GitHub)."""
         self._state = State()
-        # Initialize decoder from slate
-        slate_root = os.path.join(os.path.dirname(os.path.dirname(__file__)), "slate")
-        instr_root = os.path.join(slate_root, "yaml", "rv64", "instructions")
-        format_dir = os.path.join(slate_root, "yaml", "rv64", "formats")
-        # Load instructions for decoder
-        from instruction_loader import load_all_instructions
-
-        instructions = load_all_instructions(str(instr_root), str(format_dir))
-        self._decoder = Decoder(instructions=instructions)
+        self._decoder = Decoder()
         self._last_changes: Optional[ChangeRecord] = None
 
     def execute(

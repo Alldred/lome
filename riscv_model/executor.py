@@ -97,7 +97,7 @@ def execute_instruction(
     """Execute an instruction instance.
 
     Args:
-        instruction_instance: InstructionInstance from slate decoder
+        instruction_instance: InstructionInstance from eumos decoder
         state: State object to read/write
         pc: Current program counter
         speculate: If True, don't modify state, just return changes
