@@ -485,6 +485,38 @@ class RISCVModel:
         """
         return self._state.poke_pc(value)
 
+    # ============================================================ CSR hooks
+
+    def register_csr_write_hook(
+        self,
+        csr_addr: int,
+        hook: Any,
+    ) -> None:
+        """Register a callback invoked after an architectural CSR write.
+
+        The hook is called as ``hook(state, address, old_value, new_value)``
+        **after** the new value has been stored.  Hooks are only triggered
+        by :meth:`set_csr`, **not** by :meth:`poke_csr`.
+
+        Parameters
+        ----------
+        csr_addr : int
+            12-bit CSR address to watch.
+        hook : callable
+            ``(state, address, old_value, new_value) -> None``
+
+        Examples
+        --------
+        >>> # m = RISCVModel(decoder=dec, gpr_defs=gprs, csr_defs=csrs)
+        >>> log = []
+        >>> m.register_csr_write_hook(0x300, lambda st, a, o, n: log.append((o, n)))
+        >>> m.set_csr("mstatus", 0xFF)
+        0
+        >>> log
+        [(0, 255)]
+        """
+        self._state.register_csr_write_hook(csr_addr, hook)
+
     # ============================================================ Eumos access
 
     @property
@@ -616,7 +648,7 @@ class RISCVModel:
         >>> m.poke_gpr(1, 42)
         0
         >>> data = m.export_state()
-        >>> m2 = RISCVModel()
+        >>> # m2 = RISCVModel(decoder=dec, gpr_defs=gprs, csr_defs=csrs)
         >>> m2.restore_state(data)
         >>> m2.get_gpr(1)
         42

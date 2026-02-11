@@ -92,7 +92,7 @@ setup, debugging, and checkpoint restore.
 | **export_state** | `export_state() -> dict` | Export complete state as JSON-serialisable dict. |
 | **restore_state** | `restore_state(data: dict) -> None` | Restore from dict (raw — no hooks). |
 | **export_state_json** | `export_state_json(indent=2) -> str` | Export as formatted JSON string. |
-| **from_json** *(classmethod)* | `from_json(json_str: str) -> RISCVModel` | Create model from JSON string. |
+| **from_json** *(classmethod)* | `from_json(json_str, *, decoder, gpr_defs, csr_defs) -> RISCVModel` | Create model from JSON string. |
 
 #### Export Format
 
@@ -161,10 +161,10 @@ storing the new value.  Built-in hooks:
   bits to `sstatus` (0x100), and vice-versa.  Only active if both CSRs exist
   in the Eumos definitions.
 
-Custom hooks can be registered on the `State` object:
+Custom hooks can be registered on the model:
 
 ```python
-model._state.register_csr_write_hook(
+model.register_csr_write_hook(
     0x300,
     lambda state, addr, old, new: print(f"mstatus: {old:#x} → {new:#x}")
 )

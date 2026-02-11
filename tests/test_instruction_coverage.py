@@ -469,12 +469,14 @@ class TestExecutorEdgeCases:
         s = state
         assert execute_instruction(None, s, 0) is None
 
-    def test_speculation_restores_on_exception(self, model):
-        """If an instruction handler raises, speculation still restores state."""
+    def test_speculation_restores_state(self, model):
+        """Speculation executes but does not commit changes to the model."""
         m = model
         m.poke_gpr(1, 42)
         # Execute a valid instruction in speculation mode
         addi = _i_type(0x13, 2, 0, 1, 5)
-        m.speculate(addi)
+        changes = m.speculate(addi)
+        assert changes is not None
+        assert changes.gpr_writes[0].value == 47  # 42 + 5
         assert m.get_gpr(2) == 0  # state unchanged
         assert m.get_gpr(1) == 42  # preserved

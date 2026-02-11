@@ -72,7 +72,10 @@ class State:
 
     Parameters
     ----------
-    None
+    gpr_defs : dict[int, GPRDef]
+        GPR definitions (from :func:`eumos.load_all_gprs`).
+    csr_defs : dict[str, CSRDef]
+        CSR definitions (from :func:`eumos.load_all_csrs`).
 
     Examples
     --------

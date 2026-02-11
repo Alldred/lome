@@ -150,14 +150,17 @@ class TestCSRPeekPoke:
         assert s.peek_csr_by_name("nonexistent_csr") is None
 
     def test_poke_bypasses_read_only(self, state):
-        """poke_csr writes even to read-only CSRs."""
+        """poke_csr writes even to CSRs whose access is read-only."""
         s = state
-        # Find a read-only CSR (if any)
-        for addr, csr_def in s._csr_by_address.items():
-            if csr_def.access == "read-only":
-                s.poke_csr(addr, 0x42)
-                assert s.peek_csr(addr) == 0x42
-                break
+        # Temporarily mark mstatus as read-only to test the bypass
+        csr_def = s._csr_by_address[0x300]
+        original_access = csr_def.access
+        csr_def.access = "read-only"
+        try:
+            s.poke_csr(0x300, 0x42)
+            assert s.peek_csr(0x300) == 0x42  # poke ignores access mode
+        finally:
+            csr_def.access = original_access
 
     def test_poke_does_not_trigger_hooks(self, state):
         """poke_csr should not trigger CSR write hooks."""
@@ -191,15 +194,19 @@ class TestCSRGetSet:
         assert s.get_csr(0xFFF) is None
 
     def test_set_respects_read_only(self, state):
-        """set_csr should not modify read-only CSRs."""
+        """set_csr should not modify CSRs whose access is read-only."""
         s = state
-        for addr, csr_def in s._csr_by_address.items():
-            if csr_def.access == "read-only":
-                old_val = s.get_csr(addr)
-                result = s.set_csr(addr, 0xDEADBEEF)
-                assert result == old_val  # returns old value
-                assert s.get_csr(addr) == old_val  # not modified
-                break
+        # Temporarily mark mstatus as read-only to test enforcement
+        csr_def = s._csr_by_address[0x300]
+        original_access = csr_def.access
+        csr_def.access = "read-only"
+        try:
+            s.poke_csr(0x300, 0x1234)  # seed a known value via raw write
+            result = s.set_csr(0x300, 0xDEADBEEF)
+            assert result == 0x1234  # returns old value
+            assert s.get_csr(0x300) == 0x1234  # not modified
+        finally:
+            csr_def.access = original_access
 
     def test_set_by_name(self, state):
         s = state
