@@ -61,9 +61,8 @@ def test_branch_taken():
     # Use internal state access for test setup
     model._state.set_gpr(1, 10)
     model._state.set_gpr(2, 10)
-    # beq x1, x2, 8
-    # imm = 8, encoded as: [12|10:5|4:1|11] = 0x008
-    beq_instr = 0x63 | (0 << 12) | (1 << 15) | (2 << 20) | (8 << 7)
+    # beq x1, x2, 8  (branch forward 8 bytes; B-type: imm[4:1] uses shift 1, so 2 -> 4, *2 = 8)
+    beq_instr = 0x63 | (0 << 12) | (1 << 15) | (2 << 20) | (2 << 8)
     changes = model.execute(beq_instr)
     assert changes is not None
     branch_info = model.get_branch_info()

@@ -3,32 +3,18 @@
 
 """State management for RISC-V functional model: GPRs, CSRs, and PC."""
 
-import os
-import sys
 from typing import Dict, Optional
 
-# Add slate to path
-_slate_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "slate", "python")
-if _slate_path not in sys.path:
-    sys.path.insert(0, _slate_path)
-
-from csr_loader import load_all_csrs
-from gpr_loader import load_gprs
-from models import CSRDef, GPRDef
+from eumos import CSRDef, GPRDef, load_all_csrs, load_all_gprs
 
 
 class State:
     """Manages RISC-V architectural state: GPRs, CSRs, and PC."""
 
     def __init__(self):
-        """Initialize state with GPRs, CSRs, and PC from Slate definitions."""
-        # Load GPR and CSR definitions from Slate
-        slate_root = os.path.join(os.path.dirname(os.path.dirname(__file__)), "slate")
-        csr_root = os.path.join(slate_root, "yaml", "rv64", "csrs")
-        gpr_path = os.path.join(slate_root, "yaml", "rv64", "gprs.yml")
-
-        self._gpr_defs: Dict[int, GPRDef] = load_gprs(gpr_path)
-        self._csr_defs: Dict[str, CSRDef] = load_all_csrs(csr_root)
+        """Initialize state with GPRs, CSRs, and PC from Eumos (installed from GitHub)."""
+        self._gpr_defs: Dict[int, GPRDef] = load_all_gprs()
+        self._csr_defs: Dict[str, CSRDef] = load_all_csrs()
         self._csr_by_address: Dict[int, CSRDef] = {
             csr.address: csr for csr in self._csr_defs.values()
         }

@@ -4,7 +4,7 @@ Python-based RISC-V functional model for the core instruction set (extension I).
 
 ## Features
 
-- **Instruction Execution**: Execute all RISC-V I extension instructions currently defined in Slate
+- **Instruction Execution**: Execute all RISC-V I extension instructions currently defined in Eumos
 - **Speculation**: Execute instructions without modifying state to see what would change
 - **Change Tracking**: Track all state modifications (GPRs, CSRs, PC, memory accesses, branches)
 - **State Queries**: Easy access to register values and execution results
@@ -14,7 +14,7 @@ Python-based RISC-V functional model for the core instruction set (extension I).
 ## Requirements
 
 - Python 3.13+
-- Slate (git submodule): RISC-V ISA specification
+- Eumos: RISC-V ISA specification (installed from GitHub as a dependency)
 
 ## Installation
 
@@ -23,10 +23,7 @@ Python-based RISC-V functional model for the core instruction set (extension I).
 git clone <repository-url>
 cd borrowdale
 
-# Initialize submodules
-git submodule update --init --recursive
-
-# Install dependencies (using uv, like Slate)
+# Install dependencies (uv will fetch eumos from GitHub)
 uv sync --extra dev
 ```
 
@@ -88,7 +85,7 @@ Changes are tracked for:
 
 ## Supported Instructions
 
-All instructions currently defined in Slate:
+All instructions currently defined in Eumos:
 
 - **Arithmetic**: ADD, ADDI, SUB, ADDW, ADDIW, SUBW
 - **Logical**: AND, ANDI, OR, ORI, XOR, XORI
@@ -119,7 +116,7 @@ See `examples/basic_usage.py` for comprehensive usage examples.
 - Additional CSR support as needed
 - Exception handling model
 - Performance counters
-- Support for other RISC-V extensions (M, A, etc.) as they are added to Slate
+- Support for other RISC-V extensions (M, A, etc.) as they are added to Eumos
 
 ## License
 
