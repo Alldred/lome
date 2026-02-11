@@ -3,7 +3,7 @@
   ~ Copyright (c) 2026 Stuart Alldred.
   -->
 
-# Borrowdale
+# Lome
 
 Python-based RISC-V functional model for the core instruction set (extension I).
 
@@ -28,7 +28,7 @@ Python-based RISC-V functional model for the core instruction set (extension I).
 ```bash
 # Clone repository
 git clone <repository-url>
-cd borrowdale
+cd lome
 
 # Install dependencies (uv will fetch eumos from GitHub)
 uv sync --extra dev
