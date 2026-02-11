@@ -20,12 +20,11 @@ State can be serialised to a JSON-compatible ``dict`` with
 
 Example -- basic register manipulation::
 
-    from eumos import load_all_gprs, load_all_csrs
+    from eumos import Eumos
     from riscv_model.state import State
 
-    gprs = load_all_gprs()
-    csrs = load_all_csrs()
-    s = State(gpr_defs=gprs, csr_defs=csrs)
+    isa = Eumos()
+    s = State(isa)
 
     s.set_gpr(1, 42)        # architectural write
     s.get_gpr(1)             # => 42
@@ -35,7 +34,7 @@ Example -- basic register manipulation::
 Example -- JSON round-trip::
 
     data = s.export_state()
-    s2 = State(gpr_defs=gprs, csr_defs=csrs)
+    s2 = State(isa)
     s2.restore_state(data)
     assert s2.get_gpr(1) == s.get_gpr(1)
 """
@@ -45,7 +44,7 @@ from __future__ import annotations
 import json
 from typing import Any, Callable, Dict, List, Optional
 
-from eumos import CSRDef, GPRDef
+from eumos import CSRDef, Eumos, GPRDef
 
 # ---------------------------------------------------------------------------
 # Constants
@@ -66,20 +65,18 @@ _NUM_GPRS: int = 32
 class State:
     """Manages RISC-V architectural state: GPRs, CSRs, and PC.
 
-    Attributes are loaded from *Eumos* (a RISC-V ISA specification package
-    installed from GitHub).  GPR and CSR definitions come from Eumos and
-    determine names, widths, reset values and access modes.
+    GPR and CSR definitions come from an :class:`~eumos.Eumos` instance
+    and determine register names, widths, reset values and access modes.
 
     Parameters
     ----------
-    gpr_defs : dict[int, GPRDef]
-        GPR definitions (from :func:`eumos.load_all_gprs`).
-    csr_defs : dict[str, CSRDef]
-        CSR definitions (from :func:`eumos.load_all_csrs`).
+    eumos : Eumos
+        Shared Eumos ISA instance.
 
     Examples
     --------
-    >>> # state = State(gpr_defs=gprs, csr_defs=csrs)
+    >>> from eumos import Eumos
+    >>> state = State(eumos=Eumos())
     >>> state.get_pc()
     0
     >>> state.get_gpr(0)   # x0 is hardwired to zero
@@ -88,28 +85,17 @@ class State:
 
     # ------------------------------------------------------------------ init
 
-    def __init__(
-        self,
-        *,
-        gpr_defs: Dict[int, GPRDef],
-        csr_defs: Dict[str, CSRDef],
-    ) -> None:
+    def __init__(self, eumos: Eumos) -> None:
         """Initialise state with GPRs, CSRs, and PC.
 
         Parameters
         ----------
-        gpr_defs : dict[int, GPRDef]
-            GPR definitions (from :func:`eumos.load_all_gprs`).
-        csr_defs : dict[str, CSRDef]
-            CSR definitions (from :func:`eumos.load_all_csrs`).
-
-        Both arguments are **required**.  Callers (typically
-        :class:`~riscv_model.model.RISCVModel`) load Eumos once and pass
-        the same objects here, so that multiple components sharing a model
-        all reference the same definitions.
+        eumos : Eumos
+            Shared Eumos ISA instance providing GPR and CSR definitions.
         """
-        self._gpr_defs: Dict[int, GPRDef] = gpr_defs
-        self._csr_defs: Dict[str, CSRDef] = csr_defs
+        self._eumos: Eumos = eumos
+        self._gpr_defs: Dict[int, GPRDef] = eumos.gprs
+        self._csr_defs: Dict[str, CSRDef] = eumos.csrs
         self._csr_by_address: Dict[int, CSRDef] = {
             csr.address: csr for csr in self._csr_defs.values()
         }
@@ -183,7 +169,7 @@ class State:
 
         Examples
         --------
-        >>> # s = State(gpr_defs=gprs, csr_defs=csrs)
+        >>> # s = State(isa)
         >>> s.poke_gpr(0, 0xDEAD)  # force a value into x0 storage
         0
         >>> s.peek_gpr(0)           # raw read sees it
@@ -221,7 +207,7 @@ class State:
 
         Examples
         --------
-        >>> # s = State(gpr_defs=gprs, csr_defs=csrs)
+        >>> # s = State(isa)
         >>> s.poke_gpr(1, 0xFF)
         0
         >>> s.peek_gpr(1)
@@ -257,7 +243,7 @@ class State:
 
         Examples
         --------
-        >>> # s = State(gpr_defs=gprs, csr_defs=csrs)
+        >>> # s = State(isa)
         >>> s.set_gpr(1, 42)
         0
         >>> s.get_gpr(1)
@@ -296,7 +282,7 @@ class State:
 
         Examples
         --------
-        >>> # s = State(gpr_defs=gprs, csr_defs=csrs)
+        >>> # s = State(isa)
         >>> old = s.set_gpr(1, 100)
         >>> old
         0
@@ -336,7 +322,7 @@ class State:
 
         Examples
         --------
-        >>> # s = State(gpr_defs=gprs, csr_defs=csrs)
+        >>> # s = State(isa)
         >>> val = s.peek_csr(0x300)  # mstatus
         >>> val is not None
         True
@@ -363,7 +349,7 @@ class State:
 
         Examples
         --------
-        >>> # s = State(gpr_defs=gprs, csr_defs=csrs)
+        >>> # s = State(isa)
         >>> s.poke_csr(0x300, 0xABCD)  # force mstatus
         0
         >>> s.peek_csr(0x300)
@@ -394,7 +380,7 @@ class State:
 
         Examples
         --------
-        >>> # s = State(gpr_defs=gprs, csr_defs=csrs)
+        >>> # s = State(isa)
         >>> s.peek_csr_by_name("mstatus") is not None
         True
         """
@@ -420,7 +406,7 @@ class State:
 
         Examples
         --------
-        >>> # s = State(gpr_defs=gprs, csr_defs=csrs)
+        >>> # s = State(isa)
         >>> s.poke_csr_by_name("mstatus", 0x1234)
         0
         """
@@ -446,7 +432,7 @@ class State:
 
         Examples
         --------
-        >>> # s = State(gpr_defs=gprs, csr_defs=csrs)
+        >>> # s = State(isa)
         >>> s.set_csr(0x300, 0x1800)  # mstatus
         0
         >>> s.get_csr(0x300)
@@ -477,7 +463,7 @@ class State:
 
         Examples
         --------
-        >>> # s = State(gpr_defs=gprs, csr_defs=csrs)
+        >>> # s = State(isa)
         >>> s.set_csr(0x300, 0x1800)  # write mstatus
         0
         >>> s.get_csr(0x300)
@@ -517,7 +503,7 @@ class State:
 
         Examples
         --------
-        >>> # s = State(gpr_defs=gprs, csr_defs=csrs)
+        >>> # s = State(isa)
         >>> s.get_csr_by_name("mstatus") is not None
         True
         """
@@ -545,7 +531,7 @@ class State:
 
         Examples
         --------
-        >>> # s = State(gpr_defs=gprs, csr_defs=csrs)
+        >>> # s = State(isa)
         >>> s.set_csr_by_name("mstatus", 0x1800)
         0
         """
@@ -567,7 +553,7 @@ class State:
 
         Examples
         --------
-        >>> # s = State(gpr_defs=gprs, csr_defs=csrs)
+        >>> # s = State(isa)
         >>> s.peek_pc()
         0
         """
@@ -588,7 +574,7 @@ class State:
 
         Examples
         --------
-        >>> # s = State(gpr_defs=gprs, csr_defs=csrs)
+        >>> # s = State(isa)
         >>> s.poke_pc(0x8000_0000)
         0
         >>> s.peek_pc()
@@ -607,7 +593,7 @@ class State:
 
         Examples
         --------
-        >>> # s = State(gpr_defs=gprs, csr_defs=csrs)
+        >>> # s = State(isa)
         >>> s.get_pc()
         0
         """
@@ -628,7 +614,7 @@ class State:
 
         Examples
         --------
-        >>> # s = State(gpr_defs=gprs, csr_defs=csrs)
+        >>> # s = State(isa)
         >>> s.set_pc(0x1000)
         0
         >>> s.get_pc()
@@ -663,7 +649,7 @@ class State:
 
         Examples
         --------
-        >>> # s = State(gpr_defs=gprs, csr_defs=csrs)
+        >>> # s = State(isa)
         >>> log = []
         >>> s.register_csr_write_hook(0x300, lambda st, a, o, n: log.append((a, o, n)))
         >>> s.set_csr(0x300, 0xFF)
@@ -761,7 +747,7 @@ class State:
 
         Examples
         --------
-        >>> # s = State(gpr_defs=gprs, csr_defs=csrs)
+        >>> # s = State(isa)
         >>> s.set_gpr(1, 42)
         0
         >>> snap = s.snapshot()
@@ -801,7 +787,7 @@ class State:
 
         Examples
         --------
-        >>> # s = State(gpr_defs=gprs, csr_defs=csrs)
+        >>> # s = State(isa)
         >>> s.set_gpr(1, 999)
         0
         >>> s.set_pc(0x8000)
@@ -851,7 +837,7 @@ class State:
 
         Examples
         --------
-        >>> # s = State(gpr_defs=gprs, csr_defs=csrs)
+        >>> # s = State(isa)
         >>> s.set_gpr(1, 42)
         0
         >>> data = s.export_state()
@@ -902,11 +888,11 @@ class State:
 
         Examples
         --------
-        >>> # s = State(gpr_defs=gprs, csr_defs=csrs)
+        >>> # s = State(isa)
         >>> s.set_gpr(1, 42)
         0
         >>> data = s.export_state()
-        >>> # s2 = State(gpr_defs=gprs, csr_defs=csrs)
+        >>> # s2 = State(isa)
         >>> s2.restore_state(data)
         >>> s2.get_gpr(1)
         42
@@ -944,37 +930,29 @@ class State:
 
         Examples
         --------
-        >>> # s = State(gpr_defs=gprs, csr_defs=csrs)
+        >>> # s = State(isa)
         >>> isinstance(s.export_state_json(), str)
         True
         """
         return json.dumps(self.export_state(), indent=indent)
 
     @classmethod
-    def from_json(
-        cls,
-        json_str: str,
-        *,
-        gpr_defs: Dict[int, GPRDef],
-        csr_defs: Dict[str, CSRDef],
-    ) -> "State":
+    def from_json(cls, json_str: str, eumos: Eumos) -> "State":
         """Create a new State instance from a JSON string.
 
         Parameters
         ----------
         json_str : str
             JSON string as produced by :meth:`export_state_json`.
-        gpr_defs : dict[int, GPRDef]
-            GPR definitions (from :func:`eumos.load_all_gprs`).
-        csr_defs : dict[str, CSRDef]
-            CSR definitions (from :func:`eumos.load_all_csrs`).
+        eumos : Eumos
+            Shared Eumos ISA instance.
 
         Returns
         -------
         State
             New state with values from the JSON.
         """
-        state = cls(gpr_defs=gpr_defs, csr_defs=csr_defs)
+        state = cls(eumos)
         state.restore_state(json.loads(json_str))
         return state
 

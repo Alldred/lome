@@ -5,15 +5,11 @@
 
 Quick start::
 
-    from eumos import load_all_gprs, load_all_csrs
-    from eumos.decoder import Decoder
+    from eumos import Eumos
     from riscv_model import RISCVModel
 
-    gprs = load_all_gprs()
-    csrs = load_all_csrs()
-    dec  = Decoder()
-
-    model = RISCVModel(decoder=dec, gpr_defs=gprs, csr_defs=csrs)
+    isa   = Eumos()
+    model = RISCVModel(isa)
     model.poke_gpr(1, 42)
     print(model.get_gpr(1))      # 42
 """

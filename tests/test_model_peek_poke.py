@@ -117,13 +117,13 @@ class TestModelJSONExportRestore:
         assert data["gprs"]["1"] == 42
         assert data["pc"] == 0x1000
 
-    def test_restore_state(self, model, decoder, gpr_defs, csr_defs):
+    def test_restore_state(self, model, eumos):
         m = model
         m.poke_gpr(1, 42)
         m.poke_pc(0x1000)
         data = m.export_state()
 
-        m2 = RISCVModel(decoder=decoder, gpr_defs=gpr_defs, csr_defs=csr_defs)
+        m2 = RISCVModel(eumos)
         m2.restore_state(data)
         assert m2.get_gpr(1) == 42
         assert m2.get_pc() == 0x1000
@@ -143,20 +143,15 @@ class TestModelJSONExportRestore:
         data = json.loads(json_str)
         assert data["gprs"]["3"] == 77
 
-    def test_from_json(self, model, decoder, gpr_defs, csr_defs):
+    def test_from_json(self, model, eumos):
         m = model
         m.poke_gpr(5, 123)
         m.poke_pc(0x2000)
-        m2 = RISCVModel.from_json(
-            m.export_state_json(),
-            decoder=decoder,
-            gpr_defs=gpr_defs,
-            csr_defs=csr_defs,
-        )
+        m2 = RISCVModel.from_json(m.export_state_json(), eumos)
         assert m2.get_gpr(5) == 123
         assert m2.get_pc() == 0x2000
 
-    def test_full_round_trip(self, model, decoder, gpr_defs, csr_defs):
+    def test_full_round_trip(self, model, eumos):
         """export -> JSON string -> from_json -> export -> compare."""
         m = model
         for i in range(1, 32):
@@ -165,12 +160,7 @@ class TestModelJSONExportRestore:
         m.poke_csr(0x300, 0xDEAD)
 
         json_str = m.export_state_json()
-        m2 = RISCVModel.from_json(
-            json_str,
-            decoder=decoder,
-            gpr_defs=gpr_defs,
-            csr_defs=csr_defs,
-        )
+        m2 = RISCVModel.from_json(json_str, eumos)
 
         for i in range(1, 32):
             assert m2.get_gpr(i) == i * 1000
@@ -185,13 +175,11 @@ class TestModelJSONExportRestore:
         json_str = json.dumps(data)
         assert json_str  # non-empty
 
-    def test_export_import_preserves_csr_values(
-        self, model, decoder, gpr_defs, csr_defs
-    ):
+    def test_export_import_preserves_csr_values(self, model, eumos):
         m = model
         m.poke_csr(0x300, 0xCAFE)
         data = m.export_state()
 
-        m2 = RISCVModel(decoder=decoder, gpr_defs=gpr_defs, csr_defs=csr_defs)
+        m2 = RISCVModel(eumos)
         m2.restore_state(data)
         assert m2.get_csr(0x300) == 0xCAFE

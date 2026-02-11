@@ -22,15 +22,11 @@ and an instruction executor.  It provides:
 
 Example -- quick start::
 
-    from eumos import load_all_gprs, load_all_csrs
-    from eumos.decoder import Decoder
+    from eumos import Eumos
     from riscv_model import RISCVModel
 
-    gprs = load_all_gprs()
-    csrs = load_all_csrs()
-    dec  = Decoder()
-
-    model = RISCVModel(decoder=dec, gpr_defs=gprs, csr_defs=csrs)
+    isa   = Eumos()
+    model = RISCVModel(isa)
     model.poke_gpr(1, 10)
     model.get_gpr(1)  # => 10
 """
@@ -39,7 +35,7 @@ from __future__ import annotations
 
 from typing import Any, Dict, Optional, Union
 
-from eumos import CSRDef, GPRDef
+from eumos import CSRDef, Eumos, GPRDef
 from eumos.decoder import Decoder
 
 from riscv_model.changes import BranchInfo, ChangeRecord
@@ -58,7 +54,7 @@ class RISCVModel:
     --------
     Create a model and execute an ``ADDI`` instruction:
 
-    >>> # model = RISCVModel(decoder=dec, gpr_defs=gprs, csr_defs=csrs)
+    >>> # model = RISCVModel(isa)
     >>> # addi x1, x0, 42
     >>> instr = 0x13 | (1 << 7) | (0 << 12) | (0 << 15) | (42 << 20)
     >>> changes = model.execute(instr)
@@ -76,7 +72,7 @@ class RISCVModel:
     JSON round-trip:
 
     >>> data = model.export_state()
-    >>> # model2 = RISCVModel(decoder=dec, gpr_defs=gprs, csr_defs=csrs)
+    >>> # model2 = RISCVModel(isa)
     >>> model2.restore_state(data)
     >>> model2.get_gpr(1)
     42
@@ -84,40 +80,24 @@ class RISCVModel:
 
     # ---------------------------------------------------------------- init
 
-    def __init__(
-        self,
-        *,
-        decoder: Decoder,
-        gpr_defs: Dict[int, GPRDef],
-        csr_defs: Dict[str, CSRDef],
-    ) -> None:
+    def __init__(self, eumos: Eumos) -> None:
         """Initialise the RISC-V model.
-
-        All three arguments are **required** and must be supplied by the
-        caller (typically the ISG or application entry point).  This
-        ensures a single set of Eumos objects is loaded once and shared
-        across all components.
 
         Parameters
         ----------
-        decoder : Decoder
-            Eumos :class:`~eumos.decoder.Decoder` for instruction decoding.
-        gpr_defs : dict[int, GPRDef]
-            GPR definitions (from :func:`eumos.load_all_gprs`).
-        csr_defs : dict[str, CSRDef]
-            CSR definitions (from :func:`eumos.load_all_csrs`).
+        eumos : Eumos
+            Shared :class:`~eumos.Eumos` ISA instance.  The model
+            extracts GPR/CSR definitions and builds a
+            :class:`~eumos.decoder.Decoder` from the instruction set.
 
         Examples
         --------
-        >>> from eumos import load_all_gprs, load_all_csrs
-        >>> from eumos.decoder import Decoder
-        >>> gprs = load_all_gprs()
-        >>> csrs = load_all_csrs()
-        >>> dec  = Decoder()
-        >>> model = RISCVModel(decoder=dec, gpr_defs=gprs, csr_defs=csrs)
+        >>> from eumos import Eumos
+        >>> model = RISCVModel(Eumos())
         """
-        self._state: State = State(gpr_defs=gpr_defs, csr_defs=csr_defs)
-        self._decoder: Decoder = decoder
+        self._eumos: Eumos = eumos
+        self._state: State = State(eumos)
+        self._decoder: Decoder = Decoder(instructions=eumos.instructions)
         self._last_changes: Optional[ChangeRecord] = None
 
     # ============================================================ execute
@@ -146,7 +126,7 @@ class RISCVModel:
 
         Examples
         --------
-        >>> # m = RISCVModel(decoder=dec, gpr_defs=gprs, csr_defs=csrs)
+        >>> # m = RISCVModel(isa)
         >>> # addi x1, x0, 7
         >>> instr = 0x13 | (1 << 7) | (0 << 12) | (0 << 15) | (7 << 20)
         >>> changes = m.execute(instr)
@@ -199,7 +179,7 @@ class RISCVModel:
 
         Examples
         --------
-        >>> # m = RISCVModel(decoder=dec, gpr_defs=gprs, csr_defs=csrs)
+        >>> # m = RISCVModel(isa)
         >>> m.poke_gpr(1, 10)
         0
         >>> # addi x2, x1, 5
@@ -228,7 +208,7 @@ class RISCVModel:
 
         Examples
         --------
-        >>> # m = RISCVModel(decoder=dec, gpr_defs=gprs, csr_defs=csrs)
+        >>> # m = RISCVModel(isa)
         >>> m.get_gpr(0)
         0
         """
@@ -251,7 +231,7 @@ class RISCVModel:
 
         Examples
         --------
-        >>> # m = RISCVModel(decoder=dec, gpr_defs=gprs, csr_defs=csrs)
+        >>> # m = RISCVModel(isa)
         >>> m.set_gpr(1, 42)
         0
         >>> m.get_gpr(1)
@@ -273,7 +253,7 @@ class RISCVModel:
 
         Examples
         --------
-        >>> # m = RISCVModel(decoder=dec, gpr_defs=gprs, csr_defs=csrs)
+        >>> # m = RISCVModel(isa)
         >>> m.peek_gpr(0)
         0
         """
@@ -298,7 +278,7 @@ class RISCVModel:
 
         Examples
         --------
-        >>> # m = RISCVModel(decoder=dec, gpr_defs=gprs, csr_defs=csrs)
+        >>> # m = RISCVModel(isa)
         >>> m.poke_gpr(1, 0xFF)
         0
         >>> m.get_gpr(1)
@@ -323,7 +303,7 @@ class RISCVModel:
 
         Examples
         --------
-        >>> # m = RISCVModel(decoder=dec, gpr_defs=gprs, csr_defs=csrs)
+        >>> # m = RISCVModel(isa)
         >>> m.get_csr("mstatus") is not None
         True
         >>> m.get_csr(0x300) is not None
@@ -350,7 +330,7 @@ class RISCVModel:
 
         Examples
         --------
-        >>> # m = RISCVModel(decoder=dec, gpr_defs=gprs, csr_defs=csrs)
+        >>> # m = RISCVModel(isa)
         >>> m.set_csr("mstatus", 0x1800)
         0
         >>> m.get_csr("mstatus")
@@ -374,7 +354,7 @@ class RISCVModel:
 
         Examples
         --------
-        >>> # m = RISCVModel(decoder=dec, gpr_defs=gprs, csr_defs=csrs)
+        >>> # m = RISCVModel(isa)
         >>> m.peek_csr(0x300) is not None
         True
         """
@@ -399,7 +379,7 @@ class RISCVModel:
 
         Examples
         --------
-        >>> # m = RISCVModel(decoder=dec, gpr_defs=gprs, csr_defs=csrs)
+        >>> # m = RISCVModel(isa)
         >>> m.poke_csr("mstatus", 0xABCD)
         0
         >>> m.peek_csr("mstatus")
@@ -420,7 +400,7 @@ class RISCVModel:
 
         Examples
         --------
-        >>> # m = RISCVModel(decoder=dec, gpr_defs=gprs, csr_defs=csrs)
+        >>> # m = RISCVModel(isa)
         >>> m.get_pc()
         0
         """
@@ -441,7 +421,7 @@ class RISCVModel:
 
         Examples
         --------
-        >>> # m = RISCVModel(decoder=dec, gpr_defs=gprs, csr_defs=csrs)
+        >>> # m = RISCVModel(isa)
         >>> m.set_pc(0x1000)
         0
         >>> m.get_pc()
@@ -458,7 +438,7 @@ class RISCVModel:
 
         Examples
         --------
-        >>> # m = RISCVModel(decoder=dec, gpr_defs=gprs, csr_defs=csrs)
+        >>> # m = RISCVModel(isa)
         >>> m.peek_pc()
         0
         """
@@ -479,7 +459,7 @@ class RISCVModel:
 
         Examples
         --------
-        >>> # m = RISCVModel(decoder=dec, gpr_defs=gprs, csr_defs=csrs)
+        >>> # m = RISCVModel(isa)
         >>> m.poke_pc(0x8000_0000)
         0
         """
@@ -507,7 +487,7 @@ class RISCVModel:
 
         Examples
         --------
-        >>> # m = RISCVModel(decoder=dec, gpr_defs=gprs, csr_defs=csrs)
+        >>> # m = RISCVModel(isa)
         >>> log = []
         >>> m.register_csr_write_hook(0x300, lambda st, a, o, n: log.append((o, n)))
         >>> m.set_csr("mstatus", 0xFF)
@@ -520,10 +500,18 @@ class RISCVModel:
     # ============================================================ Eumos access
 
     @property
-    def decoder(self) -> Decoder:
-        """The Eumos :class:`~eumos.decoder.Decoder` used by this model.
+    def eumos(self) -> Eumos:
+        """The shared :class:`~eumos.Eumos` ISA instance.
 
-        Useful for sharing with other components (e.g. an ISG).
+        Returns
+        -------
+        Eumos
+        """
+        return self._eumos
+
+    @property
+    def decoder(self) -> Decoder:
+        """The :class:`~eumos.decoder.Decoder` used by this model.
 
         Returns
         -------
@@ -533,23 +521,23 @@ class RISCVModel:
 
     @property
     def gpr_defs(self) -> Dict[int, GPRDef]:
-        """GPR definitions loaded from Eumos.
+        """GPR definitions from the Eumos instance.
 
         Returns
         -------
         dict[int, GPRDef]
         """
-        return self._state._gpr_defs
+        return self._eumos.gprs
 
     @property
     def csr_defs(self) -> Dict[str, CSRDef]:
-        """CSR definitions loaded from Eumos.
+        """CSR definitions from the Eumos instance.
 
         Returns
         -------
         dict[str, CSRDef]
         """
-        return self._state._csr_defs
+        return self._eumos.csrs
 
     # ============================================================ changes
 
@@ -562,7 +550,7 @@ class RISCVModel:
 
         Examples
         --------
-        >>> # m = RISCVModel(decoder=dec, gpr_defs=gprs, csr_defs=csrs)
+        >>> # m = RISCVModel(isa)
         >>> # addi x1, x0, 5
         >>> instr = 0x13 | (1 << 7) | (0 << 12) | (0 << 15) | (5 << 20)
         >>> _ = m.execute(instr)
@@ -581,7 +569,7 @@ class RISCVModel:
 
         Examples
         --------
-        >>> # m = RISCVModel(decoder=dec, gpr_defs=gprs, csr_defs=csrs)
+        >>> # m = RISCVModel(isa)
         >>> m.get_branch_info() is None
         True
         """
@@ -596,7 +584,7 @@ class RISCVModel:
 
         Examples
         --------
-        >>> # m = RISCVModel(decoder=dec, gpr_defs=gprs, csr_defs=csrs)
+        >>> # m = RISCVModel(isa)
         >>> m.poke_gpr(1, 100)
         0
         >>> m.poke_pc(0x1000)
@@ -623,7 +611,7 @@ class RISCVModel:
 
         Examples
         --------
-        >>> # m = RISCVModel(decoder=dec, gpr_defs=gprs, csr_defs=csrs)
+        >>> # m = RISCVModel(isa)
         >>> m.poke_gpr(1, 42)
         0
         >>> data = m.export_state()
@@ -644,11 +632,11 @@ class RISCVModel:
 
         Examples
         --------
-        >>> # m = RISCVModel(decoder=dec, gpr_defs=gprs, csr_defs=csrs)
+        >>> # m = RISCVModel(isa)
         >>> m.poke_gpr(1, 42)
         0
         >>> data = m.export_state()
-        >>> # m2 = RISCVModel(decoder=dec, gpr_defs=gprs, csr_defs=csrs)
+        >>> # m2 = RISCVModel(isa)
         >>> m2.restore_state(data)
         >>> m2.get_gpr(1)
         42
@@ -670,33 +658,22 @@ class RISCVModel:
 
         Examples
         --------
-        >>> # m = RISCVModel(decoder=dec, gpr_defs=gprs, csr_defs=csrs)
+        >>> # m = RISCVModel(isa)
         >>> isinstance(m.export_state_json(), str)
         True
         """
         return self._state.export_state_json(indent=indent)
 
     @classmethod
-    def from_json(
-        cls,
-        json_str: str,
-        *,
-        decoder: Decoder,
-        gpr_defs: Dict[int, GPRDef],
-        csr_defs: Dict[str, CSRDef],
-    ) -> "RISCVModel":
+    def from_json(cls, json_str: str, eumos: Eumos) -> "RISCVModel":
         """Create a new model from a JSON state string.
 
         Parameters
         ----------
         json_str : str
             As produced by :meth:`export_state_json`.
-        decoder : Decoder
-            Eumos decoder.
-        gpr_defs : dict[int, GPRDef]
-            GPR definitions.
-        csr_defs : dict[str, CSRDef]
-            CSR definitions.
+        eumos : Eumos
+            Shared Eumos ISA instance.
 
         Returns
         -------
@@ -704,6 +681,6 @@ class RISCVModel:
         """
         import json as json_mod
 
-        model = cls(decoder=decoder, gpr_defs=gpr_defs, csr_defs=csr_defs)
+        model = cls(eumos)
         model.restore_state(json_mod.loads(json_str))
         return model

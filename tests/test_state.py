@@ -436,31 +436,31 @@ class TestJSONExportRestore:
         json_str = json.dumps(data)
         assert isinstance(json_str, str)
 
-    def test_restore_gprs(self, state, gpr_defs, csr_defs):
+    def test_restore_gprs(self, state, eumos):
         s = state
         s.set_gpr(1, 42)
         data = s.export_state()
-        s2 = State(gpr_defs=gpr_defs, csr_defs=csr_defs)
+        s2 = State(eumos)
         s2.restore_state(data)
         assert s2.get_gpr(1) == 42
 
-    def test_restore_pc(self, state, gpr_defs, csr_defs):
+    def test_restore_pc(self, state, eumos):
         s = state
         s.set_pc(0x3000)
         data = s.export_state()
-        s2 = State(gpr_defs=gpr_defs, csr_defs=csr_defs)
+        s2 = State(eumos)
         s2.restore_state(data)
         assert s2.get_pc() == 0x3000
 
-    def test_restore_csrs(self, state, gpr_defs, csr_defs):
+    def test_restore_csrs(self, state, eumos):
         s = state
         s.set_csr(0x300, 0x5678)
         data = s.export_state()
-        s2 = State(gpr_defs=gpr_defs, csr_defs=csr_defs)
+        s2 = State(eumos)
         s2.restore_state(data)
         assert s2.get_csr(0x300) == 0x5678
 
-    def test_round_trip(self, state, gpr_defs, csr_defs):
+    def test_round_trip(self, state, eumos):
         """Full export -> restore round-trip preserves all state."""
         s = state
         s.set_gpr(1, 111)
@@ -468,7 +468,7 @@ class TestJSONExportRestore:
         s.set_pc(0x4000)
         s.set_csr(0x300, 0xAA)
         data = s.export_state()
-        s2 = State(gpr_defs=gpr_defs, csr_defs=csr_defs)
+        s2 = State(eumos)
         s2.restore_state(data)
         assert s2.get_gpr(1) == 111
         assert s2.get_gpr(31) == 222
@@ -501,22 +501,22 @@ class TestJSONExportRestore:
         data = json.loads(json_str)
         assert data["gprs"]["1"] == 42
 
-    def test_from_json(self, state, gpr_defs, csr_defs):
+    def test_from_json(self, state, eumos):
         s = state
         s.set_gpr(5, 123)
         s.set_pc(0x1000)
         json_str = s.export_state_json()
-        s2 = State.from_json(json_str, gpr_defs=gpr_defs, csr_defs=csr_defs)
+        s2 = State.from_json(json_str, eumos)
         assert s2.get_gpr(5) == 123
         assert s2.get_pc() == 0x1000
 
-    def test_from_json_round_trip(self, state, gpr_defs, csr_defs):
+    def test_from_json_round_trip(self, state, eumos):
         """from_json -> export_state_json round-trip."""
         s = state
         s.set_gpr(3, 77)
         s.set_csr(0x300, 0x42)
         json1 = s.export_state_json()
-        s2 = State.from_json(json1, gpr_defs=gpr_defs, csr_defs=csr_defs)
+        s2 = State.from_json(json1, eumos)
         json2 = s2.export_state_json()
         # Parse both and compare values
         d1 = json.loads(json1)

@@ -21,8 +21,7 @@ from pathlib import Path
 # Add parent directory to path (for running as a script)
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from eumos import load_all_csrs, load_all_gprs
-from eumos.decoder import Decoder
+from eumos import Eumos
 
 from riscv_model import RISCVModel
 
@@ -36,12 +35,10 @@ def main():
     # 0. Load Eumos once, share across all models
     # ------------------------------------------------------------------
     print("0. Load Eumos (once)")
-    gprs = load_all_gprs()
-    csrs = load_all_csrs()
-    dec = Decoder()
-    print(f"   Loaded {len(gprs)} GPR defs, {len(csrs)} CSR defs\n")
+    isa = Eumos()
+    print(f"   Loaded {len(isa.gprs)} GPR defs, {len(isa.csrs)} CSR defs\n")
 
-    model = RISCVModel(decoder=dec, gpr_defs=gprs, csr_defs=csrs)
+    model = RISCVModel(isa)
 
     # ------------------------------------------------------------------
     # 1. Simple arithmetic
@@ -57,7 +54,7 @@ def main():
     # 2. Peek / poke for state setup
     # ------------------------------------------------------------------
     print("2. Peek / poke (raw state manipulation)")
-    model2 = RISCVModel(decoder=dec, gpr_defs=gprs, csr_defs=csrs)
+    model2 = RISCVModel(isa)
     model2.poke_gpr(1, 0x1000)
     model2.poke_gpr(2, 0x2000)
     model2.poke_pc(0x8000_0000)
@@ -143,13 +140,11 @@ def main():
     print(f"   PC = {data['pc']}")
     print(f"   x1 = {data['gprs']['1']}")
 
-    restored = RISCVModel(decoder=dec, gpr_defs=gprs, csr_defs=csrs)
+    restored = RISCVModel(isa)
     restored.restore_state(data)
     print(f"   Restored: x1 = {restored.get_gpr(1)}, PC = 0x{restored.get_pc():x}")
 
-    model_from_json = RISCVModel.from_json(
-        json_str, decoder=dec, gpr_defs=gprs, csr_defs=csrs
-    )
+    model_from_json = RISCVModel.from_json(json_str, isa)
     print(f"   from_json: x1 = {model_from_json.get_gpr(1)}\n")
 
     # ------------------------------------------------------------------

@@ -10,16 +10,12 @@ The public API is the `RISCVModel` class and the change-tracking types it uses.
 ## Package
 
 ```python
-from eumos import load_all_gprs, load_all_csrs
-from eumos.decoder import Decoder
+from eumos import Eumos
 from riscv_model import RISCVModel
 
-# Load Eumos once, share with all components
-gprs = load_all_gprs()
-csrs = load_all_csrs()
-dec  = Decoder()
-
-model = RISCVModel(decoder=dec, gpr_defs=gprs, csr_defs=csrs)
+# Load Eumos once, share with the model, ISG, or any other component
+isa   = Eumos()
+model = RISCVModel(isa)
 ```
 
 You can also import individual types:
@@ -92,7 +88,7 @@ setup, debugging, and checkpoint restore.
 | **export_state** | `export_state() -> dict` | Export complete state as JSON-serialisable dict. |
 | **restore_state** | `restore_state(data: dict) -> None` | Restore from dict (raw — no hooks). |
 | **export_state_json** | `export_state_json(indent=2) -> str` | Export as formatted JSON string. |
-| **from_json** *(classmethod)* | `from_json(json_str, *, decoder, gpr_defs, csr_defs) -> RISCVModel` | Create model from JSON string. |
+| **from_json** *(classmethod)* | `from_json(json_str, eumos) -> RISCVModel` | Create model from JSON string. |
 
 #### Export Format
 
@@ -181,7 +177,7 @@ model.register_csr_write_hook(
 ```python
 from riscv_model import RISCVModel
 
-model = RISCVModel(decoder=dec, gpr_defs=gprs, csr_defs=csrs)
+model = RISCVModel(isa)
 
 # ADDI x1, x0, 42
 addi = 0x13 | (1 << 7) | (0 << 12) | (0 << 15) | (42 << 20)
@@ -194,7 +190,7 @@ print(changes.to_simple_dict())            # {'gpr_changes': {1: 42}}
 ### Peek / Poke for Test Setup
 
 ```python
-model = RISCVModel(decoder=dec, gpr_defs=gprs, csr_defs=csrs)
+model = RISCVModel(isa)
 model.poke_gpr(1, 0x1000)    # raw setup — no side effects
 model.poke_pc(0x8000_0000)   # jump to a custom start address
 model.poke_csr(0x300, 0xFF)  # force mstatus — bypasses read-only & hooks
@@ -203,7 +199,7 @@ model.poke_csr(0x300, 0xFF)  # force mstatus — bypasses read-only & hooks
 ### Speculation
 
 ```python
-model = RISCVModel(decoder=dec, gpr_defs=gprs, csr_defs=csrs)
+model = RISCVModel(isa)
 model.poke_gpr(1, 10)
 addi = 0x13 | (2 << 7) | (0 << 12) | (1 << 15) | (5 << 20)
 spec = model.speculate(addi)
@@ -216,7 +212,7 @@ print(model.get_gpr(2))          # 0   (state unchanged)
 ```python
 import json
 
-model = RISCVModel(decoder=dec, gpr_defs=gprs, csr_defs=csrs)
+model = RISCVModel(isa)
 model.poke_gpr(1, 42)
 model.poke_pc(0x1000)
 
@@ -226,10 +222,10 @@ json_str = model.export_state_json(indent=2)
 print(json_str)
 
 # Restore
-model2 = RISCVModel(decoder=dec, gpr_defs=gprs, csr_defs=csrs)
+model2 = RISCVModel(isa)
 model2.restore_state(data)
 # or
-model3 = RISCVModel.from_json(json_str, decoder=dec, gpr_defs=gprs, csr_defs=csrs)
+model3 = RISCVModel.from_json(json_str, isa)
 
 assert model3.get_gpr(1) == 42
 assert model3.get_pc() == 0x1000
@@ -238,7 +234,7 @@ assert model3.get_pc() == 0x1000
 ### CSR Side Effects
 
 ```python
-model = RISCVModel(decoder=dec, gpr_defs=gprs, csr_defs=csrs)
+model = RISCVModel(isa)
 
 # Architectural write — triggers mstatus→sstatus mirroring
 model.set_csr("mstatus", 0x0000_0002)   # SIE bit

@@ -37,16 +37,12 @@ uv sync --extra dev
 ## Quick Start
 
 ```python
-from eumos import load_all_gprs, load_all_csrs
-from eumos.decoder import Decoder
+from eumos import Eumos
 from riscv_model import RISCVModel
 
 # Load Eumos once -- share with the model, ISG, or any other component
-gprs = load_all_gprs()
-csrs = load_all_csrs()
-dec  = Decoder()
-
-model = RISCVModel(decoder=dec, gpr_defs=gprs, csr_defs=csrs)
+isa   = Eumos()
+model = RISCVModel(isa)
 
 # Execute instruction (32-bit integer or bytes)
 # addi x1, x0, 42
@@ -87,7 +83,7 @@ json_str = model.export_state_json()   # formatted JSON string
 # Restore
 model.restore_state(data)
 # or
-model2 = RISCVModel.from_json(json_str, decoder=dec, gpr_defs=gprs, csr_defs=csrs)
+model2 = RISCVModel.from_json(json_str, isa)
 ```
 
 ## Speculation

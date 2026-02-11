@@ -149,13 +149,11 @@ def execute_instruction(
     :meth:`RISCVModel.execute`, but can be used directly for low-level
     testing::
 
-        from eumos import load_all_gprs, load_all_csrs
+        from eumos import Eumos
         from riscv_model.executor import execute_instruction
         from riscv_model.state import State
 
-        gprs = load_all_gprs()
-        csrs = load_all_csrs()
-        state = State(gpr_defs=gprs, csr_defs=csrs)
+        state = State(Eumos())
         # (decode an instruction with Eumos to get instance)
         changes = execute_instruction(instance, state, pc=0)
     """
