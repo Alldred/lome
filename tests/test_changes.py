@@ -95,6 +95,12 @@ class TestChangeRecord:
         cr = ChangeRecord(exception="breakpoint")
         assert cr.has_changes()
 
+    def test_has_changes_with_exception_code_only(self):
+        """has_changes() is True when only exception_code is set."""
+        cr = ChangeRecord()
+        cr.exception_code = 3  # Breakpoint
+        assert cr.has_changes()
+
     def test_get_gpr_changes(self):
         cr = ChangeRecord()
         cr.gpr_writes.append(GPRWrite(register=5, value=10, old_value=0))
@@ -189,6 +195,12 @@ class TestDictSerialisation:
         d = cr.to_simple_dict()
         assert d["exception"] == "breakpoint"
 
+    def test_simple_dict_exception_code(self):
+        cr = ChangeRecord(exception="breakpoint", exception_code=3)
+        d = cr.to_simple_dict()
+        assert d["exception"] == "breakpoint"
+        assert d["exception_code"] == 3
+
     def test_detailed_dict_gpr(self):
         cr = ChangeRecord()
         cr.gpr_writes.append(GPRWrite(register=1, value=42, old_value=0))
@@ -225,6 +237,12 @@ class TestDictSerialisation:
             "size": 1,
             "is_write": True,
         }
+
+    def test_detailed_dict_exception_code(self):
+        cr = ChangeRecord(exception="breakpoint", exception_code=3)
+        d = cr.to_detailed_dict()
+        assert d["exception"] == "breakpoint"
+        assert d["exception_code"] == 3
 
 
 # ====================================================================

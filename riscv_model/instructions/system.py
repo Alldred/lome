@@ -379,8 +379,10 @@ def execute_ecall(operand_values: dict, state: State, pc: int) -> ChangeRecord:
         # ecall  — trigger environment call (syscall)
     """
     changes = ChangeRecord()
-    # RISC-V mcause: 8=U-mode, 9=S-mode, 10=M-mode. Default M-mode when privilege unknown.
-    changes.exception_code = 10
+    # Note: We do not set exception_code (mcause) here because the current
+    # privilege mode (U/S/M) is not tracked at this level. A higher-level
+    # component that knows the active privilege should assign the correct
+    # mcause value (e.g. 8/9/10) based on this ECALL exception.
     changes.exception = "environment_call"
     # ECALL doesn't update PC in normal execution (trap handler does)
     # But we track it as a change for query purposes

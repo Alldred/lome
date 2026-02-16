@@ -42,7 +42,6 @@ from riscv_model.changes import BranchInfo, ChangeRecord
 from riscv_model.executor import execute_instruction
 from riscv_model.memory import MemoryInterface
 from riscv_model.ras import RASModel
-from riscv_model.ras import RASModel
 from riscv_model.state import State
 
 
@@ -100,8 +99,6 @@ class RISCVModel:
             :class:`~eumos.decoder.Decoder` from the instruction set.
         memory : MemoryInterface or None, optional
             If provided, load/store instructions read/write through it.
-        ras : RASModel or None, optional
-            If provided, JAL/JALR update the return address stack.
         ras : RASModel or None, optional
             If provided, JAL/JALR update the return address stack.
 

@@ -22,9 +22,6 @@ from __future__ import annotations
 from typing import Any, Optional
 
 from riscv_model.changes import ChangeRecord
-from riscv_model.memory import MemoryInterface
-from riscv_model.ras import RASModel
-from riscv_model.ras import RASModel
 from riscv_model.instructions import (
     arithmetic,
     branch,
@@ -35,12 +32,13 @@ from riscv_model.instructions import (
     shift,
     system,
 )
+from riscv_model.memory import MemoryInterface
+from riscv_model.ras import RASModel
 from riscv_model.state import State
 
 _LOAD_STORE_MNEMONICS: frozenset[str] = frozenset(
     {"lb", "lh", "lw", "lbu", "lhu", "ld", "lwu", "sb", "sh", "sw", "sd"}
 )
-_JUMP_MNEMONICS: frozenset[str] = frozenset({"jal", "jalr"})
 _JUMP_MNEMONICS: frozenset[str] = frozenset({"jal", "jalr"})
 
 # ---------------------------------------------------------------------------
@@ -191,16 +189,12 @@ def execute_instruction(
         kwargs["memory"] = memory
     if ras is not None and mnemonic in _JUMP_MNEMONICS:
         kwargs["ras"] = ras
-    if ras is not None and mnemonic in _JUMP_MNEMONICS:
-        kwargs["ras"] = ras
 
     if speculate:
         # Snapshot → execute → restore
         snapshot = state.snapshot()
         try:
-            changes = handler(
-                instruction_instance.operand_values, state, pc, **kwargs
-            )
+            changes = handler(instruction_instance.operand_values, state, pc, **kwargs)
             return changes
         except Exception as exc:
             changes = ChangeRecord()
@@ -212,9 +206,7 @@ def execute_instruction(
         # Normal execution -- state is mutated in-place
         # Note: PC advancement is handled by the model, not here.
         try:
-            return handler(
-                instruction_instance.operand_values, state, pc, **kwargs
-            )
+            return handler(instruction_instance.operand_values, state, pc, **kwargs)
         except Exception as exc:
             changes = ChangeRecord()
             changes.exception = f"execution_error: {exc}"

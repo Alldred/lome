@@ -130,11 +130,11 @@ All CSRs currently defined in Eumos:
 ## Testing
 
 ```bash
-# Run tests
-uv run pytest
+# Run tests (upgrades eumos from GitHub each time, then runs pytest)
+uv sync --extra dev --upgrade-package eumos && uv run pytest
 
 # Run with coverage
-uv run pytest --cov=riscv_model --cov-report=term-missing
+uv sync --extra dev --upgrade-package eumos && uv run pytest --cov=riscv_model --cov-report=term-missing
 ```
 
 ## Examples
