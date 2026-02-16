@@ -22,6 +22,9 @@ from __future__ import annotations
 from typing import Any, Optional
 
 from riscv_model.changes import ChangeRecord
+from riscv_model.memory import MemoryInterface
+from riscv_model.ras import RASModel
+from riscv_model.ras import RASModel
 from riscv_model.instructions import (
     arithmetic,
     branch,
@@ -33,6 +36,12 @@ from riscv_model.instructions import (
     system,
 )
 from riscv_model.state import State
+
+_LOAD_STORE_MNEMONICS: frozenset[str] = frozenset(
+    {"lb", "lh", "lw", "lbu", "lhu", "ld", "lwu", "sb", "sh", "sw", "sd"}
+)
+_JUMP_MNEMONICS: frozenset[str] = frozenset({"jal", "jalr"})
+_JUMP_MNEMONICS: frozenset[str] = frozenset({"jal", "jalr"})
 
 # ---------------------------------------------------------------------------
 # Handler table
@@ -120,6 +129,8 @@ def execute_instruction(
     state: State,
     pc: int,
     *,
+    memory: Optional[MemoryInterface] = None,
+    ras: Optional[RASModel] = None,
     speculate: bool = False,
 ) -> Optional[ChangeRecord]:
     """Execute a decoded instruction instance.
@@ -133,6 +144,11 @@ def execute_instruction(
         The architectural state to read from and (unless speculating) write to.
     pc : int
         Current program counter value.
+    memory : MemoryInterface or None, optional
+        If provided, load/store instructions use it for reads/writes.
+        Otherwise loads return 0 (placeholder).
+    ras : RASModel or None, optional
+        If provided, JAL/JALR update the return address stack.
     speculate : bool, optional
         If ``True``, snapshot state before execution and restore it
         afterwards so the caller sees no mutations (default ``False``).
@@ -166,14 +182,25 @@ def execute_instruction(
     if handler is None:
         # Unknown / unsupported instruction
         changes = ChangeRecord()
+        changes.exception_code = 2  # RISC-V mcause: Illegal instruction
         changes.exception = f"illegal_instruction: {mnemonic}"
         return changes
+
+    kwargs: dict[str, Any] = {}
+    if memory is not None and mnemonic in _LOAD_STORE_MNEMONICS:
+        kwargs["memory"] = memory
+    if ras is not None and mnemonic in _JUMP_MNEMONICS:
+        kwargs["ras"] = ras
+    if ras is not None and mnemonic in _JUMP_MNEMONICS:
+        kwargs["ras"] = ras
 
     if speculate:
         # Snapshot → execute → restore
         snapshot = state.snapshot()
         try:
-            changes = handler(instruction_instance.operand_values, state, pc)
+            changes = handler(
+                instruction_instance.operand_values, state, pc, **kwargs
+            )
             return changes
         except Exception as exc:
             changes = ChangeRecord()
@@ -185,7 +212,9 @@ def execute_instruction(
         # Normal execution -- state is mutated in-place
         # Note: PC advancement is handled by the model, not here.
         try:
-            return handler(instruction_instance.operand_values, state, pc)
+            return handler(
+                instruction_instance.operand_values, state, pc, **kwargs
+            )
         except Exception as exc:
             changes = ChangeRecord()
             changes.exception = f"execution_error: {exc}"

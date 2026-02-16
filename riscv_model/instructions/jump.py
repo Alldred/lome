@@ -5,11 +5,20 @@
 
 from __future__ import annotations
 
+from typing import Optional
+
 from riscv_model.changes import ChangeRecord, GPRWrite
+from riscv_model.ras import RASModel
 from riscv_model.state import State
 
 
-def execute_jal(operand_values: dict, state: State, pc: int) -> ChangeRecord:
+def execute_jal(
+    operand_values: dict,
+    state: State,
+    pc: int,
+    *,
+    ras: Optional[RASModel] = None,
+) -> ChangeRecord:
     """Execute JAL: rd = pc + 4; pc = pc + imm
 
     Jump to *pc + imm* and store the return address (*pc + 4*) in rd.
@@ -33,6 +42,9 @@ def execute_jal(operand_values: dict, state: State, pc: int) -> ChangeRecord:
     return_addr = pc + 4
     target = pc + imm
 
+    if ras is not None and rd is not None and rd in (1, 5):
+        ras.push(return_addr)
+
     changes = ChangeRecord()
     # Write return address to rd
     old_value = state.set_gpr(rd, return_addr)
@@ -44,7 +56,13 @@ def execute_jal(operand_values: dict, state: State, pc: int) -> ChangeRecord:
     return changes
 
 
-def execute_jalr(operand_values: dict, state: State, pc: int) -> ChangeRecord:
+def execute_jalr(
+    operand_values: dict,
+    state: State,
+    pc: int,
+    *,
+    ras: Optional[RASModel] = None,
+) -> ChangeRecord:
     """Execute JALR: rd = pc + 4; pc = (rs1 + imm) & ~1
 
     Jump to *(rs1 + imm)* with the LSB cleared and store the return
@@ -69,6 +87,11 @@ def execute_jalr(operand_values: dict, state: State, pc: int) -> ChangeRecord:
     rs1_val = state.get_gpr(rs1_idx)
     return_addr = pc + 4
     target = (rs1_val + imm) & ~1  # Clear LSB for alignment
+
+    if ras is not None and rs1_idx is not None and rs1_idx in (1, 5):
+        ras.pop()
+    if ras is not None and rd is not None and rd in (1, 5):
+        ras.push(return_addr)
 
     changes = ChangeRecord()
     # Write return address to rd

@@ -174,6 +174,9 @@ class ChangeRecord:
         Branch direction and target (only for branch instructions).
     exception : str or None
         Exception description (e.g. ``"illegal_instruction: foo"``).
+    exception_code : int or None
+        RISC-V mcause value (0-15) when a trap occurs. When set, this is
+        authoritative; ``exception`` may be derived from Eumos lookup.
 
     Examples
     --------
@@ -193,6 +196,7 @@ class ChangeRecord:
     memory_accesses: List[MemoryAccess] = field(default_factory=list)
     branch_info: Optional[BranchInfo] = None
     exception: Optional[str] = None
+    exception_code: Optional[int] = None
 
     # ---- predicates ---------------------------------------------------
 
@@ -214,6 +218,7 @@ class ChangeRecord:
             or len(self.memory_accesses) > 0
             or self.branch_info is not None
             or self.exception is not None
+            or self.exception_code is not None
         )
 
     # ---- convenience getters ------------------------------------------
@@ -334,6 +339,7 @@ class ChangeRecord:
                 else None
             ),
             "exception": self.exception,
+            "exception_code": self.exception_code,
         }
 
     def to_simple_dict(self) -> Dict:
@@ -373,6 +379,8 @@ class ChangeRecord:
             result["memory_accesses"] = len(self.memory_accesses)
         if self.exception:
             result["exception"] = self.exception
+        if self.exception_code is not None:
+            result["exception_code"] = self.exception_code
         return result
 
     def to_detailed_dict(self) -> Dict:
