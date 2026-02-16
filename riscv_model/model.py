@@ -43,7 +43,6 @@ from eumos.decoder import Decoder
 
 from riscv_model.changes import BranchInfo, ChangeRecord
 from riscv_model.executor import execute_instruction
-from riscv_model.memory import MemoryInterface
 from riscv_model.ras import RASModel
 from riscv_model.state import State
 
