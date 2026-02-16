@@ -42,9 +42,12 @@ Example -- JSON round-trip::
 from __future__ import annotations
 
 import json
-from typing import Any, Callable, Dict, List, Optional
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional
 
 from eumos import CSRDef, Eumos, GPRDef
+
+if TYPE_CHECKING:
+    from riscv_model.memory import MemoryInterface
 
 # ---------------------------------------------------------------------------
 # Constants
@@ -85,15 +88,18 @@ class State:
 
     # ------------------------------------------------------------------ init
 
-    def __init__(self, eumos: Eumos) -> None:
+    def __init__(self, eumos: Eumos, memory: "MemoryInterface | None" = None) -> None:
         """Initialise state with GPRs, CSRs, and PC.
 
         Parameters
         ----------
         eumos : Eumos
             Shared Eumos ISA instance providing GPR and CSR definitions.
+        memory : MemoryInterface or None, optional
+            Optional memory backend for load/store instructions.
         """
         self._eumos: Eumos = eumos
+        self._memory: "MemoryInterface | None" = memory
         self._gpr_defs: Dict[int, GPRDef] = eumos.gprs
         self._csr_defs: Dict[str, CSRDef] = eumos.csrs
         self._csr_by_address: Dict[int, CSRDef] = {
