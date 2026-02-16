@@ -492,6 +492,7 @@ def execute_sd(
 
     if memory is not None:
         memory.store(addr, value, 8)
+
     changes = ChangeRecord()
     changes.memory_accesses.append(
         MemoryAccess(address=addr, value=value, size=8, is_write=True)

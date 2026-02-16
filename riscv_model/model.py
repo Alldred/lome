@@ -33,14 +33,16 @@ Example -- quick start::
 
 from __future__ import annotations
 
-from typing import Any, Dict, Optional, Union
+from typing import TYPE_CHECKING, Any, Dict, Optional, Union
 
 from eumos import CSRDef, Eumos, GPRDef
+
+if TYPE_CHECKING:
+    from riscv_model.memory import MemoryInterface
 from eumos.decoder import Decoder
 
 from riscv_model.changes import BranchInfo, ChangeRecord
 from riscv_model.executor import execute_instruction
-from riscv_model.memory import MemoryInterface
 from riscv_model.ras import RASModel
 from riscv_model.state import State
 
@@ -108,7 +110,7 @@ class RISCVModel:
         >>> model = RISCVModel(Eumos())
         """
         self._eumos: Eumos = eumos
-        self._state: State = State(eumos)
+        self._state: State = State(eumos, memory=memory)
         self._decoder: Decoder = Decoder(instructions=eumos.instructions)
         self._memory: Optional[MemoryInterface] = memory
         self._ras: Optional[RASModel] = ras
