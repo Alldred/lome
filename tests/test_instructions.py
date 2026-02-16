@@ -251,6 +251,33 @@ class TestSystem:
         assert changes is not None
         assert not changes.gpr_writes
 
+    def test_ecall_sets_exception_and_change_record(self, model):
+        """ECALL triggers environment_call exception; change record is serialisable."""
+        ecall = 0x00000073  # RISC-V ECALL: opcode 0x73, imm=0
+        changes = model.execute(ecall)
+        assert changes is not None
+        assert changes.exception == "environment_call"
+        assert changes.pc_change is not None
+        d = changes.to_simple_dict()
+        assert d.get("exception") == "environment_call"
+        assert "pc_change" in d
+        detailed = changes.to_detailed_dict()
+        assert detailed["exception"] == "environment_call"
+
+    def test_ebreak_sets_exception_code_and_serialisation(self, model):
+        """EBREAK sets exception_code (mcause 3 = Breakpoint) and serialises."""
+        ebreak = 0x00100073
+        changes = model.execute(ebreak)
+        assert changes is not None
+        assert changes.exception == "breakpoint"
+        assert changes.exception_code == 3  # RISC-V mcause: Breakpoint
+        assert changes.pc_change is not None
+        d = changes.to_simple_dict()
+        assert d.get("exception") == "breakpoint"
+        assert d.get("exception_code") == 3
+        detailed = changes.to_detailed_dict()
+        assert detailed["exception_code"] == 3
+
 
 # ====================================================================
 # CSR instructions
@@ -302,3 +329,156 @@ class TestSpeculationPreservesState:
         assert model.get_gpr(3) == 0
         assert model.get_pc() == initial_pc
         assert spec.gpr_writes[0].value == 30
+
+
+# ====================================================================
+# Load/store with MemoryInterface
+# ====================================================================
+
+
+def _i_type(opcode: int, rd: int, funct3: int, rs1: int, imm: int) -> int:
+    """Build I-type instruction: opcode | rd | funct3 | rs1 | imm[11:0]."""
+    return opcode | (rd << 7) | (funct3 << 12) | (rs1 << 15) | ((imm & 0xFFF) << 20)
+
+
+def _s_type(opcode: int, funct3: int, rs1: int, rs2: int, imm: int) -> int:
+    """Build S-type instruction."""
+    imm4_0 = imm & 0x1F
+    imm11_5 = (imm >> 5) & 0x7F
+    return (
+        opcode
+        | (imm4_0 << 7)
+        | (funct3 << 12)
+        | (rs1 << 15)
+        | (rs2 << 20)
+        | (imm11_5 << 25)
+    )
+
+
+class TestLoadStoreWithMemory:
+    """Load/store through a fake MemoryInterface: loads return provided values, stores recorded."""
+
+    def test_lb_sign_extend_via_memory(self, eumos):
+        """LB with memory: loaded byte is sign-extended into rd."""
+        from riscv_model import RISCVModel
+        from riscv_model.memory import MemoryInterface
+
+        class FakeMem(MemoryInterface):
+            def __init__(self):
+                self._loads: dict = {}
+                self.stores: list = []
+
+            def load(self, addr: int, size: int) -> int:
+                return self._loads.get((addr, size), 0)
+
+            def store(self, addr: int, value: int, size: int) -> None:
+                self.stores.append((addr, value, size))
+
+        fake = FakeMem()
+        fake._loads[(0x1000, 1)] = 0xFF  # -1 as byte
+        model = RISCVModel(eumos, memory=fake)
+        model.poke_gpr(1, 0x1000)
+        lb = _i_type(0x03, 2, 0, 1, 0)  # lb x2, 0(x1)
+        model.execute(lb)
+        assert model.get_gpr(2) == 0xFFFFFFFFFFFFFFFF  # sign-extended
+
+    def test_lbu_zero_extend_via_memory(self, eumos):
+        """LBU with memory: loaded byte is zero-extended into rd."""
+        from riscv_model import RISCVModel
+        from riscv_model.memory import MemoryInterface
+
+        class FakeMem(MemoryInterface):
+            def __init__(self):
+                self._loads = {}
+                self.stores = []
+
+            def load(self, addr: int, size: int) -> int:
+                return self._loads.get((addr, size), 0)
+
+            def store(self, addr: int, value: int, size: int) -> None:
+                self.stores.append((addr, value, size))
+
+        fake = FakeMem()
+        fake._loads[(0x1000, 1)] = 0xFF
+        model = RISCVModel(eumos, memory=fake)
+        model.poke_gpr(1, 0x1000)
+        lbu = _i_type(0x03, 2, 4, 1, 0)  # lbu x2, 0(x1)
+        model.execute(lbu)
+        assert model.get_gpr(2) == 0xFF  # zero-extended
+
+    def test_store_calls_memory_interface(self, eumos):
+        """SB/SW with memory: store(addr, value, size) is called with expected args."""
+        from riscv_model import RISCVModel
+        from riscv_model.memory import MemoryInterface
+
+        class FakeMem(MemoryInterface):
+            def __init__(self):
+                self._loads = {}
+                self.stores = []
+
+            def load(self, addr: int, size: int) -> int:
+                return self._loads.get((addr, size), 0)
+
+            def store(self, addr: int, value: int, size: int) -> None:
+                self.stores.append((addr, value, size))
+
+        fake = FakeMem()
+        model = RISCVModel(eumos, memory=fake)
+        model.poke_gpr(1, 0x2000)
+        model.poke_gpr(2, 0xAB)
+        sb = _s_type(0x23, 0, 1, 2, 4)  # sb x2, 4(x1)
+        model.execute(sb)
+        assert fake.stores == [(0x2004, 0xAB, 1)]
+
+
+# ====================================================================
+# RAS (Return Address Stack) for JAL/JALR
+# ====================================================================
+
+
+class TestRAS:
+    """RAS push on JAL/JALR (rd in x1/x5), pop on JALR (rs1 in x1/x5)."""
+
+    def test_ras_push_on_jal_ra_pop_on_jalr_return(self, eumos):
+        """JAL x1 pushes return address; JALR x0, x1, 0 pops and does not push (rd=x0)."""
+        from riscv_model import RISCVModel
+        from riscv_model.ras import RASModel
+
+        ras = RASModel(size=4)
+        model = RISCVModel(eumos, ras=ras)
+        model.poke_pc(0x1000)
+        # jal x1, 0x100  -> ra = 0x1004, pc = 0x1100
+        jal = 0x6F | (1 << 7) | (0x40 << 21)  # rd=1 (ra), imm=0x100
+        model.execute(jal)
+        assert len(ras) == 1
+        assert ras.peek(0) == 0x1004
+        model.poke_gpr(1, 0x2000)  # ra now holds target for return
+        # jalr x0, x1, 0  -> return to (x1)+0, rd=x0 so no push
+        jalr = 0x67 | (0 << 7) | (0 << 12) | (1 << 15) | (0 << 20)
+        model.execute(jalr)
+        assert len(ras) == 0  # one pop, no push (rd=x0)
+        assert model.get_pc() == 0x2000
+
+    def test_ras_multiple_calls_depth(self, eumos):
+        """Multiple JAL x1 increase RAS depth; JALR x0, x1, 0 pops each return."""
+        from riscv_model import RISCVModel
+        from riscv_model.ras import RASModel
+
+        ras = RASModel(size=8)
+        model = RISCVModel(eumos, ras=ras)
+        model.poke_pc(0x1000)
+        # jal x1, 0  (nop jump, return addr 0x1004)
+        jal = 0x6F | (1 << 7) | (0 << 21)
+        model.execute(jal)
+        model.poke_pc(0x1004)
+        model.execute(jal)  # return addr 0x1008
+        assert len(ras) == 2
+        assert ras.peek(0) == 0x1008
+        assert ras.peek(1) == 0x1004
+        model.poke_gpr(1, 0x2000)
+        jalr = 0x67 | (0 << 7) | (0 << 12) | (1 << 15) | (0 << 20)
+        model.execute(jalr)
+        assert len(ras) == 1
+        model.poke_gpr(1, 0x3000)
+        model.execute(jalr)
+        assert len(ras) == 0

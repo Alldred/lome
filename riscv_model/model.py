@@ -40,6 +40,8 @@ from eumos.decoder import Decoder
 
 from riscv_model.changes import BranchInfo, ChangeRecord
 from riscv_model.executor import execute_instruction
+from riscv_model.memory import MemoryInterface
+from riscv_model.ras import RASModel
 from riscv_model.state import State
 
 
@@ -80,7 +82,13 @@ class RISCVModel:
 
     # ---------------------------------------------------------------- init
 
-    def __init__(self, eumos: Eumos) -> None:
+    def __init__(
+        self,
+        eumos: Eumos,
+        *,
+        memory: Optional[MemoryInterface] = None,
+        ras: Optional[RASModel] = None,
+    ) -> None:
         """Initialise the RISC-V model.
 
         Parameters
@@ -89,6 +97,10 @@ class RISCVModel:
             Shared :class:`~eumos.Eumos` ISA instance.  The model
             extracts GPR/CSR definitions and builds a
             :class:`~eumos.decoder.Decoder` from the instruction set.
+        memory : MemoryInterface or None, optional
+            If provided, load/store instructions read/write through it.
+        ras : RASModel or None, optional
+            If provided, JAL/JALR update the return address stack.
 
         Examples
         --------
@@ -98,6 +110,8 @@ class RISCVModel:
         self._eumos: Eumos = eumos
         self._state: State = State(eumos)
         self._decoder: Decoder = Decoder(instructions=eumos.instructions)
+        self._memory: Optional[MemoryInterface] = memory
+        self._ras: Optional[RASModel] = ras
         self._last_changes: Optional[ChangeRecord] = None
 
     # ============================================================ execute
@@ -145,10 +159,17 @@ class RISCVModel:
 
         # Decode
         pc = self._state.get_pc()
-        instance = self._decoder.decode(word, pc=pc)
+        instance = self._decoder.from_opc(word, pc=pc)
 
         # Execute
-        changes = execute_instruction(instance, self._state, pc, speculate=speculate)
+        changes = execute_instruction(
+            instance,
+            self._state,
+            pc,
+            memory=self._memory,
+            ras=self._ras,
+            speculate=speculate,
+        )
 
         # Update PC if not speculating
         if not speculate and changes:

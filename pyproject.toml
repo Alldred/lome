@@ -11,7 +11,7 @@ dependencies = [
     "PyYAML",
 ]
 authors = [
-    "Stuart Alldred <stuartalldred@gmail.com>",
+    { name = "Stuart Alldred", email = "stuartalldred@gmail.com" },
 ]
 requires-python = ">= 3.13"
 

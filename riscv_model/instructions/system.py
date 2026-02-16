@@ -379,6 +379,10 @@ def execute_ecall(operand_values: dict, state: State, pc: int) -> ChangeRecord:
         # ecall  — trigger environment call (syscall)
     """
     changes = ChangeRecord()
+    # Note: We do not set exception_code (mcause) here because the current
+    # privilege mode (U/S/M) is not tracked at this level. A higher-level
+    # component that knows the active privilege should assign the correct
+    # mcause value (e.g. 8/9/10) based on this ECALL exception.
     changes.exception = "environment_call"
     # ECALL doesn't update PC in normal execution (trap handler does)
     # But we track it as a change for query purposes
@@ -404,6 +408,7 @@ def execute_ebreak(operand_values: dict, state: State, pc: int) -> ChangeRecord:
         # ebreak  — trigger breakpoint for debugger
     """
     changes = ChangeRecord()
+    changes.exception_code = 3  # RISC-V mcause: Breakpoint
     changes.exception = "breakpoint"
     # EBREAK doesn't update PC in normal execution (debugger handles it)
     changes.pc_change = (pc + 4, pc)  # Next instruction (though debugger will redirect)
