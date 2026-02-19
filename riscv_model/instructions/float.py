@@ -937,8 +937,11 @@ def execute_fcvt_w_s(operand_values: dict, state: State, pc: int) -> ChangeRecor
     rm = effective_rounding_mode(operand_values, state)
     if math.isnan(f):
         x = 0x8000_0000
+    elif math.isinf(f):
+        x = 0x7FFF_FFFF if f > 0 else 0x8000_0000
     else:
         x = int(round_for_float(f, 24, rm))
+        x = max(-(1 << 31), min((1 << 31) - 1, x))
     x = x & _MASK_64
     if x >= (1 << 31):
         x = x - (1 << 32)
@@ -955,8 +958,12 @@ def execute_fcvt_wu_s(operand_values: dict, state: State, pc: int) -> ChangeReco
     rm = effective_rounding_mode(operand_values, state)
     if math.isnan(f) or f < 0:
         x = 0
+    elif math.isinf(f):
+        x = 0xFFFF_FFFF
     else:
-        x = int(round_for_float(f, 24, rm)) & _MASK_64
+        x = int(round_for_float(f, 24, rm))
+        x = max(0, min(0xFFFF_FFFF, x))
+        x = x & _MASK_64
     changes = ChangeRecord()
     old = state.set_gpr(rd, x)
     changes.gpr_writes.append(GPRWrite(register=rd, value=x, old_value=old))
@@ -970,8 +977,11 @@ def execute_fcvt_w_d(operand_values: dict, state: State, pc: int) -> ChangeRecor
     rm = effective_rounding_mode(operand_values, state)
     if math.isnan(f):
         x = 0x8000_0000
+    elif math.isinf(f):
+        x = 0x7FFF_FFFF if f > 0 else 0x8000_0000
     else:
         x = int(round_for_float(f, 53, rm))
+        x = max(-(1 << 31), min((1 << 31) - 1, x))
     x = x & _MASK_64
     if x >= (1 << 31):
         x = x - (1 << 32)
@@ -988,8 +998,12 @@ def execute_fcvt_wu_d(operand_values: dict, state: State, pc: int) -> ChangeReco
     rm = effective_rounding_mode(operand_values, state)
     if math.isnan(f) or f < 0:
         x = 0
+    elif math.isinf(f):
+        x = 0xFFFF_FFFF
     else:
-        x = int(round_for_float(f, 53, rm)) & _MASK_64
+        x = int(round_for_float(f, 53, rm))
+        x = max(0, min(0xFFFF_FFFF, x))
+        x = x & _MASK_64
     changes = ChangeRecord()
     old = state.set_gpr(rd, x)
     changes.gpr_writes.append(GPRWrite(register=rd, value=x, old_value=old))
@@ -1003,8 +1017,11 @@ def execute_fcvt_l_s(operand_values: dict, state: State, pc: int) -> ChangeRecor
     rm = effective_rounding_mode(operand_values, state)
     if math.isnan(f):
         x = 0x8000_0000_0000_0000
+    elif math.isinf(f):
+        x = 0x7FFF_FFFF_FFFF_FFFF if f > 0 else 0x8000_0000_0000_0000
     else:
         x = int(round_for_float(f, 24, rm))
+        x = max(-(1 << 63), min((1 << 63) - 1, x))
     x = x & _MASK_64
     changes = ChangeRecord()
     old = state.set_gpr(rd, x)
@@ -1019,8 +1036,11 @@ def execute_fcvt_lu_s(operand_values: dict, state: State, pc: int) -> ChangeReco
     rm = effective_rounding_mode(operand_values, state)
     if math.isnan(f) or f < 0:
         x = 0
+    elif math.isinf(f):
+        x = 0xFFFF_FFFF_FFFF_FFFF
     else:
-        x = int(round_for_float(f, 24, rm)) & _MASK_64
+        x = int(round_for_float(f, 24, rm))
+        x = max(0, min(0xFFFF_FFFF_FFFF_FFFF, x)) & _MASK_64
     changes = ChangeRecord()
     old = state.set_gpr(rd, x)
     changes.gpr_writes.append(GPRWrite(register=rd, value=x, old_value=old))
@@ -1034,8 +1054,11 @@ def execute_fcvt_l_d(operand_values: dict, state: State, pc: int) -> ChangeRecor
     rm = effective_rounding_mode(operand_values, state)
     if math.isnan(f):
         x = 0x8000_0000_0000_0000
+    elif math.isinf(f):
+        x = 0x7FFF_FFFF_FFFF_FFFF if f > 0 else 0x8000_0000_0000_0000
     else:
         x = int(round_for_float(f, 53, rm))
+        x = max(-(1 << 63), min((1 << 63) - 1, x))
     x = x & _MASK_64
     changes = ChangeRecord()
     old = state.set_gpr(rd, x)
@@ -1050,8 +1073,11 @@ def execute_fcvt_lu_d(operand_values: dict, state: State, pc: int) -> ChangeReco
     rm = effective_rounding_mode(operand_values, state)
     if math.isnan(f) or f < 0:
         x = 0
+    elif math.isinf(f):
+        x = 0xFFFF_FFFF_FFFF_FFFF
     else:
-        x = int(round_for_float(f, 53, rm)) & _MASK_64
+        x = int(round_for_float(f, 53, rm))
+        x = max(0, min(0xFFFF_FFFF_FFFF_FFFF, x)) & _MASK_64
     changes = ChangeRecord()
     old = state.set_gpr(rd, x)
     changes.gpr_writes.append(GPRWrite(register=rd, value=x, old_value=old))
@@ -1089,6 +1115,11 @@ def execute_fcvt_d_s(operand_values: dict, state: State, pc: int) -> ChangeRecor
 # ---------------------------------------------------------------------------
 
 
+# Smallest positive normal: single 2**-126, double 2**-1022 (for subnormal detection)
+_MIN_NORMAL_S = 2.0**-126
+_MIN_NORMAL_D = 2.0**-1022
+
+
 def _fclass_s(bits: int) -> int:
     f = bits_to_float_s(bits)
     mask = 0
@@ -1098,14 +1129,15 @@ def _fclass_s(bits: int) -> int:
         else:
             mask |= 1 << 8
     elif math.isinf(f):
-        mask |= 1 << 7 if f < 0 else 1 << 0
+        mask |= 1 << 0 if f < 0 else 1 << 7  # negative / positive infinity
     elif f == 0:
-        mask |= 1 << 6 if (bits & (1 << 31)) else 1 << 3
+        mask |= 1 << 3 if (bits & (1 << 31)) else 1 << 4  # neg zero / pos zero
     else:
-        if f < 0:
-            mask |= 1 << 5  # negative normal
+        abs_f = abs(f)
+        if abs_f < _MIN_NORMAL_S:
+            mask |= 1 << 2 if f < 0 else 1 << 5  # negative / positive subnormal
         else:
-            mask |= 1 << 2  # positive normal
+            mask |= 1 << 1 if f < 0 else 1 << 6  # negative / positive normal
     return mask
 
 
@@ -1118,14 +1150,15 @@ def _fclass_d(bits: int) -> int:
         else:
             mask |= 1 << 8
     elif math.isinf(f):
-        mask |= 1 << 7 if f < 0 else 1 << 0
+        mask |= 1 << 0 if f < 0 else 1 << 7  # negative / positive infinity
     elif f == 0:
-        mask |= 1 << 6 if (bits & (1 << 63)) else 1 << 3
+        mask |= 1 << 3 if (bits & (1 << 63)) else 1 << 4  # neg zero / pos zero
     else:
-        if f < 0:
-            mask |= 1 << 5
+        abs_f = abs(f)
+        if abs_f < _MIN_NORMAL_D:
+            mask |= 1 << 2 if f < 0 else 1 << 5  # negative / positive subnormal
         else:
-            mask |= 1 << 2
+            mask |= 1 << 1 if f < 0 else 1 << 6  # negative / positive normal
     return mask
 
 

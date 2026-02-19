@@ -120,7 +120,7 @@ All instructions currently defined in Eumos:
 - **Float (F/D)**: FADD, FSUB, FMUL, FDIV, FSQRT, FMADD, FMSUB, FNMADD, FNMSUB, FSGNJ/N/X, FMIN, FMAX, FEQ, FLE, FLT, FMV.*, FCVT.*, FCLASS
 - **System**: LUI, AUIPC, CSRRW, CSRRS, CSRRC, CSRRWI, CSRRSI, CSRRCI, ECALL, EBREAK, MRET, FENCE, FENCE.TSO
 
-Floating-point uses a reasonable precision/rounding implementation (Python float); rounding mode is taken from the instruction or the `frm` CSR when dynamic. This can be tightened later (e.g. full IEEE fflags, softfloat).
+Floating-point uses Python's built-in `float` for a "reasonable" precision/rounding implementation. At present, IEEE 754 exception flags (`fflags` CSR) are not modelled and the configured rounding mode (from the instruction or dynamic `frm` CSR) is not strictly enforced (the internal `round_for_float` helper currently returns its input unchanged), so floating-point behaviour is approximate and intended for functional modelling rather than bit-exact IEEE 754 compliance; a tighter implementation (e.g. full IEEE `fflags`, softfloat) may be added later.
 
 ## Supported CSRs
 

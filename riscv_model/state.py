@@ -49,9 +49,6 @@ from eumos import CSRDef, Eumos, FPRDef, GPRDef
 if TYPE_CHECKING:
     from riscv_model.memory import MemoryInterface
 
-if TYPE_CHECKING:
-    from riscv_model.memory import MemoryInterface
-
 # ---------------------------------------------------------------------------
 # Constants
 # ---------------------------------------------------------------------------
@@ -102,7 +99,9 @@ class State:
         eumos : Eumos
             Shared Eumos ISA instance providing GPR and CSR definitions.
         memory : MemoryInterface or None, optional
-            Optional memory backend for load/store instructions.
+            Optional memory backend for load/store instructions. Stored on
+            state for reference; the executor passes memory directly to
+            load/store instruction handlers rather than reading it from here.
         """
         self._eumos: Eumos = eumos
         self._memory: "MemoryInterface | None" = memory
@@ -909,13 +908,17 @@ class State:
         Parameters
         ----------
         snapshot : dict
-            As returned by :meth:`snapshot`.
+            As returned by :meth:`snapshot`. Keys ``gprs``, ``csrs``, ``fprs``,
+            and ``pc`` are optional; only present keys are restored.
         """
-        self._gprs = snapshot["gprs"].copy()
-        self._csrs = snapshot["csrs"].copy()
+        if "gprs" in snapshot:
+            self._gprs = snapshot["gprs"].copy()
+        if "csrs" in snapshot:
+            self._csrs = snapshot["csrs"].copy()
         if "fprs" in snapshot:
             self._fprs = snapshot["fprs"].copy()
-        self._pc = snapshot["pc"]
+        if "pc" in snapshot:
+            self._pc = snapshot["pc"]
 
     # ====================================================================
     # Reset
