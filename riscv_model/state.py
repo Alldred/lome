@@ -49,6 +49,9 @@ from eumos import CSRDef, Eumos, FPRDef, GPRDef
 if TYPE_CHECKING:
     from riscv_model.memory import MemoryInterface
 
+if TYPE_CHECKING:
+    from riscv_model.memory import MemoryInterface
+
 # ---------------------------------------------------------------------------
 # Constants
 # ---------------------------------------------------------------------------
