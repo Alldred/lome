@@ -14,17 +14,18 @@ Quick start::
     print(model.get_gpr(1))      # 42
 """
 
-from riscv_model.memory import MemoryInterface
-from riscv_model.ras import RASModel
 from riscv_model.changes import (
     BranchInfo,
     ChangeQuery,
     ChangeRecord,
     CSRWrite,
+    FPRWrite,
     GPRWrite,
     MemoryAccess,
 )
+from riscv_model.memory import MemoryInterface
 from riscv_model.model import RISCVModel
+from riscv_model.ras import RASModel
 from riscv_model.state import State
 
 __all__ = [
@@ -35,6 +36,7 @@ __all__ = [
     "ChangeRecord",
     "ChangeQuery",
     "GPRWrite",
+    "FPRWrite",
     "CSRWrite",
     "MemoryAccess",
     "BranchInfo",

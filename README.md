@@ -100,8 +100,8 @@ print(model.get_gpr(1))          # state unchanged
 
 Summary:
 
-- **Architectural access**: `get_gpr()`, `set_gpr()`, `get_csr()`, `set_csr()`, `get_pc()`, `set_pc()`
-- **Raw access**: `peek_gpr()`, `poke_gpr()`, `peek_csr()`, `poke_csr()`, `peek_pc()`, `poke_pc()`
+- **Architectural access**: `get_gpr()`, `set_gpr()`, `get_csr()`, `set_csr()`, `get_fpr()`, `set_fpr()`, `get_pc()`, `set_pc()`
+- **Raw access**: `peek_gpr()`, `poke_gpr()`, `peek_csr()`, `poke_csr()`, `peek_fpr()`, `poke_fpr()`, `peek_pc()`, `poke_pc()`
 - **Execution**: `execute()`, `speculate()`
 - **State management**: `reset()`, `export_state()`, `restore_state()`, `export_state_json()`, `from_json()`
 - **Change tracking**: `get_changes()`, `get_branch_info()` → `ChangeRecord.to_simple_dict()` / `.to_detailed_dict()`
@@ -116,8 +116,11 @@ All instructions currently defined in Eumos:
 - **Compare**: SLT, SLTI, SLTU, SLTIU
 - **Branch**: BEQ, BNE, BLT, BGE, BLTU, BGEU
 - **Jump**: JAL, JALR
-- **Load/Store**: LB, LH, LW, LBU, LHU, LD, LWU, SB, SH, SW, SD
+- **Load/Store**: LB, LH, LW, LBU, LHU, LD, LWU, SB, SH, SW, SD, FLW, FSW, FLD, FSD
+- **Float (F/D)**: FADD, FSUB, FMUL, FDIV, FSQRT, FMADD, FMSUB, FNMADD, FNMSUB, FSGNJ/N/X, FMIN, FMAX, FEQ, FLE, FLT, FMV.*, FCVT.*, FCLASS
 - **System**: LUI, AUIPC, CSRRW, CSRRS, CSRRC, CSRRWI, CSRRSI, CSRRCI, ECALL, EBREAK, MRET, FENCE, FENCE.TSO
+
+Floating-point uses Python's built-in `float` for a "reasonable" precision/rounding implementation. At present, IEEE 754 exception flags (`fflags` CSR) are not modelled and the configured rounding mode (from the instruction or dynamic `frm` CSR) is not strictly enforced (the internal `round_for_float` helper currently returns its input unchanged), so floating-point behaviour is approximate and intended for functional modelling rather than bit-exact IEEE 754 compliance; a tighter implementation (e.g. full IEEE `fflags`, softfloat) may be added later.
 
 ## Supported CSRs
 

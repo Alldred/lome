@@ -56,6 +56,8 @@ trigger CSR side-effect hooks (e.g. mstatus → sstatus mirroring).
 | **set_gpr** | `set_gpr(reg: int, value: int) -> int` | Write GPR. x0 writes ignored. Returns previous value. |
 | **get_csr** | `get_csr(csr: int \| str) -> int \| None` | Read CSR by address or name. |
 | **set_csr** | `set_csr(csr: int \| str, value: int) -> int \| None` | Write CSR. Respects read-only, triggers hooks. Returns previous value. |
+| **get_fpr** | `get_fpr(reg: int) -> int` | Read FPR (64-bit bits). |
+| **set_fpr** | `set_fpr(reg: int, value: int) -> int` | Write FPR. Returns previous value. |
 | **get_pc** | `get_pc() -> int` | Read program counter. |
 | **set_pc** | `set_pc(value: int) -> int` | Write program counter. Returns previous value. |
 
@@ -70,6 +72,8 @@ setup, debugging, and checkpoint restore.
 | **poke_gpr** | `poke_gpr(reg: int, value: int) -> int` | Raw write (even x0). Returns previous raw value. |
 | **peek_csr** | `peek_csr(csr: int \| str) -> int \| None` | Raw read (no side effects). |
 | **poke_csr** | `poke_csr(csr: int \| str, value: int) -> int \| None` | Raw write (bypasses read-only, no hooks). |
+| **peek_fpr** | `peek_fpr(reg: int) -> int` | Raw read FPR. |
+| **poke_fpr** | `poke_fpr(reg: int, value: int) -> int` | Raw write FPR. Returns previous value. |
 | **peek_pc** | `peek_pc() -> int` | Raw read PC. |
 | **poke_pc** | `poke_pc(value: int) -> int` | Raw write PC. Returns previous value. |
 
@@ -77,7 +81,7 @@ setup, debugging, and checkpoint restore.
 
 | Method | Signature | Description |
 |--------|-----------|-------------|
-| **reset** | `reset() -> None` | Reset GPRs, CSRs, PC to initial values; clears last changes. |
+| **reset** | `reset() -> None` | Reset GPRs, FPRs, CSRs, PC to initial values; clears last changes. |
 | **get_changes** | `get_changes() -> ChangeRecord \| None` | Last execution's change record. |
 | **get_branch_info** | `get_branch_info() -> BranchInfo \| None` | Branch info from last execution. |
 
@@ -96,9 +100,11 @@ setup, debugging, and checkpoint restore.
 {
   "pc": 4096,
   "gprs": { "0": 0, "1": 42, ..., "31": 0 },
+  "fprs": { "0": 0, "1": 1078530011, ..., "31": 0 },
   "csrs": { "768": 6144, ... },
   "metadata": {
     "gpr_names": { "0": "zero", "1": "ra", ... },
+    "fpr_names": { "0": "ft0", "1": "ft1", ... },
     "csr_names": { "768": "mstatus", ... }
   }
 }
@@ -115,6 +121,7 @@ Returned by `execute()`, `speculate()`, and `get_changes()`.
 | Field | Type | Description |
 |-------|------|-------------|
 | `gpr_writes` | `list[GPRWrite]` | GPR writes. |
+| `fpr_writes` | `list[FPRWrite]` | FPR writes. |
 | `csr_writes` | `list[CSRWrite]` | CSR writes. |
 | `pc_change` | `(new_pc, old_pc) \| None` | PC change (branches/jumps). |
 | `memory_accesses` | `list[MemoryAccess]` | Load/store accesses. |

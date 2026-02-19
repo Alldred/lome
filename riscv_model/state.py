@@ -44,7 +44,7 @@ from __future__ import annotations
 import json
 from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional
 
-from eumos import CSRDef, Eumos, GPRDef
+from eumos import CSRDef, Eumos, FPRDef, GPRDef
 
 if TYPE_CHECKING:
     from riscv_model.memory import MemoryInterface
@@ -58,6 +58,9 @@ _MASK_64: int = 0xFFFF_FFFF_FFFF_FFFF
 
 _NUM_GPRS: int = 32
 """Number of general-purpose registers."""
+
+_NUM_FPRS: int = 32
+"""Number of floating-point registers."""
 
 
 # ---------------------------------------------------------------------------
@@ -96,7 +99,9 @@ class State:
         eumos : Eumos
             Shared Eumos ISA instance providing GPR and CSR definitions.
         memory : MemoryInterface or None, optional
-            Optional memory backend for load/store instructions.
+            Optional memory backend for load/store instructions. Stored on
+            state for reference; the executor passes memory directly to
+            load/store instruction handlers rather than reading it from here.
         """
         self._eumos: Eumos = eumos
         self._memory: "MemoryInterface | None" = memory
@@ -126,6 +131,13 @@ class State:
 
         # Initialise PC
         self._pc: int = 0
+
+        # FPR definitions and storage (from Eumos)
+        self._fpr_defs: Dict[int, FPRDef] = getattr(eumos, "fprs", {}) or {}
+        self._fprs: Dict[int, int] = {}
+        for idx in range(_NUM_FPRS):
+            fpr_def = self._fpr_defs.get(idx)
+            self._fprs[idx] = fpr_def.reset_value if fpr_def else 0
 
         # CSR side-effect hooks -----------------------------------------
         # Mapping of CSR address -> list of callbacks invoked *after* an
@@ -307,6 +319,110 @@ class State:
             return 0  # x0 is read-only
         old = self._gprs.get(reg, 0)
         self._gprs[reg] = value & _MASK_64
+        return old
+
+    # ====================================================================
+    # FPR access
+    # ====================================================================
+
+    # ---- peek / poke (raw) ---------------------------------------------
+
+    def peek_fpr(self, reg: int) -> int:
+        """Read the raw storage value of an FPR -- no architectural checks.
+
+        Parameters
+        ----------
+        reg : int
+            Register index (0-31).
+
+        Returns
+        -------
+        int
+            Raw stored value (64-bit).
+
+        Raises
+        ------
+        ValueError
+            If *reg* is outside 0-31.
+        """
+        if not (0 <= reg <= 31):
+            raise ValueError(f"FPR index must be 0-31, got {reg}")
+        return self._fprs.get(reg, 0) & _MASK_64
+
+    def poke_fpr(self, reg: int, value: int) -> int:
+        """Write a raw value to an FPR -- no side effects.
+
+        Parameters
+        ----------
+        reg : int
+            Register index (0-31).
+        value : int
+            Value to write (masked to 64 bits).
+
+        Returns
+        -------
+        int
+            Previous raw stored value.
+
+        Raises
+        ------
+        ValueError
+            If *reg* is outside 0-31.
+        """
+        if not (0 <= reg <= 31):
+            raise ValueError(f"FPR index must be 0-31, got {reg}")
+        old = self._fprs.get(reg, 0)
+        self._fprs[reg] = value & _MASK_64
+        return old
+
+    # ---- get / set (architectural) -------------------------------------
+
+    def get_fpr(self, reg: int) -> int:
+        """Read an FPR with architectural semantics.
+
+        Parameters
+        ----------
+        reg : int
+            Register index (0-31).
+
+        Returns
+        -------
+        int
+            Value (64-bit).
+
+        Raises
+        ------
+        ValueError
+            If *reg* is outside 0-31.
+        """
+        if not (0 <= reg <= 31):
+            raise ValueError(f"FPR index must be 0-31, got {reg}")
+        return self._fprs.get(reg, 0) & _MASK_64
+
+    def set_fpr(self, reg: int, value: int) -> int:
+        """Write an FPR with architectural semantics.
+
+        Parameters
+        ----------
+        reg : int
+            Register index (0-31).
+        value : int
+            Value to write (masked to 64 bits).
+
+        Returns
+        -------
+        int
+            Previous value.
+
+        Raises
+        ------
+        ValueError
+            If *reg* is outside 0-31.
+        """
+        if not (0 <= reg <= 31):
+            raise ValueError(f"FPR index must be 0-31, got {reg}")
+        old = self._fprs.get(reg, 0)
+        self._fprs[reg] = value & _MASK_64
         return old
 
     # ====================================================================
@@ -737,6 +853,20 @@ class State:
         """
         return self._csr_defs.get(name)
 
+    def get_fpr_def(self, reg: int) -> Optional[FPRDef]:
+        """Return the Eumos :class:`FPRDef` for FPR *reg*.
+
+        Parameters
+        ----------
+        reg : int
+            Register index (0-31).
+
+        Returns
+        -------
+        FPRDef or None
+        """
+        return self._fpr_defs.get(reg)
+
     # ====================================================================
     # Snapshot / restore (for speculation -- raw, no hooks)
     # ====================================================================
@@ -768,6 +898,7 @@ class State:
         return {
             "gprs": self._gprs.copy(),
             "csrs": self._csrs.copy(),
+            "fprs": self._fprs.copy(),
             "pc": self._pc,
         }
 
@@ -777,11 +908,17 @@ class State:
         Parameters
         ----------
         snapshot : dict
-            As returned by :meth:`snapshot`.
+            As returned by :meth:`snapshot`. Keys ``gprs``, ``csrs``, ``fprs``,
+            and ``pc`` are optional; only present keys are restored.
         """
-        self._gprs = snapshot["gprs"].copy()
-        self._csrs = snapshot["csrs"].copy()
-        self._pc = snapshot["pc"]
+        if "gprs" in snapshot:
+            self._gprs = snapshot["gprs"].copy()
+        if "csrs" in snapshot:
+            self._csrs = snapshot["csrs"].copy()
+        if "fprs" in snapshot:
+            self._fprs = snapshot["fprs"].copy()
+        if "pc" in snapshot:
+            self._pc = snapshot["pc"]
 
     # ====================================================================
     # Reset
@@ -814,6 +951,10 @@ class State:
             self._csrs[csr_def.address] = (
                 csr_def.reset_value if csr_def.reset_value is not None else 0
             )
+
+        for idx in range(_NUM_FPRS):
+            fpr_def = self._fpr_defs.get(idx)
+            self._fprs[idx] = fpr_def.reset_value if fpr_def else 0
 
         self._pc = 0
 
@@ -872,13 +1013,22 @@ class State:
             if name:
                 csr_names[key] = name
 
+        fprs: Dict[str, int] = {}
+        fpr_names: Dict[str, str] = {}
+        for idx in range(_NUM_FPRS):
+            fprs[str(idx)] = self._fprs[idx]
+            fpr_def = self._fpr_defs.get(idx)
+            fpr_names[str(idx)] = fpr_def.abi_name if fpr_def else f"f{idx}"
+
         return {
             "pc": self._pc,
             "gprs": gprs,
             "csrs": csrs,
+            "fprs": fprs,
             "metadata": {
                 "gpr_names": gpr_names,
                 "csr_names": csr_names,
+                "fpr_names": fpr_names,
             },
         }
 
@@ -922,6 +1072,12 @@ class State:
                     self._csrs[addr] = self._mask_to_width(
                         int(value), csr_def.width if csr_def else None
                     )
+
+        if "fprs" in data:
+            for key, value in data["fprs"].items():
+                idx = int(key)
+                if 0 <= idx <= 31:
+                    self._fprs[idx] = int(value) & _MASK_64
 
     def export_state_json(self, indent: int = 2) -> str:
         """Export state as a formatted JSON string.
