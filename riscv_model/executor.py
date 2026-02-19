@@ -32,12 +32,31 @@ from riscv_model.instructions import (
     shift,
     system,
 )
+from riscv_model.instructions import (
+    float as float_ins,
+)
 from riscv_model.memory import MemoryInterface
 from riscv_model.ras import RASModel
 from riscv_model.state import State
 
 _LOAD_STORE_MNEMONICS: frozenset[str] = frozenset(
-    {"lb", "lh", "lw", "lbu", "lhu", "ld", "lwu", "sb", "sh", "sw", "sd"}
+    {
+        "lb",
+        "lh",
+        "lw",
+        "lbu",
+        "lhu",
+        "ld",
+        "lwu",
+        "sb",
+        "sh",
+        "sw",
+        "sd",
+        "flw",
+        "fsw",
+        "fld",
+        "fsd",
+    }
 )
 _JUMP_MNEMONICS: frozenset[str] = frozenset({"jal", "jalr"})
 
@@ -114,6 +133,69 @@ _INSTRUCTION_HANDLERS: dict[str, Any] = {
     "mret": system.execute_mret,
     "fence": system.execute_fence,
     "fence.tso": system.execute_fence_tso,
+    # Float (F/D extension)
+    "flw": float_ins.execute_flw,
+    "fsw": float_ins.execute_fsw,
+    "fld": float_ins.execute_fld,
+    "fsd": float_ins.execute_fsd,
+    "fadd.s": float_ins.execute_fadd_s,
+    "fadd.d": float_ins.execute_fadd_d,
+    "fsub.s": float_ins.execute_fsub_s,
+    "fsub.d": float_ins.execute_fsub_d,
+    "fmul.s": float_ins.execute_fmul_s,
+    "fmul.d": float_ins.execute_fmul_d,
+    "fdiv.s": float_ins.execute_fdiv_s,
+    "fdiv.d": float_ins.execute_fdiv_d,
+    "fsqrt.s": float_ins.execute_fsqrt_s,
+    "fsqrt.d": float_ins.execute_fsqrt_d,
+    "fmadd.s": float_ins.execute_fmadd_s,
+    "fmadd.d": float_ins.execute_fmadd_d,
+    "fmsub.s": float_ins.execute_fmsub_s,
+    "fmsub.d": float_ins.execute_fmsub_d,
+    "fnmadd.s": float_ins.execute_fnmadd_s,
+    "fnmadd.d": float_ins.execute_fnmadd_d,
+    "fnmsub.s": float_ins.execute_fnmsub_s,
+    "fnmsub.d": float_ins.execute_fnmsub_d,
+    "fsgnj.s": float_ins.execute_fsgnj_s,
+    "fsgnj.d": float_ins.execute_fsgnj_d,
+    "fsgnjn.s": float_ins.execute_fsgnjn_s,
+    "fsgnjn.d": float_ins.execute_fsgnjn_d,
+    "fsgnjx.s": float_ins.execute_fsgnjx_s,
+    "fsgnjx.d": float_ins.execute_fsgnjx_d,
+    "fmin.s": float_ins.execute_fmin_s,
+    "fmin.d": float_ins.execute_fmin_d,
+    "fmax.s": float_ins.execute_fmax_s,
+    "fmax.d": float_ins.execute_fmax_d,
+    "feq.s": float_ins.execute_feq_s,
+    "feq.d": float_ins.execute_feq_d,
+    "fle.s": float_ins.execute_fle_s,
+    "fle.d": float_ins.execute_fle_d,
+    "flt.s": float_ins.execute_flt_s,
+    "flt.d": float_ins.execute_flt_d,
+    "fmv.w.x": float_ins.execute_fmv_w_x,
+    "fmv.d.x": float_ins.execute_fmv_d_x,
+    "fmv.x.w": float_ins.execute_fmv_x_w,
+    "fmv.x.d": float_ins.execute_fmv_x_d,
+    "fcvt.s.w": float_ins.execute_fcvt_s_w,
+    "fcvt.s.wu": float_ins.execute_fcvt_s_wu,
+    "fcvt.s.l": float_ins.execute_fcvt_s_l,
+    "fcvt.s.lu": float_ins.execute_fcvt_s_lu,
+    "fcvt.d.w": float_ins.execute_fcvt_d_w,
+    "fcvt.d.wu": float_ins.execute_fcvt_d_wu,
+    "fcvt.d.l": float_ins.execute_fcvt_d_l,
+    "fcvt.d.lu": float_ins.execute_fcvt_d_lu,
+    "fcvt.w.s": float_ins.execute_fcvt_w_s,
+    "fcvt.wu.s": float_ins.execute_fcvt_wu_s,
+    "fcvt.w.d": float_ins.execute_fcvt_w_d,
+    "fcvt.wu.d": float_ins.execute_fcvt_wu_d,
+    "fcvt.l.s": float_ins.execute_fcvt_l_s,
+    "fcvt.lu.s": float_ins.execute_fcvt_lu_s,
+    "fcvt.l.d": float_ins.execute_fcvt_l_d,
+    "fcvt.lu.d": float_ins.execute_fcvt_lu_d,
+    "fcvt.s.d": float_ins.execute_fcvt_s_d,
+    "fcvt.d.s": float_ins.execute_fcvt_d_s,
+    "fclass.s": float_ins.execute_fclass_s,
+    "fclass.d": float_ins.execute_fclass_d,
 }
 
 

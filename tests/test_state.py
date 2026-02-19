@@ -114,6 +114,77 @@ class TestGPRGetSet:
 
 
 # ====================================================================
+# FPR -- peek / poke and get / set
+# ====================================================================
+
+
+class TestFPRPeekPoke:
+    """Raw FPR access."""
+
+    def test_poke_and_peek(self, state):
+        s = state
+        old = s.poke_fpr(1, 0x40490FDB)
+        assert old == 0
+        assert s.peek_fpr(1) == 0x40490FDB
+
+    def test_poke_masks_to_64_bits(self, state):
+        s = state
+        s.poke_fpr(1, (1 << 65))
+        assert s.peek_fpr(1) == 0
+
+    def test_peek_invalid_reg_raises(self, state):
+        s = state
+        with pytest.raises(ValueError, match="FPR index"):
+            s.peek_fpr(32)
+
+    def test_poke_invalid_reg_raises(self, state):
+        s = state
+        with pytest.raises(ValueError, match="FPR index"):
+            s.poke_fpr(-1, 0)
+
+
+class TestFPRGetSet:
+    """Architectural FPR access."""
+
+    def test_set_and_get(self, state):
+        s = state
+        old = s.set_fpr(1, 0x40490FDB)
+        assert old == 0
+        assert s.get_fpr(1) == 0x40490FDB
+
+
+class TestFPRSnapshotRestore:
+    """FPRs are included in snapshot/restore."""
+
+    def test_snapshot_restore_fprs(self, state):
+        s = state
+        s.set_fpr(5, 0xDEADBEEF)
+        snap = s.snapshot()
+        s.set_fpr(5, 0)
+        assert s.get_fpr(5) == 0
+        s.restore(snap)
+        assert s.get_fpr(5) == 0xDEADBEEF
+
+
+class TestFPRExportRestore:
+    """FPRs are included in export_state/restore_state."""
+
+    def test_export_contains_fprs(self, state):
+        s = state
+        data = s.export_state()
+        assert "fprs" in data
+        assert "fpr_names" in data.get("metadata", {})
+
+    def test_restore_fprs(self, state):
+        s = state
+        s.set_fpr(3, 0x40490FDB)
+        data = s.export_state()
+        s2 = State(s._eumos)
+        s2.restore_state(data)
+        assert s2.get_fpr(3) == 0x40490FDB
+
+
+# ====================================================================
 # CSR -- peek / poke (raw access)
 # ====================================================================
 
@@ -372,6 +443,12 @@ class TestReset:
         s.set_csr(0x300, 0xDEAD)
         s.reset()
         assert s.get_csr(0x300) == 0  # back to reset value
+
+    def test_reset_fprs(self, state):
+        s = state
+        s.set_fpr(1, 0x40490FDB)
+        s.reset()
+        assert s.get_fpr(1) == 0
 
 
 # ====================================================================
@@ -670,3 +747,14 @@ class TestDefinitionLookups:
     def test_get_csr_def_by_name_none(self, state):
         s = state
         assert s.get_csr_def_by_name("nonexistent") is None
+
+    def test_get_fpr_def(self, state):
+        s = state
+        if s._fpr_defs:
+            fpr_def = s.get_fpr_def(0)
+            assert fpr_def is not None
+            assert fpr_def.index == 0
+
+    def test_get_fpr_def_none(self, state):
+        s = state
+        assert s.get_fpr_def(99) is None

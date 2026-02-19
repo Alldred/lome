@@ -14,6 +14,7 @@ via :meth:`ChangeRecord.to_simple_dict` / :meth:`ChangeRecord.to_detailed_dict`.
 Dataclasses
 -----------
 * :class:`GPRWrite`  -- a single GPR write
+* :class:`FPRWrite`  -- a single FPR write
 * :class:`CSRWrite`  -- a single CSR write
 * :class:`MemoryAccess` -- a load or store access
 * :class:`BranchInfo` -- branch direction and target
@@ -93,6 +94,31 @@ class CSRWrite:
 
 
 @dataclass
+class FPRWrite:
+    """Record of a single FPR write operation.
+
+    Attributes
+    ----------
+    register : int
+        FPR index (0-31).
+    value : int
+        Value written (64-bit bits).
+    old_value : int
+        Value before the write.
+
+    Examples
+    --------
+    >>> w = FPRWrite(register=1, value=0x40490FDB, old_value=0)
+    >>> w.register
+    1
+    """
+
+    register: int
+    value: int
+    old_value: int
+
+
+@dataclass
 class MemoryAccess:
     """Record of a memory access (load or store).
 
@@ -164,6 +190,8 @@ class ChangeRecord:
     ----------
     gpr_writes : list[GPRWrite]
         GPR write operations.
+    fpr_writes : list[FPRWrite]
+        FPR write operations.
     csr_writes : list[CSRWrite]
         CSR write operations.
     pc_change : tuple[int, int] or None
@@ -191,6 +219,7 @@ class ChangeRecord:
     """
 
     gpr_writes: List[GPRWrite] = field(default_factory=list)
+    fpr_writes: List[FPRWrite] = field(default_factory=list)
     csr_writes: List[CSRWrite] = field(default_factory=list)
     pc_change: Optional[Tuple[int, int]] = None  # (new_pc, old_pc)
     memory_accesses: List[MemoryAccess] = field(default_factory=list)
@@ -213,6 +242,7 @@ class ChangeRecord:
         """
         return (
             len(self.gpr_writes) > 0
+            or len(self.fpr_writes) > 0
             or len(self.csr_writes) > 0
             or self.pc_change is not None
             or len(self.memory_accesses) > 0
@@ -234,6 +264,18 @@ class ChangeRecord:
         {5: (10, 0)}
         """
         return {w.register: (w.value, w.old_value) for w in self.gpr_writes}
+
+    def get_fpr_changes(self) -> Dict[int, Tuple[int, int]]:
+        """Return FPR changes as ``{register: (new_value, old_value)}``.
+
+        Examples
+        --------
+        >>> cr = ChangeRecord()
+        >>> cr.fpr_writes.append(FPRWrite(register=5, value=0x40490FDB, old_value=0))
+        >>> cr.get_fpr_changes()
+        {5: (1078530011, 0)}
+        """
+        return {w.register: (w.value, w.old_value) for w in self.fpr_writes}
 
     def get_csr_changes(self) -> Dict[int, Tuple[int, int]]:
         """Return CSR changes as ``{address: (new_value, old_value)}``.
@@ -310,6 +352,14 @@ class ChangeRecord:
                 }
                 for w in self.gpr_writes
             ],
+            "fpr_writes": [
+                {
+                    "register": w.register,
+                    "value": w.value,
+                    "old_value": w.old_value,
+                }
+                for w in self.fpr_writes
+            ],
             "csr_writes": [
                 {
                     "address": w.address,
@@ -363,6 +413,10 @@ class ChangeRecord:
         if self.gpr_writes:
             result["gpr_changes"] = {
                 reg: new for reg, (new, _) in self.get_gpr_changes().items()
+            }
+        if self.fpr_writes:
+            result["fpr_changes"] = {
+                reg: new for reg, (new, _) in self.get_fpr_changes().items()
             }
         if self.csr_writes:
             result["csr_changes"] = {

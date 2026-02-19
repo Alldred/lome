@@ -35,7 +35,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Dict, Optional, Union
 
-from eumos import CSRDef, Eumos, GPRDef
+from eumos import CSRDef, Eumos, FPRDef, GPRDef
 
 if TYPE_CHECKING:
     from riscv_model.memory import MemoryInterface
@@ -412,6 +412,66 @@ class RISCVModel:
             return self._state.poke_csr_by_name(csr, value)
         return self._state.poke_csr(csr, value)
 
+    # ============================================================ FPR access
+
+    def get_fpr(self, reg: int) -> int:
+        """Read an FPR (architectural).
+
+        Parameters
+        ----------
+        reg : int
+            FPR index (0-31).
+
+        Returns
+        -------
+        int
+            Value (64-bit).
+        """
+        return self._state.get_fpr(reg)
+
+    def set_fpr(self, reg: int, value: int) -> int:
+        """Write an FPR (architectural).
+
+        Parameters
+        ----------
+        reg : int
+            FPR index (0-31).
+        value : int
+            Value to write (masked to 64 bits).
+
+        Returns
+        -------
+        int
+            Previous value.
+        """
+        return self._state.set_fpr(reg, value)
+
+    def peek_fpr(self, reg: int) -> int:
+        """Read raw FPR value.
+
+        Returns
+        -------
+        int
+        """
+        return self._state.peek_fpr(reg)
+
+    def poke_fpr(self, reg: int, value: int) -> int:
+        """Write raw FPR value (no side effects).
+
+        Parameters
+        ----------
+        reg : int
+            FPR index (0-31).
+        value : int
+            Value to write (masked to 64 bits).
+
+        Returns
+        -------
+        int
+            Previous value.
+        """
+        return self._state.poke_fpr(reg, value)
+
     # ============================================================ PC access
 
     def get_pc(self) -> int:
@@ -561,6 +621,16 @@ class RISCVModel:
         dict[str, CSRDef]
         """
         return self._eumos.csrs
+
+    @property
+    def fpr_defs(self) -> Dict[int, FPRDef]:
+        """FPR definitions from the Eumos instance.
+
+        Returns
+        -------
+        dict[int, FPRDef]
+        """
+        return getattr(self._eumos, "fprs", {})
 
     # ============================================================ changes
 
