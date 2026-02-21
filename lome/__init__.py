@@ -6,15 +6,15 @@
 Quick start::
 
     from eumos import Eumos
-    from riscv_model import RISCVModel
+    from lome import Lome
 
     isa   = Eumos()
-    model = RISCVModel(isa)
+    model = Lome(isa)
     model.poke_gpr(1, 42)
     print(model.get_gpr(1))      # 42
 """
 
-from riscv_model.changes import (
+from lome.changes import (
     BranchInfo,
     ChangeQuery,
     ChangeRecord,
@@ -23,15 +23,15 @@ from riscv_model.changes import (
     GPRWrite,
     MemoryAccess,
 )
-from riscv_model.memory import MemoryInterface
-from riscv_model.model import RISCVModel
-from riscv_model.ras import RASModel
-from riscv_model.state import State
+from lome.memory import MemoryInterface
+from lome.model import Lome
+from lome.ras import RASModel
+from lome.state import State
 
 __all__ = [
     "MemoryInterface",
     "RASModel",
-    "RISCVModel",
+    "Lome",
     "State",
     "ChangeRecord",
     "ChangeQuery",

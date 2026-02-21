@@ -3,7 +3,7 @@
 
 """Change tracking for RISC-V instruction execution.
 
-Every call to :meth:`RISCVModel.execute() <riscv_model.model.RISCVModel.execute>`
+Every call to :meth:`Lome.execute() <lome.model.Lome.execute>`
 returns a :class:`ChangeRecord` that captures **all** state modifications the
 instruction performed (or would have performed in speculation mode).
 
@@ -21,7 +21,7 @@ Dataclasses
 
 Examples
 --------
->>> from riscv_model.changes import ChangeRecord, GPRWrite
+>>> from lome.changes import ChangeRecord, GPRWrite
 >>> cr = ChangeRecord()
 >>> cr.gpr_writes.append(GPRWrite(register=1, value=42, old_value=0))
 >>> cr.has_changes()
@@ -181,10 +181,10 @@ class BranchInfo:
 class ChangeRecord:
     """Complete record of all changes from a single instruction execution.
 
-    Typically obtained from :meth:`RISCVModel.execute()
-    <riscv_model.model.RISCVModel.execute>` or
-    :meth:`RISCVModel.get_changes()
-    <riscv_model.model.RISCVModel.get_changes>`.
+    Typically obtained from :meth:`Lome.execute()
+    <lome.model.Lome.execute>` or
+    :meth:`Lome.get_changes()
+    <lome.model.Lome.get_changes>`.
 
     Attributes
     ----------

@@ -3,7 +3,7 @@
 
 """Tests for the change-tracking dataclasses and ChangeRecord."""
 
-from riscv_model.changes import (
+from lome.changes import (
     BranchInfo,
     ChangeQuery,
     ChangeRecord,

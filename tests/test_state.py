@@ -7,7 +7,7 @@ import json
 
 import pytest
 
-from riscv_model.state import State
+from lome.state import State
 
 # ====================================================================
 # GPR -- peek / poke (raw access)

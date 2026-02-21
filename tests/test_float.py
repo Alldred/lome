@@ -5,8 +5,8 @@
 
 import struct
 
-from riscv_model import RISCVModel
-from riscv_model.instructions import float as float_ins
+from lome import Lome
+from lome.instructions import float as float_ins
 
 
 def _bits_s(f: float) -> int:
@@ -76,7 +76,7 @@ class TestFloatLoadStore:
 
     def test_flw_fsw_round_trip(self, eumos):
         """FLW then FSW round-trip via memory."""
-        from riscv_model.memory import MemoryInterface
+        from lome.memory import MemoryInterface
 
         class SimpleMem(MemoryInterface):
             def __init__(self):
@@ -93,7 +93,7 @@ class TestFloatLoadStore:
                     self._data[addr + i] = (value >> (i * 8)) & 0xFF
 
         mem = SimpleMem()
-        model = RISCVModel(eumos, memory=mem)
+        model = Lome(eumos, memory=mem)
         state = model._state
         state.set_gpr(1, 0x1000)
         state.set_fpr(10, _bits_s(1.0))

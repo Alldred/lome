@@ -21,7 +21,7 @@ State can be serialised to a JSON-compatible ``dict`` with
 Example -- basic register manipulation::
 
     from eumos import Eumos
-    from riscv_model.state import State
+    from lome.state import State
 
     isa = Eumos()
     s = State(isa)
@@ -47,7 +47,7 @@ from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional
 from eumos import CSRDef, Eumos, FPRDef, GPRDef
 
 if TYPE_CHECKING:
-    from riscv_model.memory import MemoryInterface
+    from lome.memory import MemoryInterface
 
 # ---------------------------------------------------------------------------
 # Constants

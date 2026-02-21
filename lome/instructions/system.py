@@ -5,8 +5,8 @@
 
 from __future__ import annotations
 
-from riscv_model.changes import ChangeRecord, CSRWrite, GPRWrite
-from riscv_model.state import State
+from lome.changes import ChangeRecord, CSRWrite, GPRWrite
+from lome.state import State
 
 
 def execute_csrrw(operand_values: dict, state: State, pc: int) -> ChangeRecord:

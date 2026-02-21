@@ -3,7 +3,7 @@
 
 """Load/store instruction implementations: LB, LH, LW, LBU, LHU, LD, LWU, SB, SH, SW, SD.
 
-When a :class:`~riscv_model.memory.MemoryInterface` is provided, loads and stores
+When a :class:`~lome.memory.MemoryInterface` is provided, loads and stores
 read/write real memory. Otherwise loads return 0 (placeholder for tests).
 """
 
@@ -11,9 +11,9 @@ from __future__ import annotations
 
 from typing import Optional
 
-from riscv_model.changes import ChangeRecord, GPRWrite, MemoryAccess
-from riscv_model.memory import MemoryInterface
-from riscv_model.state import State
+from lome.changes import ChangeRecord, GPRWrite, MemoryAccess
+from lome.memory import MemoryInterface
+from lome.state import State
 
 
 def _sign_extend(value: int, bits: int) -> int:

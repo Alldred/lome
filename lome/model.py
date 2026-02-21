@@ -3,30 +3,30 @@
 
 """Main RISC-V functional model interface.
 
-The :class:`RISCVModel` class is the primary public API.  It wraps a
-:class:`~riscv_model.state.State`, an Eumos :class:`~eumos.decoder.Decoder`,
+The :class:`Lome` class is the primary public API.  It wraps a
+:class:`~lome.state.State`, an Eumos :class:`~eumos.decoder.Decoder`,
 and an instruction executor.  It provides:
 
-* **Instruction execution** -- :meth:`~RISCVModel.execute` and
-  :meth:`~RISCVModel.speculate`.
-* **Architectural register access** -- :meth:`~RISCVModel.get_gpr`,
-  :meth:`~RISCVModel.set_gpr`, :meth:`~RISCVModel.get_csr`,
-  :meth:`~RISCVModel.set_csr`, etc.  These honour read-only flags and
+* **Instruction execution** -- :meth:`~Lome.execute` and
+  :meth:`~Lome.speculate`.
+* **Architectural register access** -- :meth:`~Lome.get_gpr`,
+  :meth:`~Lome.set_gpr`, :meth:`~Lome.get_csr`,
+  :meth:`~Lome.set_csr`, etc.  These honour read-only flags and
   trigger CSR side-effect hooks.
-* **Raw register access (peek / poke)** -- :meth:`~RISCVModel.peek_gpr`,
-  :meth:`~RISCVModel.poke_gpr`, :meth:`~RISCVModel.peek_csr`,
-  :meth:`~RISCVModel.poke_csr`, etc.  Useful for test setup, debugging,
+* **Raw register access (peek / poke)** -- :meth:`~Lome.peek_gpr`,
+  :meth:`~Lome.poke_gpr`, :meth:`~Lome.peek_csr`,
+  :meth:`~Lome.poke_csr`, etc.  Useful for test setup, debugging,
   and checkpoint restore.
-* **State serialisation** -- :meth:`~RISCVModel.export_state` /
-  :meth:`~RISCVModel.restore_state` for JSON round-trips.
+* **State serialisation** -- :meth:`~Lome.export_state` /
+  :meth:`~Lome.restore_state` for JSON round-trips.
 
 Example -- quick start::
 
     from eumos import Eumos
-    from riscv_model import RISCVModel
+    from lome import Lome
 
     isa   = Eumos()
-    model = RISCVModel(isa)
+    model = Lome(isa)
     model.poke_gpr(1, 10)
     model.get_gpr(1)  # => 10
 """
@@ -38,16 +38,16 @@ from typing import TYPE_CHECKING, Any, Dict, Optional, Union
 from eumos import CSRDef, Eumos, FPRDef, GPRDef
 
 if TYPE_CHECKING:
-    from riscv_model.memory import MemoryInterface
+    from lome.memory import MemoryInterface
 from eumos.decoder import Decoder
 
-from riscv_model.changes import BranchInfo, ChangeRecord
-from riscv_model.executor import execute_instruction
-from riscv_model.ras import RASModel
-from riscv_model.state import State
+from lome.changes import BranchInfo, ChangeRecord
+from lome.executor import execute_instruction
+from lome.ras import RASModel
+from lome.state import State
 
 
-class RISCVModel:
+class Lome:
     """RISC-V functional model for instruction execution, speculation, and change tracking.
 
     This is the primary public interface for the model.  Create an instance,
@@ -58,7 +58,7 @@ class RISCVModel:
     --------
     Create a model and execute an ``ADDI`` instruction:
 
-    >>> # model = RISCVModel(isa)
+    >>> # model = Lome(isa)
     >>> # addi x1, x0, 42
     >>> instr = 0x13 | (1 << 7) | (0 << 12) | (0 << 15) | (42 << 20)
     >>> changes = model.execute(instr)
@@ -76,7 +76,7 @@ class RISCVModel:
     JSON round-trip:
 
     >>> data = model.export_state()
-    >>> # model2 = RISCVModel(isa)
+    >>> # model2 = Lome(isa)
     >>> model2.restore_state(data)
     >>> model2.get_gpr(1)
     42
@@ -107,7 +107,7 @@ class RISCVModel:
         Examples
         --------
         >>> from eumos import Eumos
-        >>> model = RISCVModel(Eumos())
+        >>> model = Lome(Eumos())
         """
         self._eumos: Eumos = eumos
         self._state: State = State(eumos, memory=memory)
@@ -142,7 +142,7 @@ class RISCVModel:
 
         Examples
         --------
-        >>> # m = RISCVModel(isa)
+        >>> # m = Lome(isa)
         >>> # addi x1, x0, 7
         >>> instr = 0x13 | (1 << 7) | (0 << 12) | (0 << 15) | (7 << 20)
         >>> changes = m.execute(instr)
@@ -202,7 +202,7 @@ class RISCVModel:
 
         Examples
         --------
-        >>> # m = RISCVModel(isa)
+        >>> # m = Lome(isa)
         >>> m.poke_gpr(1, 10)
         0
         >>> # addi x2, x1, 5
@@ -231,7 +231,7 @@ class RISCVModel:
 
         Examples
         --------
-        >>> # m = RISCVModel(isa)
+        >>> # m = Lome(isa)
         >>> m.get_gpr(0)
         0
         """
@@ -254,7 +254,7 @@ class RISCVModel:
 
         Examples
         --------
-        >>> # m = RISCVModel(isa)
+        >>> # m = Lome(isa)
         >>> m.set_gpr(1, 42)
         0
         >>> m.get_gpr(1)
@@ -276,7 +276,7 @@ class RISCVModel:
 
         Examples
         --------
-        >>> # m = RISCVModel(isa)
+        >>> # m = Lome(isa)
         >>> m.peek_gpr(0)
         0
         """
@@ -301,7 +301,7 @@ class RISCVModel:
 
         Examples
         --------
-        >>> # m = RISCVModel(isa)
+        >>> # m = Lome(isa)
         >>> m.poke_gpr(1, 0xFF)
         0
         >>> m.get_gpr(1)
@@ -326,7 +326,7 @@ class RISCVModel:
 
         Examples
         --------
-        >>> # m = RISCVModel(isa)
+        >>> # m = Lome(isa)
         >>> m.get_csr("mstatus") is not None
         True
         >>> m.get_csr(0x300) is not None
@@ -353,7 +353,7 @@ class RISCVModel:
 
         Examples
         --------
-        >>> # m = RISCVModel(isa)
+        >>> # m = Lome(isa)
         >>> m.set_csr("mstatus", 0x1800)
         0
         >>> m.get_csr("mstatus")
@@ -377,7 +377,7 @@ class RISCVModel:
 
         Examples
         --------
-        >>> # m = RISCVModel(isa)
+        >>> # m = Lome(isa)
         >>> m.peek_csr(0x300) is not None
         True
         """
@@ -402,7 +402,7 @@ class RISCVModel:
 
         Examples
         --------
-        >>> # m = RISCVModel(isa)
+        >>> # m = Lome(isa)
         >>> m.poke_csr("mstatus", 0xABCD)
         0
         >>> m.peek_csr("mstatus")
@@ -483,7 +483,7 @@ class RISCVModel:
 
         Examples
         --------
-        >>> # m = RISCVModel(isa)
+        >>> # m = Lome(isa)
         >>> m.get_pc()
         0
         """
@@ -504,7 +504,7 @@ class RISCVModel:
 
         Examples
         --------
-        >>> # m = RISCVModel(isa)
+        >>> # m = Lome(isa)
         >>> m.set_pc(0x1000)
         0
         >>> m.get_pc()
@@ -521,7 +521,7 @@ class RISCVModel:
 
         Examples
         --------
-        >>> # m = RISCVModel(isa)
+        >>> # m = Lome(isa)
         >>> m.peek_pc()
         0
         """
@@ -542,7 +542,7 @@ class RISCVModel:
 
         Examples
         --------
-        >>> # m = RISCVModel(isa)
+        >>> # m = Lome(isa)
         >>> m.poke_pc(0x8000_0000)
         0
         """
@@ -570,7 +570,7 @@ class RISCVModel:
 
         Examples
         --------
-        >>> # m = RISCVModel(isa)
+        >>> # m = Lome(isa)
         >>> log = []
         >>> m.register_csr_write_hook(0x300, lambda st, a, o, n: log.append((o, n)))
         >>> m.set_csr("mstatus", 0xFF)
@@ -643,7 +643,7 @@ class RISCVModel:
 
         Examples
         --------
-        >>> # m = RISCVModel(isa)
+        >>> # m = Lome(isa)
         >>> # addi x1, x0, 5
         >>> instr = 0x13 | (1 << 7) | (0 << 12) | (0 << 15) | (5 << 20)
         >>> _ = m.execute(instr)
@@ -662,7 +662,7 @@ class RISCVModel:
 
         Examples
         --------
-        >>> # m = RISCVModel(isa)
+        >>> # m = Lome(isa)
         >>> m.get_branch_info() is None
         True
         """
@@ -677,7 +677,7 @@ class RISCVModel:
 
         Examples
         --------
-        >>> # m = RISCVModel(isa)
+        >>> # m = Lome(isa)
         >>> m.poke_gpr(1, 100)
         0
         >>> m.poke_pc(0x1000)
@@ -704,7 +704,7 @@ class RISCVModel:
 
         Examples
         --------
-        >>> # m = RISCVModel(isa)
+        >>> # m = Lome(isa)
         >>> m.poke_gpr(1, 42)
         0
         >>> data = m.export_state()
@@ -725,11 +725,11 @@ class RISCVModel:
 
         Examples
         --------
-        >>> # m = RISCVModel(isa)
+        >>> # m = Lome(isa)
         >>> m.poke_gpr(1, 42)
         0
         >>> data = m.export_state()
-        >>> # m2 = RISCVModel(isa)
+        >>> # m2 = Lome(isa)
         >>> m2.restore_state(data)
         >>> m2.get_gpr(1)
         42
@@ -751,14 +751,14 @@ class RISCVModel:
 
         Examples
         --------
-        >>> # m = RISCVModel(isa)
+        >>> # m = Lome(isa)
         >>> isinstance(m.export_state_json(), str)
         True
         """
         return self._state.export_state_json(indent=indent)
 
     @classmethod
-    def from_json(cls, json_str: str, eumos: Eumos) -> "RISCVModel":
+    def from_json(cls, json_str: str, eumos: Eumos) -> "Lome":
         """Create a new model from a JSON state string.
 
         Parameters
@@ -770,7 +770,7 @@ class RISCVModel:
 
         Returns
         -------
-        RISCVModel
+        Lome
         """
         import json as json_mod
 

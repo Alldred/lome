@@ -5,8 +5,8 @@
 
 from __future__ import annotations
 
-from riscv_model.changes import BranchInfo, ChangeRecord
-from riscv_model.state import State
+from lome.changes import BranchInfo, ChangeRecord
+from lome.state import State
 
 
 def execute_beq(operand_values: dict, state: State, pc: int) -> ChangeRecord:

@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: MIT
 # Copyright (c) 2026 Stuart Alldred.
 
-"""Tests for RISCVModel -- the primary public API.
+"""Tests for Lome -- the primary public API.
 
 Covers initialisation, instruction execution, speculation, branch handling,
 change tracking (simple and detailed dicts), reset, CSR operations, and

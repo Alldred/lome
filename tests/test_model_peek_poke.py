@@ -1,11 +1,11 @@
 # SPDX-License-Identifier: MIT
 # Copyright (c) 2026 Stuart Alldred.
 
-"""Tests for peek/poke and JSON export/restore on the RISCVModel level."""
+"""Tests for peek/poke and JSON export/restore on the Lome level."""
 
 import json
 
-from riscv_model import RISCVModel
+from lome import Lome
 
 # ====================================================================
 # GPR peek / poke via model
@@ -123,7 +123,7 @@ class TestModelJSONExportRestore:
         m.poke_pc(0x1000)
         data = m.export_state()
 
-        m2 = RISCVModel(eumos)
+        m2 = Lome(eumos)
         m2.restore_state(data)
         assert m2.get_gpr(1) == 42
         assert m2.get_pc() == 0x1000
@@ -147,7 +147,7 @@ class TestModelJSONExportRestore:
         m = model
         m.poke_gpr(5, 123)
         m.poke_pc(0x2000)
-        m2 = RISCVModel.from_json(m.export_state_json(), eumos)
+        m2 = Lome.from_json(m.export_state_json(), eumos)
         assert m2.get_gpr(5) == 123
         assert m2.get_pc() == 0x2000
 
@@ -160,7 +160,7 @@ class TestModelJSONExportRestore:
         m.poke_csr(0x300, 0xDEAD)
 
         json_str = m.export_state_json()
-        m2 = RISCVModel.from_json(json_str, eumos)
+        m2 = Lome.from_json(json_str, eumos)
 
         for i in range(1, 32):
             assert m2.get_gpr(i) == i * 1000
@@ -180,7 +180,7 @@ class TestModelJSONExportRestore:
         m.poke_csr(0x300, 0xCAFE)
         data = m.export_state()
 
-        m2 = RISCVModel(eumos)
+        m2 = Lome(eumos)
         m2.restore_state(data)
         assert m2.get_csr(0x300) == 0xCAFE
 
@@ -246,6 +246,6 @@ class TestModelReadOnlyIDCSRs:
         for name, addr in self._ID_CSRS.items():
             m.poke_csr(addr, addr)  # distinguishable values
 
-        m2 = RISCVModel.from_json(m.export_state_json(), eumos)
+        m2 = Lome.from_json(m.export_state_json(), eumos)
         for name, addr in self._ID_CSRS.items():
             assert m2.peek_csr(addr) == addr, f"{name} not preserved in round-trip"

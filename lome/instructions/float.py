@@ -8,8 +8,8 @@ from __future__ import annotations
 import math
 from typing import Optional
 
-from riscv_model.changes import ChangeRecord, FPRWrite, GPRWrite, MemoryAccess
-from riscv_model.float_utils import (
+from lome.changes import ChangeRecord, FPRWrite, GPRWrite, MemoryAccess
+from lome.float_utils import (
     bits_to_float_d,
     bits_to_float_s,
     effective_rounding_mode,
@@ -17,8 +17,8 @@ from riscv_model.float_utils import (
     float_to_bits_s,
     round_for_float,
 )
-from riscv_model.memory import MemoryInterface
-from riscv_model.state import State
+from lome.memory import MemoryInterface
+from lome.state import State
 
 _MASK_32 = 0xFFFF_FFFF
 _MASK_64 = 0xFFFF_FFFF_FFFF_FFFF

@@ -5,24 +5,24 @@
 
 # RISC-V Model API Reference
 
-The public API is the `RISCVModel` class and the change-tracking types it uses.
+The public API is the `Lome` class and the change-tracking types it uses.
 
 ## Package
 
 ```python
 from eumos import Eumos
-from riscv_model import RISCVModel
+from lome import Lome
 
 # Load Eumos once, share with the model, ISG, or any other component
 isa   = Eumos()
-model = RISCVModel(isa)
+model = Lome(isa)
 ```
 
 You can also import individual types:
 
 ```python
-from riscv_model import (
-    RISCVModel,
+from lome import (
+    Lome,
     State,
     ChangeRecord,
     GPRWrite,
@@ -34,7 +34,7 @@ from riscv_model import (
 
 ---
 
-## RISCVModel
+## Lome
 
 Main interface for instruction execution, speculation, and state access.
 
@@ -92,7 +92,7 @@ setup, debugging, and checkpoint restore.
 | **export_state** | `export_state() -> dict` | Export complete state as JSON-serialisable dict. |
 | **restore_state** | `restore_state(data: dict) -> None` | Restore from dict (raw — no hooks). |
 | **export_state_json** | `export_state_json(indent=2) -> str` | Export as formatted JSON string. |
-| **from_json** *(classmethod)* | `from_json(json_str, eumos) -> RISCVModel` | Create model from JSON string. |
+| **from_json** *(classmethod)* | `from_json(json_str, eumos) -> Lome` | Create model from JSON string. |
 
 #### Export Format
 
@@ -201,9 +201,9 @@ These CSRs are **read-only** architecturally:
 ### Basic Execution
 
 ```python
-from riscv_model import RISCVModel
+from lome import Lome
 
-model = RISCVModel(isa)
+model = Lome(isa)
 
 # ADDI x1, x0, 42
 addi = 0x13 | (1 << 7) | (0 << 12) | (0 << 15) | (42 << 20)
@@ -216,7 +216,7 @@ print(changes.to_simple_dict())            # {'gpr_changes': {1: 42}}
 ### Peek / Poke for Test Setup
 
 ```python
-model = RISCVModel(isa)
+model = Lome(isa)
 model.poke_gpr(1, 0x1000)    # raw setup — no side effects
 model.poke_pc(0x8000_0000)   # jump to a custom start address
 model.poke_csr(0x300, 0xFF)  # force mstatus — bypasses read-only & hooks
@@ -225,7 +225,7 @@ model.poke_csr(0x300, 0xFF)  # force mstatus — bypasses read-only & hooks
 ### Speculation
 
 ```python
-model = RISCVModel(isa)
+model = Lome(isa)
 model.poke_gpr(1, 10)
 addi = 0x13 | (2 << 7) | (0 << 12) | (1 << 15) | (5 << 20)
 spec = model.speculate(addi)
@@ -238,7 +238,7 @@ print(model.get_gpr(2))          # 0   (state unchanged)
 ```python
 import json
 
-model = RISCVModel(isa)
+model = Lome(isa)
 model.poke_gpr(1, 42)
 model.poke_pc(0x1000)
 
@@ -248,10 +248,10 @@ json_str = model.export_state_json(indent=2)
 print(json_str)
 
 # Restore
-model2 = RISCVModel(isa)
+model2 = Lome(isa)
 model2.restore_state(data)
 # or
-model3 = RISCVModel.from_json(json_str, isa)
+model3 = Lome.from_json(json_str, isa)
 
 assert model3.get_gpr(1) == 42
 assert model3.get_pc() == 0x1000
@@ -260,7 +260,7 @@ assert model3.get_pc() == 0x1000
 ### CSR Side Effects
 
 ```python
-model = RISCVModel(isa)
+model = Lome(isa)
 
 # Architectural write — triggers mstatus→sstatus mirroring
 model.set_csr("mstatus", 0x0000_0002)   # SIE bit
