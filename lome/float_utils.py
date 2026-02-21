@@ -16,7 +16,7 @@ from typing import TYPE_CHECKING
 from eumos.constants import R_DYN, RNE
 
 if TYPE_CHECKING:
-    from riscv_model.state import State
+    from lome.state import State
 
 _MASK_32 = 0xFFFF_FFFF
 _MASK_64 = 0xFFFF_FFFF_FFFF_FFFF

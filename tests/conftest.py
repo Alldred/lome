@@ -8,8 +8,8 @@ from __future__ import annotations
 import pytest
 from eumos import Eumos
 
-from riscv_model import RISCVModel
-from riscv_model.state import State
+from lome import Lome
+from lome.state import State
 
 # ------------------------------------------------------------------
 # Session-scoped Eumos singleton (loaded once, shared across tests)
@@ -34,6 +34,6 @@ def state(eumos: Eumos) -> State:
 
 
 @pytest.fixture()
-def model(eumos: Eumos) -> RISCVModel:
-    """Fresh :class:`RISCVModel` wired to the session Eumos data."""
-    return RISCVModel(eumos)
+def model(eumos: Eumos) -> Lome:
+    """Fresh :class:`Lome` wired to the session Eumos data."""
+    return Lome(eumos)

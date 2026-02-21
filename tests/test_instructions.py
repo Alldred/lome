@@ -360,8 +360,8 @@ class TestLoadStoreWithMemory:
 
     def test_lb_sign_extend_via_memory(self, eumos):
         """LB with memory: loaded byte is sign-extended into rd."""
-        from riscv_model import RISCVModel
-        from riscv_model.memory import MemoryInterface
+        from lome import Lome
+        from lome.memory import MemoryInterface
 
         class FakeMem(MemoryInterface):
             def __init__(self):
@@ -376,7 +376,7 @@ class TestLoadStoreWithMemory:
 
         fake = FakeMem()
         fake._loads[(0x1000, 1)] = 0xFF  # -1 as byte
-        model = RISCVModel(eumos, memory=fake)
+        model = Lome(eumos, memory=fake)
         model.poke_gpr(1, 0x1000)
         lb = _i_type(0x03, 2, 0, 1, 0)  # lb x2, 0(x1)
         model.execute(lb)
@@ -384,8 +384,8 @@ class TestLoadStoreWithMemory:
 
     def test_lbu_zero_extend_via_memory(self, eumos):
         """LBU with memory: loaded byte is zero-extended into rd."""
-        from riscv_model import RISCVModel
-        from riscv_model.memory import MemoryInterface
+        from lome import Lome
+        from lome.memory import MemoryInterface
 
         class FakeMem(MemoryInterface):
             def __init__(self):
@@ -400,7 +400,7 @@ class TestLoadStoreWithMemory:
 
         fake = FakeMem()
         fake._loads[(0x1000, 1)] = 0xFF
-        model = RISCVModel(eumos, memory=fake)
+        model = Lome(eumos, memory=fake)
         model.poke_gpr(1, 0x1000)
         lbu = _i_type(0x03, 2, 4, 1, 0)  # lbu x2, 0(x1)
         model.execute(lbu)
@@ -408,8 +408,8 @@ class TestLoadStoreWithMemory:
 
     def test_store_calls_memory_interface(self, eumos):
         """SB/SW with memory: store(addr, value, size) is called with expected args."""
-        from riscv_model import RISCVModel
-        from riscv_model.memory import MemoryInterface
+        from lome import Lome
+        from lome.memory import MemoryInterface
 
         class FakeMem(MemoryInterface):
             def __init__(self):
@@ -423,7 +423,7 @@ class TestLoadStoreWithMemory:
                 self.stores.append((addr, value, size))
 
         fake = FakeMem()
-        model = RISCVModel(eumos, memory=fake)
+        model = Lome(eumos, memory=fake)
         model.poke_gpr(1, 0x2000)
         model.poke_gpr(2, 0xAB)
         sb = _s_type(0x23, 0, 1, 2, 4)  # sb x2, 4(x1)
@@ -441,11 +441,11 @@ class TestRAS:
 
     def test_ras_push_on_jal_ra_pop_on_jalr_return(self, eumos):
         """JAL x1 pushes return address; JALR x0, x1, 0 pops and does not push (rd=x0)."""
-        from riscv_model import RISCVModel
-        from riscv_model.ras import RASModel
+        from lome import Lome
+        from lome.ras import RASModel
 
         ras = RASModel(size=4)
-        model = RISCVModel(eumos, ras=ras)
+        model = Lome(eumos, ras=ras)
         model.poke_pc(0x1000)
         # jal x1, 0x100  -> ra = 0x1004, pc = 0x1100
         jal = 0x6F | (1 << 7) | (0x40 << 21)  # rd=1 (ra), imm=0x100
@@ -461,11 +461,11 @@ class TestRAS:
 
     def test_ras_multiple_calls_depth(self, eumos):
         """Multiple JAL x1 increase RAS depth; JALR x0, x1, 0 pops each return."""
-        from riscv_model import RISCVModel
-        from riscv_model.ras import RASModel
+        from lome import Lome
+        from lome.ras import RASModel
 
         ras = RASModel(size=8)
-        model = RISCVModel(eumos, ras=ras)
+        model = Lome(eumos, ras=ras)
         model.poke_pc(0x1000)
         # jal x1, 0  (nop jump, return addr 0x1004)
         jal = 0x6F | (1 << 7) | (0 << 21)

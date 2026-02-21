@@ -38,11 +38,11 @@ uv sync --extra dev
 
 ```python
 from eumos import Eumos
-from riscv_model import RISCVModel
+from lome import Lome
 
 # Load Eumos once -- share with the model, ISG, or any other component
 isa   = Eumos()
-model = RISCVModel(isa)
+model = Lome(isa)
 
 # Execute instruction (32-bit integer or bytes)
 # addi x1, x0, 42
@@ -83,7 +83,7 @@ json_str = model.export_state_json()   # formatted JSON string
 # Restore
 model.restore_state(data)
 # or
-model2 = RISCVModel.from_json(json_str, isa)
+model2 = Lome.from_json(json_str, isa)
 ```
 
 ## Speculation
@@ -137,7 +137,7 @@ All CSRs currently defined in Eumos:
 uv sync --extra dev --upgrade-package eumos && uv run pytest
 
 # Run with coverage
-uv sync --extra dev --upgrade-package eumos && uv run pytest --cov=riscv_model --cov-report=term-missing
+uv sync --extra dev --upgrade-package eumos && uv run pytest --cov=lome --cov-report=term-missing
 ```
 
 ## Examples

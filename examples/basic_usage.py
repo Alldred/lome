@@ -24,7 +24,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from eumos import Eumos
 
-from riscv_model import RISCVModel
+from lome import Lome
 
 
 def main():
@@ -39,7 +39,7 @@ def main():
     isa = Eumos()
     print(f"   Loaded {len(isa.gprs)} GPR defs, {len(isa.csrs)} CSR defs\n")
 
-    model = RISCVModel(isa)
+    model = Lome(isa)
 
     # ------------------------------------------------------------------
     # 1. Simple arithmetic
@@ -55,7 +55,7 @@ def main():
     # 2. Peek / poke for state setup
     # ------------------------------------------------------------------
     print("2. Peek / poke (raw state manipulation)")
-    model2 = RISCVModel(isa)
+    model2 = Lome(isa)
     model2.poke_gpr(1, 0x1000)
     model2.poke_gpr(2, 0x2000)
     model2.poke_pc(0x8000_0000)
@@ -141,18 +141,18 @@ def main():
     print(f"   PC = {data['pc']}")
     print(f"   x1 = {data['gprs']['1']}")
 
-    restored = RISCVModel(isa)
+    restored = Lome(isa)
     restored.restore_state(data)
     print(f"   Restored: x1 = {restored.get_gpr(1)}, PC = 0x{restored.get_pc():x}")
 
-    model_from_json = RISCVModel.from_json(json_str, isa)
+    model_from_json = Lome.from_json(json_str, isa)
     print(f"   from_json: x1 = {model_from_json.get_gpr(1)}\n")
 
     # ------------------------------------------------------------------
     # 9. Read-only machine ID CSRs
     # ------------------------------------------------------------------
     print("9. Read-only machine ID CSRs")
-    model3 = RISCVModel(isa)
+    model3 = Lome(isa)
     id_csrs = ["mvendorid", "marchid", "mimpid", "mhartid"]
     for name in id_csrs:
         val = model3.get_csr(name)

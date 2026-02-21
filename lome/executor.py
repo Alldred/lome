@@ -11,9 +11,9 @@ in a handler table and delegates execution.  Unknown mnemonics produce a
 Speculation is handled transparently: the executor snapshots state before
 execution and restores it afterwards so the caller sees no mutations.
 
-Example -- direct use (normally called by :class:`RISCVModel`)::
+Example -- direct use (normally called by :class:`Lome`)::
 
-    from riscv_model.executor import execute_instruction
+    from lome.executor import execute_instruction
     changes = execute_instruction(instance, state, pc, speculate=False)
 """
 
@@ -21,8 +21,8 @@ from __future__ import annotations
 
 from typing import Any, Optional
 
-from riscv_model.changes import ChangeRecord
-from riscv_model.instructions import (
+from lome.changes import ChangeRecord
+from lome.instructions import (
     arithmetic,
     branch,
     compare,
@@ -32,12 +32,12 @@ from riscv_model.instructions import (
     shift,
     system,
 )
-from riscv_model.instructions import (
+from lome.instructions import (
     float as float_ins,
 )
-from riscv_model.memory import MemoryInterface
-from riscv_model.ras import RASModel
-from riscv_model.state import State
+from lome.memory import MemoryInterface
+from lome.ras import RASModel
+from lome.state import State
 
 _LOAD_STORE_MNEMONICS: frozenset[str] = frozenset(
     {
@@ -242,12 +242,12 @@ def execute_instruction(
     Examples
     --------
     This function is normally called internally by
-    :meth:`RISCVModel.execute`, but can be used directly for low-level
+    :meth:`Lome.execute`, but can be used directly for low-level
     testing::
 
         from eumos import Eumos
-        from riscv_model.executor import execute_instruction
-        from riscv_model.state import State
+        from lome.executor import execute_instruction
+        from lome.state import State
 
         state = State(Eumos())
         # (decode an instruction with Eumos to get instance)

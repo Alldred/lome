@@ -7,9 +7,9 @@ from __future__ import annotations
 
 from typing import Optional
 
-from riscv_model.changes import ChangeRecord, GPRWrite
-from riscv_model.ras import RASModel
-from riscv_model.state import State
+from lome.changes import ChangeRecord, GPRWrite
+from lome.ras import RASModel
+from lome.state import State
 
 
 def execute_jal(

@@ -464,7 +464,7 @@ class TestExecutorEdgeCases:
 
     def test_none_instruction_returns_none(self, state):
         """execute_instruction(None, ...) returns None."""
-        from riscv_model.executor import execute_instruction
+        from lome.executor import execute_instruction
 
         s = state
         assert execute_instruction(None, s, 0) is None
