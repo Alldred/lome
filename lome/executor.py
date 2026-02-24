@@ -276,20 +276,10 @@ def execute_instruction(
         # Snapshot → execute → restore
         snapshot = state.snapshot()
         try:
-            changes = handler(instruction_instance.operand_values, state, pc, **kwargs)
-            return changes
-        except Exception as exc:
-            changes = ChangeRecord()
-            changes.exception = f"execution_error: {exc}"
-            return changes
+            return handler(instruction_instance.operand_values, state, pc, **kwargs)
         finally:
             state.restore(snapshot)
-    else:
-        # Normal execution -- state is mutated in-place
-        # Note: PC advancement is handled by the model, not here.
-        try:
-            return handler(instruction_instance.operand_values, state, pc, **kwargs)
-        except Exception as exc:
-            changes = ChangeRecord()
-            changes.exception = f"execution_error: {exc}"
-            return changes
+
+    # Normal execution -- state is mutated in-place.
+    # Note: PC advancement is handled by the model, not here.
+    return handler(instruction_instance.operand_values, state, pc, **kwargs)
