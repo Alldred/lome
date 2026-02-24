@@ -5,7 +5,8 @@
 
 from __future__ import annotations
 
-from lome.changes import ChangeRecord, GPRRead, GPRWrite
+from lome.changes import ChangeRecord
+from lome.instructions.common import read_gpr, write_gpr
 from lome.state import State
 
 
@@ -31,16 +32,11 @@ def execute_and(operand_values: dict, state: State, pc: int) -> ChangeRecord:
     rs1_idx = operand_values.get("rs1")
     rs2_idx = operand_values.get("rs2")
 
-    rs1_val = state.get_gpr(rs1_idx)
-    rs2_val = state.get_gpr(rs2_idx)
-    if rs1_idx is not None:
-        changes.gpr_reads.append(GPRRead(register=rs1_idx, value=rs1_val))
-    if rs2_idx is not None:
-        changes.gpr_reads.append(GPRRead(register=rs2_idx, value=rs2_val))
+    rs1_val = read_gpr(changes, state, rs1_idx)
+    rs2_val = read_gpr(changes, state, rs2_idx)
     result = rs1_val & rs2_val
 
-    old_value = state.set_gpr(rd, result)
-    changes.gpr_writes.append(GPRWrite(register=rd, value=result, old_value=old_value))
+    write_gpr(changes, state, rd, result)
     return changes
 
 
@@ -67,13 +63,10 @@ def execute_andi(operand_values: dict, state: State, pc: int) -> ChangeRecord:
     rs1_idx = operand_values.get("rs1")
     imm = operand_values.get("imm")
 
-    rs1_val = state.get_gpr(rs1_idx)
-    if rs1_idx is not None:
-        changes.gpr_reads.append(GPRRead(register=rs1_idx, value=rs1_val))
+    rs1_val = read_gpr(changes, state, rs1_idx)
     result = rs1_val & imm
 
-    old_value = state.set_gpr(rd, result)
-    changes.gpr_writes.append(GPRWrite(register=rd, value=result, old_value=old_value))
+    write_gpr(changes, state, rd, result)
     return changes
 
 
@@ -99,16 +92,11 @@ def execute_or(operand_values: dict, state: State, pc: int) -> ChangeRecord:
     rs1_idx = operand_values.get("rs1")
     rs2_idx = operand_values.get("rs2")
 
-    rs1_val = state.get_gpr(rs1_idx)
-    rs2_val = state.get_gpr(rs2_idx)
-    if rs1_idx is not None:
-        changes.gpr_reads.append(GPRRead(register=rs1_idx, value=rs1_val))
-    if rs2_idx is not None:
-        changes.gpr_reads.append(GPRRead(register=rs2_idx, value=rs2_val))
+    rs1_val = read_gpr(changes, state, rs1_idx)
+    rs2_val = read_gpr(changes, state, rs2_idx)
     result = rs1_val | rs2_val
 
-    old_value = state.set_gpr(rd, result)
-    changes.gpr_writes.append(GPRWrite(register=rd, value=result, old_value=old_value))
+    write_gpr(changes, state, rd, result)
     return changes
 
 
@@ -135,13 +123,10 @@ def execute_ori(operand_values: dict, state: State, pc: int) -> ChangeRecord:
     rs1_idx = operand_values.get("rs1")
     imm = operand_values.get("imm")
 
-    rs1_val = state.get_gpr(rs1_idx)
-    if rs1_idx is not None:
-        changes.gpr_reads.append(GPRRead(register=rs1_idx, value=rs1_val))
+    rs1_val = read_gpr(changes, state, rs1_idx)
     result = rs1_val | imm
 
-    old_value = state.set_gpr(rd, result)
-    changes.gpr_writes.append(GPRWrite(register=rd, value=result, old_value=old_value))
+    write_gpr(changes, state, rd, result)
     return changes
 
 
@@ -167,16 +152,11 @@ def execute_xor(operand_values: dict, state: State, pc: int) -> ChangeRecord:
     rs1_idx = operand_values.get("rs1")
     rs2_idx = operand_values.get("rs2")
 
-    rs1_val = state.get_gpr(rs1_idx)
-    rs2_val = state.get_gpr(rs2_idx)
-    if rs1_idx is not None:
-        changes.gpr_reads.append(GPRRead(register=rs1_idx, value=rs1_val))
-    if rs2_idx is not None:
-        changes.gpr_reads.append(GPRRead(register=rs2_idx, value=rs2_val))
+    rs1_val = read_gpr(changes, state, rs1_idx)
+    rs2_val = read_gpr(changes, state, rs2_idx)
     result = rs1_val ^ rs2_val
 
-    old_value = state.set_gpr(rd, result)
-    changes.gpr_writes.append(GPRWrite(register=rd, value=result, old_value=old_value))
+    write_gpr(changes, state, rd, result)
     return changes
 
 
@@ -204,10 +184,7 @@ def execute_xori(operand_values: dict, state: State, pc: int) -> ChangeRecord:
     rs1_idx = operand_values.get("rs1")
     imm = operand_values.get("imm")
 
-    rs1_val = state.get_gpr(rs1_idx)
-    if rs1_idx is not None:
-        changes.gpr_reads.append(GPRRead(register=rs1_idx, value=rs1_val))
+    rs1_val = read_gpr(changes, state, rs1_idx)
     result = rs1_val ^ imm
-    old_value = state.set_gpr(rd, result)
-    changes.gpr_writes.append(GPRWrite(register=rd, value=result, old_value=old_value))
+    write_gpr(changes, state, rd, result)
     return changes

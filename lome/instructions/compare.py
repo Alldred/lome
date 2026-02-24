@@ -5,7 +5,8 @@
 
 from __future__ import annotations
 
-from lome.changes import ChangeRecord, GPRRead, GPRWrite
+from lome.changes import ChangeRecord
+from lome.instructions.common import read_gpr, signed64, write_gpr
 from lome.state import State
 
 
@@ -32,22 +33,12 @@ def execute_slt(operand_values: dict, state: State, pc: int) -> ChangeRecord:
     rs1_idx = operand_values.get("rs1")
     rs2_idx = operand_values.get("rs2")
 
-    rs1_val = state.get_gpr(rs1_idx)
-    rs2_val = state.get_gpr(rs2_idx)
-    if rs1_idx is not None:
-        changes.gpr_reads.append(GPRRead(register=rs1_idx, value=rs1_val))
-    if rs2_idx is not None:
-        changes.gpr_reads.append(GPRRead(register=rs2_idx, value=rs2_val))
-    # Signed comparison: treat as signed integers
-    rs1_signed = (
-        rs1_val if rs1_val < 0x8000000000000000 else rs1_val - 0x10000000000000000
-    )
-    rs2_signed = (
-        rs2_val if rs2_val < 0x8000000000000000 else rs2_val - 0x10000000000000000
-    )
+    rs1_val = read_gpr(changes, state, rs1_idx)
+    rs2_val = read_gpr(changes, state, rs2_idx)
+    rs1_signed = signed64(rs1_val)
+    rs2_signed = signed64(rs2_val)
     result = 1 if rs1_signed < rs2_signed else 0
-    old_value = state.set_gpr(rd, result)
-    changes.gpr_writes.append(GPRWrite(register=rd, value=result, old_value=old_value))
+    write_gpr(changes, state, rd, result)
     return changes
 
 
@@ -74,17 +65,11 @@ def execute_slti(operand_values: dict, state: State, pc: int) -> ChangeRecord:
     rs1_idx = operand_values.get("rs1")
     imm = operand_values.get("imm")
 
-    rs1_val = state.get_gpr(rs1_idx)
-    if rs1_idx is not None:
-        changes.gpr_reads.append(GPRRead(register=rs1_idx, value=rs1_val))
-    # Signed comparison: treat as signed integers
-    rs1_signed = (
-        rs1_val if rs1_val < 0x8000000000000000 else rs1_val - 0x10000000000000000
-    )
-    imm_signed = imm if imm < 0x8000000000000000 else imm - 0x10000000000000000
+    rs1_val = read_gpr(changes, state, rs1_idx)
+    rs1_signed = signed64(rs1_val)
+    imm_signed = signed64(imm)
     result = 1 if rs1_signed < imm_signed else 0
-    old_value = state.set_gpr(rd, result)
-    changes.gpr_writes.append(GPRWrite(register=rd, value=result, old_value=old_value))
+    write_gpr(changes, state, rd, result)
     return changes
 
 
@@ -111,16 +96,10 @@ def execute_sltu(operand_values: dict, state: State, pc: int) -> ChangeRecord:
     rs1_idx = operand_values.get("rs1")
     rs2_idx = operand_values.get("rs2")
 
-    rs1_val = state.get_gpr(rs1_idx)
-    rs2_val = state.get_gpr(rs2_idx)
-    if rs1_idx is not None:
-        changes.gpr_reads.append(GPRRead(register=rs1_idx, value=rs1_val))
-    if rs2_idx is not None:
-        changes.gpr_reads.append(GPRRead(register=rs2_idx, value=rs2_val))
-    # Unsigned comparison
+    rs1_val = read_gpr(changes, state, rs1_idx)
+    rs2_val = read_gpr(changes, state, rs2_idx)
     result = 1 if rs1_val < rs2_val else 0
-    old_value = state.set_gpr(rd, result)
-    changes.gpr_writes.append(GPRWrite(register=rd, value=result, old_value=old_value))
+    write_gpr(changes, state, rd, result)
     return changes
 
 
@@ -147,13 +126,8 @@ def execute_sltiu(operand_values: dict, state: State, pc: int) -> ChangeRecord:
     rs1_idx = operand_values.get("rs1")
     imm = operand_values.get("imm")
 
-    rs1_val = state.get_gpr(rs1_idx)
-    if rs1_idx is not None:
-        changes.gpr_reads.append(GPRRead(register=rs1_idx, value=rs1_val))
-    # Treat immediate as unsigned (zero-extend)
+    rs1_val = read_gpr(changes, state, rs1_idx)
     imm_unsigned = imm & 0xFFFFFFFFFFFFFFFF
-    # Unsigned comparison
     result = 1 if rs1_val < imm_unsigned else 0
-    old_value = state.set_gpr(rd, result)
-    changes.gpr_writes.append(GPRWrite(register=rd, value=result, old_value=old_value))
+    write_gpr(changes, state, rd, result)
     return changes
