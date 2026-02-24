@@ -14,11 +14,13 @@ _SIGN_32 = 0x8000_0000
 _SIGN_64 = 0x8000_0000_0000_0000
 
 
-def read_gpr(changes: ChangeRecord, state: State, reg: int) -> int:
+def read_gpr(changes: ChangeRecord, state: State, reg: int | None) -> int:
     """Read a GPR and record the read in *changes*."""
+    if reg is None:
+        # No register to read; return a neutral value and do not record a read.
+        return 0
     value = state.get_gpr(reg)
-    if reg is not None:
-        changes.gpr_reads.append(GPRRead(register=reg, value=value))
+    changes.gpr_reads.append(GPRRead(register=reg, value=value))
     return value
 
 
