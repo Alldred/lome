@@ -117,10 +117,10 @@ class State:
         }
 
         # Initialise GPRs with reset values
-        self._gprs: Dict[int, int] = {}
-        for idx in range(_NUM_GPRS):
-            gpr_def = self._gpr_defs.get(idx)
-            self._gprs[idx] = gpr_def.reset_value if gpr_def else 0
+        self._gprs: list[int] = [
+            (self._gpr_defs[idx].reset_value if idx in self._gpr_defs else 0)
+            for idx in range(_NUM_GPRS)
+        ]
 
         # Initialise CSRs with reset values
         self._csrs: Dict[int, int] = {}
@@ -134,10 +134,10 @@ class State:
 
         # FPR definitions and storage (from Eumos)
         self._fpr_defs: Dict[int, FPRDef] = getattr(eumos, "fprs", {}) or {}
-        self._fprs: Dict[int, int] = {}
-        for idx in range(_NUM_FPRS):
-            fpr_def = self._fpr_defs.get(idx)
-            self._fprs[idx] = fpr_def.reset_value if fpr_def else 0
+        self._fprs: list[int] = [
+            (self._fpr_defs[idx].reset_value if idx in self._fpr_defs else 0)
+            for idx in range(_NUM_FPRS)
+        ]
 
         # CSR side-effect hooks -----------------------------------------
         # Mapping of CSR address -> list of callbacks invoked *after* an
@@ -199,7 +199,7 @@ class State:
         """
         if not (0 <= reg <= 31):
             raise ValueError(f"GPR index must be 0-31, got {reg}")
-        return self._gprs.get(reg, 0)
+        return self._gprs[reg]
 
     def poke_gpr(self, reg: int, value: int) -> int:
         """Write a raw value to a GPR -- no architectural checks or side effects.
@@ -235,7 +235,7 @@ class State:
         """
         if not (0 <= reg <= 31):
             raise ValueError(f"GPR index must be 0-31, got {reg}")
-        old = self._gprs.get(reg, 0)
+        old = self._gprs[reg]
         self._gprs[reg] = value & _MASK_64
         return old
 
@@ -275,7 +275,7 @@ class State:
             raise ValueError(f"GPR index must be 0-31, got {reg}")
         if reg == 0:
             return 0  # x0 is hardwired to zero
-        return self._gprs.get(reg, 0)
+        return self._gprs[reg]
 
     def set_gpr(self, reg: int, value: int) -> int:
         """Write a GPR with architectural semantics.
@@ -317,7 +317,7 @@ class State:
             raise ValueError(f"GPR index must be 0-31, got {reg}")
         if reg == 0:
             return 0  # x0 is read-only
-        old = self._gprs.get(reg, 0)
+        old = self._gprs[reg]
         self._gprs[reg] = value & _MASK_64
         return old
 
@@ -347,7 +347,7 @@ class State:
         """
         if not (0 <= reg <= 31):
             raise ValueError(f"FPR index must be 0-31, got {reg}")
-        return self._fprs.get(reg, 0) & _MASK_64
+        return self._fprs[reg] & _MASK_64
 
     def poke_fpr(self, reg: int, value: int) -> int:
         """Write a raw value to an FPR -- no side effects.
@@ -371,7 +371,7 @@ class State:
         """
         if not (0 <= reg <= 31):
             raise ValueError(f"FPR index must be 0-31, got {reg}")
-        old = self._fprs.get(reg, 0)
+        old = self._fprs[reg]
         self._fprs[reg] = value & _MASK_64
         return old
 
@@ -397,7 +397,7 @@ class State:
         """
         if not (0 <= reg <= 31):
             raise ValueError(f"FPR index must be 0-31, got {reg}")
-        return self._fprs.get(reg, 0) & _MASK_64
+        return self._fprs[reg] & _MASK_64
 
     def set_fpr(self, reg: int, value: int) -> int:
         """Write an FPR with architectural semantics.
@@ -421,7 +421,7 @@ class State:
         """
         if not (0 <= reg <= 31):
             raise ValueError(f"FPR index must be 0-31, got {reg}")
-        old = self._fprs.get(reg, 0)
+        old = self._fprs[reg]
         self._fprs[reg] = value & _MASK_64
         return old
 
@@ -912,11 +912,35 @@ class State:
             and ``pc`` are optional; only present keys are restored.
         """
         if "gprs" in snapshot:
-            self._gprs = snapshot["gprs"].copy()
+            gprs_snapshot = snapshot["gprs"]
+            if isinstance(gprs_snapshot, list):
+                restored = [int(v) & _MASK_64 for v in gprs_snapshot[:_NUM_GPRS]]
+                if len(restored) < _NUM_GPRS:
+                    restored.extend([0] * (_NUM_GPRS - len(restored)))
+                self._gprs = restored
+            elif isinstance(gprs_snapshot, dict):
+                restored = self._gprs.copy()
+                for key, value in gprs_snapshot.items():
+                    idx = int(key)
+                    if 0 <= idx < _NUM_GPRS:
+                        restored[idx] = int(value) & _MASK_64
+                self._gprs = restored
         if "csrs" in snapshot:
             self._csrs = snapshot["csrs"].copy()
         if "fprs" in snapshot:
-            self._fprs = snapshot["fprs"].copy()
+            fprs_snapshot = snapshot["fprs"]
+            if isinstance(fprs_snapshot, list):
+                restored = [int(v) & _MASK_64 for v in fprs_snapshot[:_NUM_FPRS]]
+                if len(restored) < _NUM_FPRS:
+                    restored.extend([0] * (_NUM_FPRS - len(restored)))
+                self._fprs = restored
+            elif isinstance(fprs_snapshot, dict):
+                restored = self._fprs.copy()
+                for key, value in fprs_snapshot.items():
+                    idx = int(key)
+                    if 0 <= idx < _NUM_FPRS:
+                        restored[idx] = int(value) & _MASK_64
+                self._fprs = restored
         if "pc" in snapshot:
             self._pc = snapshot["pc"]
 
@@ -1059,10 +1083,15 @@ class State:
             self._pc = int(data["pc"]) & _MASK_64
 
         if "gprs" in data:
-            for key, value in data["gprs"].items():
-                idx = int(key)
-                if 0 <= idx <= 31:
+            gprs_data = data["gprs"]
+            if isinstance(gprs_data, list):
+                for idx, value in enumerate(gprs_data[:_NUM_GPRS]):
                     self._gprs[idx] = int(value) & _MASK_64
+            else:
+                for key, value in gprs_data.items():
+                    idx = int(key)
+                    if 0 <= idx <= 31:
+                        self._gprs[idx] = int(value) & _MASK_64
 
         if "csrs" in data:
             for key, value in data["csrs"].items():
@@ -1074,10 +1103,15 @@ class State:
                     )
 
         if "fprs" in data:
-            for key, value in data["fprs"].items():
-                idx = int(key)
-                if 0 <= idx <= 31:
+            fprs_data = data["fprs"]
+            if isinstance(fprs_data, list):
+                for idx, value in enumerate(fprs_data[:_NUM_FPRS]):
                     self._fprs[idx] = int(value) & _MASK_64
+            else:
+                for key, value in fprs_data.items():
+                    idx = int(key)
+                    if 0 <= idx <= 31:
+                        self._fprs[idx] = int(value) & _MASK_64
 
     def export_state_json(self, indent: int = 2) -> str:
         """Export state as a formatted JSON string.
