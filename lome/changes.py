@@ -13,6 +13,7 @@ via :meth:`ChangeRecord.to_simple_dict` / :meth:`ChangeRecord.to_detailed_dict`.
 
 Dataclasses
 -----------
+* :class:`GPRRead`   -- a single GPR read
 * :class:`GPRWrite`  -- a single GPR write
 * :class:`FPRWrite`  -- a single FPR write
 * :class:`CSRWrite`  -- a single CSR write
@@ -38,6 +39,28 @@ from typing import Dict, List, Optional, Tuple
 # ---------------------------------------------------------------------------
 # Dataclasses
 # ---------------------------------------------------------------------------
+
+
+@dataclass
+class GPRRead:
+    """Record of a single GPR read operation.
+
+    Attributes
+    ----------
+    register : int
+        GPR index (0-31).
+    value : int
+        Value read (architectural; x0 is always 0).
+
+    Examples
+    --------
+    >>> r = GPRRead(register=1, value=10)
+    >>> r.register
+    1
+    """
+
+    register: int
+    value: int
 
 
 @dataclass
@@ -188,6 +211,8 @@ class ChangeRecord:
 
     Attributes
     ----------
+    gpr_reads : list[GPRRead]
+        GPR read operations.
     gpr_writes : list[GPRWrite]
         GPR write operations.
     fpr_writes : list[FPRWrite]
@@ -218,6 +243,7 @@ class ChangeRecord:
     {1: (42, 0)}
     """
 
+    gpr_reads: List[GPRRead] = field(default_factory=list)
     gpr_writes: List[GPRWrite] = field(default_factory=list)
     fpr_writes: List[FPRWrite] = field(default_factory=list)
     csr_writes: List[CSRWrite] = field(default_factory=list)
@@ -241,7 +267,8 @@ class ChangeRecord:
         True
         """
         return (
-            len(self.gpr_writes) > 0
+            len(self.gpr_reads) > 0
+            or len(self.gpr_writes) > 0
             or len(self.fpr_writes) > 0
             or len(self.csr_writes) > 0
             or self.pc_change is not None
@@ -252,6 +279,20 @@ class ChangeRecord:
         )
 
     # ---- convenience getters ------------------------------------------
+
+    def get_gpr_reads(self) -> Dict[int, int]:
+        """Return GPR reads as ``{register: value}``.
+
+        If the same register is read multiple times, the last value wins.
+
+        Examples
+        --------
+        >>> cr = ChangeRecord()
+        >>> cr.gpr_reads.append(GPRRead(register=5, value=10))
+        >>> cr.get_gpr_reads()
+        {5: 10}
+        """
+        return {r.register: r.value for r in self.gpr_reads}
 
     def get_gpr_changes(self) -> Dict[int, Tuple[int, int]]:
         """Return GPR changes as ``{register: (new_value, old_value)}``.
@@ -332,8 +373,9 @@ class ChangeRecord:
         Returns
         -------
         dict
-            Keys: ``gpr_writes``, ``csr_writes``, ``pc_change``,
-            ``memory_accesses``, ``branch_info``, ``exception``.
+            Keys: ``gpr_reads``, ``gpr_writes``, ``fpr_writes``,
+            ``csr_writes``, ``pc_change``, ``memory_accesses``,
+            ``branch_info``, ``exception``, ``exception_code``.
 
         Examples
         --------
@@ -344,6 +386,13 @@ class ChangeRecord:
         42
         """
         return {
+            "gpr_reads": [
+                {
+                    "register": r.register,
+                    "value": r.value,
+                }
+                for r in self.gpr_reads
+            ],
             "gpr_writes": [
                 {
                     "register": w.register,
@@ -410,6 +459,8 @@ class ChangeRecord:
         {'gpr_changes': {1: 42}}
         """
         result: Dict = {}
+        if self.gpr_reads:
+            result["gpr_reads"] = self.get_gpr_reads()
         if self.gpr_writes:
             result["gpr_changes"] = {
                 reg: new for reg, (new, _) in self.get_gpr_changes().items()

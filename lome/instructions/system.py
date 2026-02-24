@@ -5,7 +5,7 @@
 
 from __future__ import annotations
 
-from lome.changes import ChangeRecord, CSRWrite, GPRWrite
+from lome.changes import ChangeRecord, CSRWrite, GPRRead, GPRWrite
 from lome.state import State
 
 
@@ -35,6 +35,8 @@ def execute_csrrw(operand_values: dict, state: State, pc: int) -> ChangeRecord:
     rs1_val = state.get_gpr(rs1_idx)
 
     changes = ChangeRecord()
+    if rs1_idx is not None:
+        changes.gpr_reads.append(GPRRead(register=rs1_idx, value=rs1_val))
     # Write CSR
     old_csr_val = state.set_csr(csr_addr, rs1_val)
     if old_csr_val is not None:
@@ -80,6 +82,8 @@ def execute_csrrs(operand_values: dict, state: State, pc: int) -> ChangeRecord:
     rs1_val = state.get_gpr(rs1_idx)
 
     changes = ChangeRecord()
+    if rs1_idx is not None:
+        changes.gpr_reads.append(GPRRead(register=rs1_idx, value=rs1_val))
     # Update CSR (only if rs1 != 0)
     if rs1_val != 0 and csr_val is not None:
         new_csr_val = csr_val | rs1_val
@@ -130,6 +134,8 @@ def execute_csrrc(operand_values: dict, state: State, pc: int) -> ChangeRecord:
     rs1_val = state.get_gpr(rs1_idx)
 
     changes = ChangeRecord()
+    if rs1_idx is not None:
+        changes.gpr_reads.append(GPRRead(register=rs1_idx, value=rs1_val))
     # Update CSR (only if rs1 != 0)
     if rs1_val != 0 and csr_val is not None:
         new_csr_val = csr_val & ~rs1_val

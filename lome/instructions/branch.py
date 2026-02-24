@@ -5,7 +5,7 @@
 
 from __future__ import annotations
 
-from lome.changes import BranchInfo, ChangeRecord
+from lome.changes import BranchInfo, ChangeRecord, GPRRead
 from lome.state import State
 
 
@@ -37,6 +37,10 @@ def execute_beq(operand_values: dict, state: State, pc: int) -> ChangeRecord:
     target = pc + imm if taken else pc + 4
 
     changes = ChangeRecord()
+    if rs1_idx is not None:
+        changes.gpr_reads.append(GPRRead(register=rs1_idx, value=rs1_val))
+    if rs2_idx is not None:
+        changes.gpr_reads.append(GPRRead(register=rs2_idx, value=rs2_val))
     changes.branch_info = BranchInfo(taken=taken, target=target, condition="eq")
     changes.pc_change = (target, pc)
     return changes
@@ -70,6 +74,10 @@ def execute_bne(operand_values: dict, state: State, pc: int) -> ChangeRecord:
     target = pc + imm if taken else pc + 4
 
     changes = ChangeRecord()
+    if rs1_idx is not None:
+        changes.gpr_reads.append(GPRRead(register=rs1_idx, value=rs1_val))
+    if rs2_idx is not None:
+        changes.gpr_reads.append(GPRRead(register=rs2_idx, value=rs2_val))
     changes.branch_info = BranchInfo(taken=taken, target=target, condition="ne")
     changes.pc_change = (target, pc)
     return changes
@@ -110,6 +118,10 @@ def execute_blt(operand_values: dict, state: State, pc: int) -> ChangeRecord:
     target = pc + imm if taken else pc + 4
 
     changes = ChangeRecord()
+    if rs1_idx is not None:
+        changes.gpr_reads.append(GPRRead(register=rs1_idx, value=rs1_val))
+    if rs2_idx is not None:
+        changes.gpr_reads.append(GPRRead(register=rs2_idx, value=rs2_val))
     changes.branch_info = BranchInfo(taken=taken, target=target, condition="lt")
     changes.pc_change = (target, pc)
     return changes
@@ -150,6 +162,10 @@ def execute_bge(operand_values: dict, state: State, pc: int) -> ChangeRecord:
     target = pc + imm if taken else pc + 4
 
     changes = ChangeRecord()
+    if rs1_idx is not None:
+        changes.gpr_reads.append(GPRRead(register=rs1_idx, value=rs1_val))
+    if rs2_idx is not None:
+        changes.gpr_reads.append(GPRRead(register=rs2_idx, value=rs2_val))
     changes.branch_info = BranchInfo(taken=taken, target=target, condition="ge")
     changes.pc_change = (target, pc)
     return changes
@@ -183,6 +199,10 @@ def execute_bltu(operand_values: dict, state: State, pc: int) -> ChangeRecord:
     target = pc + imm if taken else pc + 4
 
     changes = ChangeRecord()
+    if rs1_idx is not None:
+        changes.gpr_reads.append(GPRRead(register=rs1_idx, value=rs1_val))
+    if rs2_idx is not None:
+        changes.gpr_reads.append(GPRRead(register=rs2_idx, value=rs2_val))
     changes.branch_info = BranchInfo(taken=taken, target=target, condition="ltu")
     changes.pc_change = (target, pc)
     return changes
@@ -216,6 +236,10 @@ def execute_bgeu(operand_values: dict, state: State, pc: int) -> ChangeRecord:
     target = pc + imm if taken else pc + 4
 
     changes = ChangeRecord()
+    if rs1_idx is not None:
+        changes.gpr_reads.append(GPRRead(register=rs1_idx, value=rs1_val))
+    if rs2_idx is not None:
+        changes.gpr_reads.append(GPRRead(register=rs2_idx, value=rs2_val))
     changes.branch_info = BranchInfo(taken=taken, target=target, condition="geu")
     changes.pc_change = (target, pc)
     return changes

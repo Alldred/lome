@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from typing import Optional
 
-from lome.changes import ChangeRecord, GPRWrite
+from lome.changes import ChangeRecord, GPRRead, GPRWrite
 from lome.ras import RASModel
 from lome.state import State
 
@@ -94,6 +94,8 @@ def execute_jalr(
         ras.push(return_addr)
 
     changes = ChangeRecord()
+    if rs1_idx is not None:
+        changes.gpr_reads.append(GPRRead(register=rs1_idx, value=rs1_val))
     # Write return address to rd
     old_value = state.set_gpr(rd, return_addr)
     changes.gpr_writes.append(

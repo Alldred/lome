@@ -8,7 +8,7 @@ from __future__ import annotations
 import math
 from typing import Optional
 
-from lome.changes import ChangeRecord, FPRWrite, GPRWrite, MemoryAccess
+from lome.changes import ChangeRecord, FPRWrite, GPRRead, GPRWrite, MemoryAccess
 from lome.float_utils import (
     bits_to_float_d,
     bits_to_float_s,
@@ -40,10 +40,13 @@ def execute_flw(
     rd = operand_values.get("rd")
     rs1_idx = operand_values.get("rs1")
     imm = operand_values.get("imm", 0)
-    addr = state.get_gpr(rs1_idx) + imm
+    base = state.get_gpr(rs1_idx)
+    addr = base + imm
     value = memory.load(addr, 4) if memory else 0
     value = value & _MASK_32
     changes = ChangeRecord()
+    if rs1_idx is not None:
+        changes.gpr_reads.append(GPRRead(register=rs1_idx, value=base))
     changes.memory_accesses.append(
         MemoryAccess(address=addr, value=None, size=4, is_write=False)
     )
@@ -63,9 +66,12 @@ def execute_fsw(
     rs1_idx = operand_values.get("rs1")
     rs2_idx = operand_values.get("rs2")
     imm = operand_values.get("imm", 0)
-    addr = state.get_gpr(rs1_idx) + imm
+    base = state.get_gpr(rs1_idx)
+    addr = base + imm
     value = state.get_fpr(rs2_idx) & _MASK_32
     changes = ChangeRecord()
+    if rs1_idx is not None:
+        changes.gpr_reads.append(GPRRead(register=rs1_idx, value=base))
     if memory:
         memory.store(addr, value, 4)
     changes.memory_accesses.append(
@@ -85,10 +91,13 @@ def execute_fld(
     rd = operand_values.get("rd")
     rs1_idx = operand_values.get("rs1")
     imm = operand_values.get("imm", 0)
-    addr = state.get_gpr(rs1_idx) + imm
+    base = state.get_gpr(rs1_idx)
+    addr = base + imm
     value = memory.load(addr, 8) if memory else 0
     value = value & _MASK_64
     changes = ChangeRecord()
+    if rs1_idx is not None:
+        changes.gpr_reads.append(GPRRead(register=rs1_idx, value=base))
     changes.memory_accesses.append(
         MemoryAccess(address=addr, value=None, size=8, is_write=False)
     )
@@ -108,9 +117,12 @@ def execute_fsd(
     rs1_idx = operand_values.get("rs1")
     rs2_idx = operand_values.get("rs2")
     imm = operand_values.get("imm", 0)
-    addr = state.get_gpr(rs1_idx) + imm
+    base = state.get_gpr(rs1_idx)
+    addr = base + imm
     value = state.get_fpr(rs2_idx) & _MASK_64
     changes = ChangeRecord()
+    if rs1_idx is not None:
+        changes.gpr_reads.append(GPRRead(register=rs1_idx, value=base))
     if memory:
         memory.store(addr, value, 8)
     changes.memory_accesses.append(
@@ -773,8 +785,11 @@ def execute_flt_d(operand_values: dict, state: State, pc: int) -> ChangeRecord:
 def execute_fmv_w_x(operand_values: dict, state: State, pc: int) -> ChangeRecord:
     rd = operand_values.get("rd")
     rs1 = operand_values.get("rs1")
-    bits = state.get_gpr(rs1) & _MASK_32
+    raw = state.get_gpr(rs1)
+    bits = raw & _MASK_32
     changes = ChangeRecord()
+    if rs1 is not None:
+        changes.gpr_reads.append(GPRRead(register=rs1, value=raw))
     old = state.set_fpr(rd, bits)
     changes.fpr_writes.append(FPRWrite(register=rd, value=bits, old_value=old))
     return changes
@@ -783,8 +798,11 @@ def execute_fmv_w_x(operand_values: dict, state: State, pc: int) -> ChangeRecord
 def execute_fmv_d_x(operand_values: dict, state: State, pc: int) -> ChangeRecord:
     rd = operand_values.get("rd")
     rs1 = operand_values.get("rs1")
-    bits = state.get_gpr(rs1) & _MASK_64
+    raw = state.get_gpr(rs1)
+    bits = raw & _MASK_64
     changes = ChangeRecord()
+    if rs1 is not None:
+        changes.gpr_reads.append(GPRRead(register=rs1, value=raw))
     old = state.set_fpr(rd, bits)
     changes.fpr_writes.append(FPRWrite(register=rd, value=bits, old_value=old))
     return changes
@@ -822,12 +840,14 @@ def execute_fcvt_s_w(operand_values: dict, state: State, pc: int) -> ChangeRecor
     rd = operand_values.get("rd")
     rs1 = operand_values.get("rs1")
     x = state.get_gpr(rs1)
+    changes = ChangeRecord()
+    if rs1 is not None:
+        changes.gpr_reads.append(GPRRead(register=rs1, value=x))
     if x >= (1 << 31):
         x = x - (1 << 32)
     rm = effective_rounding_mode(operand_values, state)
     res = round_for_float(float(x), 24, rm)
     bits = float_to_bits_s(res)
-    changes = ChangeRecord()
     old = state.set_fpr(rd, bits)
     changes.fpr_writes.append(FPRWrite(register=rd, value=bits, old_value=old))
     return changes
@@ -836,11 +856,14 @@ def execute_fcvt_s_w(operand_values: dict, state: State, pc: int) -> ChangeRecor
 def execute_fcvt_s_wu(operand_values: dict, state: State, pc: int) -> ChangeRecord:
     rd = operand_values.get("rd")
     rs1 = operand_values.get("rs1")
-    x = state.get_gpr(rs1) & _MASK_32
+    raw = state.get_gpr(rs1)
+    x = raw & _MASK_32
     rm = effective_rounding_mode(operand_values, state)
     res = round_for_float(float(x), 24, rm)
     bits = float_to_bits_s(res)
     changes = ChangeRecord()
+    if rs1 is not None:
+        changes.gpr_reads.append(GPRRead(register=rs1, value=raw))
     old = state.set_fpr(rd, bits)
     changes.fpr_writes.append(FPRWrite(register=rd, value=bits, old_value=old))
     return changes
@@ -849,13 +872,16 @@ def execute_fcvt_s_wu(operand_values: dict, state: State, pc: int) -> ChangeReco
 def execute_fcvt_s_l(operand_values: dict, state: State, pc: int) -> ChangeRecord:
     rd = operand_values.get("rd")
     rs1 = operand_values.get("rs1")
-    x = state.get_gpr(rs1) & _MASK_64
+    raw = state.get_gpr(rs1)
+    x = raw & _MASK_64
     if x >= (1 << 63):
         x = x - (1 << 64)
     rm = effective_rounding_mode(operand_values, state)
     res = round_for_float(float(x), 24, rm)
     bits = float_to_bits_s(res)
     changes = ChangeRecord()
+    if rs1 is not None:
+        changes.gpr_reads.append(GPRRead(register=rs1, value=raw))
     old = state.set_fpr(rd, bits)
     changes.fpr_writes.append(FPRWrite(register=rd, value=bits, old_value=old))
     return changes
@@ -864,11 +890,14 @@ def execute_fcvt_s_l(operand_values: dict, state: State, pc: int) -> ChangeRecor
 def execute_fcvt_s_lu(operand_values: dict, state: State, pc: int) -> ChangeRecord:
     rd = operand_values.get("rd")
     rs1 = operand_values.get("rs1")
-    x = state.get_gpr(rs1) & _MASK_64
+    raw = state.get_gpr(rs1)
+    x = raw & _MASK_64
     rm = effective_rounding_mode(operand_values, state)
     res = round_for_float(float(x), 24, rm)
     bits = float_to_bits_s(res)
     changes = ChangeRecord()
+    if rs1 is not None:
+        changes.gpr_reads.append(GPRRead(register=rs1, value=raw))
     old = state.set_fpr(rd, bits)
     changes.fpr_writes.append(FPRWrite(register=rd, value=bits, old_value=old))
     return changes
@@ -878,12 +907,14 @@ def execute_fcvt_d_w(operand_values: dict, state: State, pc: int) -> ChangeRecor
     rd = operand_values.get("rd")
     rs1 = operand_values.get("rs1")
     x = state.get_gpr(rs1)
+    changes = ChangeRecord()
+    if rs1 is not None:
+        changes.gpr_reads.append(GPRRead(register=rs1, value=x))
     if x >= (1 << 31):
         x = x - (1 << 32)
     rm = effective_rounding_mode(operand_values, state)
     res = round_for_float(float(x), 53, rm)
     bits = float_to_bits_d(res)
-    changes = ChangeRecord()
     old = state.set_fpr(rd, bits)
     changes.fpr_writes.append(FPRWrite(register=rd, value=bits, old_value=old))
     return changes
@@ -892,11 +923,14 @@ def execute_fcvt_d_w(operand_values: dict, state: State, pc: int) -> ChangeRecor
 def execute_fcvt_d_wu(operand_values: dict, state: State, pc: int) -> ChangeRecord:
     rd = operand_values.get("rd")
     rs1 = operand_values.get("rs1")
-    x = state.get_gpr(rs1) & _MASK_32
+    raw = state.get_gpr(rs1)
+    x = raw & _MASK_32
     rm = effective_rounding_mode(operand_values, state)
     res = round_for_float(float(x), 53, rm)
     bits = float_to_bits_d(res)
     changes = ChangeRecord()
+    if rs1 is not None:
+        changes.gpr_reads.append(GPRRead(register=rs1, value=raw))
     old = state.set_fpr(rd, bits)
     changes.fpr_writes.append(FPRWrite(register=rd, value=bits, old_value=old))
     return changes
@@ -905,13 +939,16 @@ def execute_fcvt_d_wu(operand_values: dict, state: State, pc: int) -> ChangeReco
 def execute_fcvt_d_l(operand_values: dict, state: State, pc: int) -> ChangeRecord:
     rd = operand_values.get("rd")
     rs1 = operand_values.get("rs1")
-    x = state.get_gpr(rs1) & _MASK_64
+    raw = state.get_gpr(rs1)
+    x = raw & _MASK_64
     if x >= (1 << 63):
         x = x - (1 << 64)
     rm = effective_rounding_mode(operand_values, state)
     res = round_for_float(float(x), 53, rm)
     bits = float_to_bits_d(res)
     changes = ChangeRecord()
+    if rs1 is not None:
+        changes.gpr_reads.append(GPRRead(register=rs1, value=raw))
     old = state.set_fpr(rd, bits)
     changes.fpr_writes.append(FPRWrite(register=rd, value=bits, old_value=old))
     return changes
@@ -920,11 +957,14 @@ def execute_fcvt_d_l(operand_values: dict, state: State, pc: int) -> ChangeRecor
 def execute_fcvt_d_lu(operand_values: dict, state: State, pc: int) -> ChangeRecord:
     rd = operand_values.get("rd")
     rs1 = operand_values.get("rs1")
-    x = state.get_gpr(rs1) & _MASK_64
+    raw = state.get_gpr(rs1)
+    x = raw & _MASK_64
     rm = effective_rounding_mode(operand_values, state)
     res = round_for_float(float(x), 53, rm)
     bits = float_to_bits_d(res)
     changes = ChangeRecord()
+    if rs1 is not None:
+        changes.gpr_reads.append(GPRRead(register=rs1, value=raw))
     old = state.set_fpr(rd, bits)
     changes.fpr_writes.append(FPRWrite(register=rd, value=bits, old_value=old))
     return changes
