@@ -33,7 +33,7 @@ Example -- quick start::
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Dict, Optional, Union
+from typing import TYPE_CHECKING, Any, Callable, Dict, Optional, Union
 
 from eumos import CSRDef, Eumos, FPRDef, GPRDef
 
@@ -214,6 +214,39 @@ class Lome:
         0
         """
         return self.execute(instruction_bytes, speculate=True)
+
+    def tick(
+        self,
+        fetch_instr: Callable[[int], Union[int, bytes]],
+        *,
+        speculate: bool = False,
+    ) -> Optional[ChangeRecord]:
+        """Fetch and execute a single instruction at the current PC.
+
+        Parameters
+        ----------
+        fetch_instr : callable
+            Function ``fetch_instr(pc) -> int | bytes`` that returns the
+            32-bit instruction word (int) or 4-byte little-endian sequence.
+        speculate : bool, optional
+            If ``True``, execute in speculation mode without modifying state.
+
+        Returns
+        -------
+        ChangeRecord or None
+            As per :meth:`execute`.
+
+        Examples
+        --------
+        >>> # model = Lome(isa)
+        >>> def fetch(pc: int) -> int:
+        ...     return 0x13  # placeholder
+        ...
+        >>> changes = model.tick(fetch)
+        """
+        pc = self.get_pc()
+        instr = fetch_instr(pc)
+        return self.execute(instr, speculate=speculate)
 
     # ============================================================ GPR access
 
