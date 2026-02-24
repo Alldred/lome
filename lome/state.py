@@ -871,6 +871,28 @@ class State:
     # Snapshot / restore (for speculation -- raw, no hooks)
     # ====================================================================
 
+    def snapshot_for_speculation(
+        self,
+    ) -> tuple[list[int], dict[int, int], list[int], int]:
+        """Create an efficient snapshot token for speculation rollback."""
+        return (
+            self._gprs.copy(),
+            self._csrs.copy(),
+            self._fprs.copy(),
+            self._pc,
+        )
+
+    def restore_from_speculation(
+        self, snapshot: tuple[list[int], dict[int, int], list[int], int]
+    ) -> None:
+        """Restore state from a speculation snapshot token."""
+        gprs, csrs, fprs, pc = snapshot
+        self._gprs[:] = gprs
+        self._csrs.clear()
+        self._csrs.update(csrs)
+        self._fprs[:] = fprs
+        self._pc = pc
+
     def snapshot(self) -> Dict[str, Any]:
         """Create a snapshot of current state for speculation.
 
@@ -917,30 +939,31 @@ class State:
                 restored = [int(v) & _MASK_64 for v in gprs_snapshot[:_NUM_GPRS]]
                 if len(restored) < _NUM_GPRS:
                     restored.extend([0] * (_NUM_GPRS - len(restored)))
-                self._gprs = restored
+                self._gprs[:] = restored
             elif isinstance(gprs_snapshot, dict):
                 restored = self._gprs.copy()
                 for key, value in gprs_snapshot.items():
                     idx = int(key)
                     if 0 <= idx < _NUM_GPRS:
                         restored[idx] = int(value) & _MASK_64
-                self._gprs = restored
+                self._gprs[:] = restored
         if "csrs" in snapshot:
-            self._csrs = snapshot["csrs"].copy()
+            self._csrs.clear()
+            self._csrs.update(snapshot["csrs"])
         if "fprs" in snapshot:
             fprs_snapshot = snapshot["fprs"]
             if isinstance(fprs_snapshot, list):
                 restored = [int(v) & _MASK_64 for v in fprs_snapshot[:_NUM_FPRS]]
                 if len(restored) < _NUM_FPRS:
                     restored.extend([0] * (_NUM_FPRS - len(restored)))
-                self._fprs = restored
+                self._fprs[:] = restored
             elif isinstance(fprs_snapshot, dict):
                 restored = self._fprs.copy()
                 for key, value in fprs_snapshot.items():
                     idx = int(key)
                     if 0 <= idx < _NUM_FPRS:
                         restored[idx] = int(value) & _MASK_64
-                self._fprs = restored
+                self._fprs[:] = restored
         if "pc" in snapshot:
             self._pc = snapshot["pc"]
 

@@ -274,11 +274,11 @@ def execute_instruction(
 
     if speculate:
         # Snapshot → execute → restore
-        snapshot = state.snapshot()
+        snapshot = state.snapshot_for_speculation()
         try:
             return handler(instruction_instance.operand_values, state, pc, **kwargs)
         finally:
-            state.restore(snapshot)
+            state.restore_from_speculation(snapshot)
 
     # Normal execution -- state is mutated in-place.
     # Note: PC advancement is handled by the model, not here.
