@@ -10,10 +10,11 @@ from typing import Optional
 from lome.changes import ChangeRecord, GPRRead, GPRWrite
 from lome.ras import RASModel
 from lome.state import State
+from lome.types import OperandValues
 
 
 def execute_jal(
-    operand_values: dict,
+    operand_values: OperandValues,
     state: State,
     pc: int,
     *,
@@ -25,7 +26,7 @@ def execute_jal(
     Used for direct function calls and unconditional jumps.
 
     Parameters:
-        operand_values: dict with keys ``rd`` and ``imm``.
+        operand_values: OperandValues with keys ``rd`` and ``imm``.
         state: Current architectural state.
         pc: Program counter of this instruction.
 
@@ -57,7 +58,7 @@ def execute_jal(
 
 
 def execute_jalr(
-    operand_values: dict,
+    operand_values: OperandValues,
     state: State,
     pc: int,
     *,
@@ -69,7 +70,7 @@ def execute_jalr(
     address (*pc + 4*) in rd.  Used for indirect jumps and function returns.
 
     Parameters:
-        operand_values: dict with keys ``rd``, ``rs1``, and ``imm``.
+        operand_values: OperandValues with keys ``rd``, ``rs1``, and ``imm``.
         state: Current architectural state.
         pc: Program counter of this instruction.
 

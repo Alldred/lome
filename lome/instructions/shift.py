@@ -7,16 +7,17 @@ from __future__ import annotations
 
 from lome.changes import ChangeRecord, GPRRead, GPRWrite
 from lome.state import State
+from lome.types import OperandValues
 
 
-def execute_sll(operand_values: dict, state: State, pc: int) -> ChangeRecord:
+def execute_sll(operand_values: OperandValues, state: State, pc: int) -> ChangeRecord:
     """Execute SLL: rd = rs1 << (rs2 & 0x3F)
 
     Logical left shift rs1 by the amount in the lower 6 bits of rs2,
     storing the 64-bit result in rd.
 
     Parameters:
-        operand_values: dict with keys ``rd``, ``rs1``, and ``rs2``.
+        operand_values: OperandValues with keys ``rd``, ``rs1``, and ``rs2``.
         state: Current architectural state.
         pc: Program counter of this instruction.
 
@@ -46,14 +47,14 @@ def execute_sll(operand_values: dict, state: State, pc: int) -> ChangeRecord:
     return changes
 
 
-def execute_slli(operand_values: dict, state: State, pc: int) -> ChangeRecord:
+def execute_slli(operand_values: OperandValues, state: State, pc: int) -> ChangeRecord:
     """Execute SLLI: rd = rs1 << (imm & 0x3F)
 
     Logical left shift rs1 by the immediate shift amount (lower 6 bits),
     storing the 64-bit result in rd.
 
     Parameters:
-        operand_values: dict with keys ``rd``, ``rs1``, and ``imm``.
+        operand_values: OperandValues with keys ``rd``, ``rs1``, and ``imm``.
         state: Current architectural state.
         pc: Program counter of this instruction.
 
@@ -80,14 +81,14 @@ def execute_slli(operand_values: dict, state: State, pc: int) -> ChangeRecord:
     return changes
 
 
-def execute_srl(operand_values: dict, state: State, pc: int) -> ChangeRecord:
+def execute_srl(operand_values: OperandValues, state: State, pc: int) -> ChangeRecord:
     """Execute SRL: rd = rs1 >> (rs2 & 0x3F) (logical right shift)
 
     Logical right shift rs1 by the amount in the lower 6 bits of rs2,
     zero-filling vacated upper bits.
 
     Parameters:
-        operand_values: dict with keys ``rd``, ``rs1``, and ``rs2``.
+        operand_values: OperandValues with keys ``rd``, ``rs1``, and ``rs2``.
         state: Current architectural state.
         pc: Program counter of this instruction.
 
@@ -117,14 +118,14 @@ def execute_srl(operand_values: dict, state: State, pc: int) -> ChangeRecord:
     return changes
 
 
-def execute_srli(operand_values: dict, state: State, pc: int) -> ChangeRecord:
+def execute_srli(operand_values: OperandValues, state: State, pc: int) -> ChangeRecord:
     """Execute SRLI: rd = rs1 >> (imm & 0x3F) (logical right shift)
 
     Logical right shift rs1 by the immediate shift amount (lower 6 bits),
     zero-filling vacated upper bits.
 
     Parameters:
-        operand_values: dict with keys ``rd``, ``rs1``, and ``imm``.
+        operand_values: OperandValues with keys ``rd``, ``rs1``, and ``imm``.
         state: Current architectural state.
         pc: Program counter of this instruction.
 
@@ -151,14 +152,14 @@ def execute_srli(operand_values: dict, state: State, pc: int) -> ChangeRecord:
     return changes
 
 
-def execute_sra(operand_values: dict, state: State, pc: int) -> ChangeRecord:
+def execute_sra(operand_values: OperandValues, state: State, pc: int) -> ChangeRecord:
     """Execute SRA: rd = rs1 >> (rs2 & 0x3F) (arithmetic right shift)
 
     Arithmetic right shift rs1 by the amount in the lower 6 bits of rs2,
     sign-filling vacated upper bits.
 
     Parameters:
-        operand_values: dict with keys ``rd``, ``rs1``, and ``rs2``.
+        operand_values: OperandValues with keys ``rd``, ``rs1``, and ``rs2``.
         state: Current architectural state.
         pc: Program counter of this instruction.
 
@@ -195,14 +196,14 @@ def execute_sra(operand_values: dict, state: State, pc: int) -> ChangeRecord:
     return changes
 
 
-def execute_srai(operand_values: dict, state: State, pc: int) -> ChangeRecord:
+def execute_srai(operand_values: OperandValues, state: State, pc: int) -> ChangeRecord:
     """Execute SRAI: rd = rs1 >> (imm & 0x3F) (arithmetic right shift)
 
     Arithmetic right shift rs1 by the immediate shift amount (lower
     6 bits), sign-filling vacated upper bits.
 
     Parameters:
-        operand_values: dict with keys ``rd``, ``rs1``, and ``imm``.
+        operand_values: OperandValues with keys ``rd``, ``rs1``, and ``imm``.
         state: Current architectural state.
         pc: Program counter of this instruction.
 
@@ -236,14 +237,14 @@ def execute_srai(operand_values: dict, state: State, pc: int) -> ChangeRecord:
     return changes
 
 
-def execute_sllw(operand_values: dict, state: State, pc: int) -> ChangeRecord:
+def execute_sllw(operand_values: OperandValues, state: State, pc: int) -> ChangeRecord:
     """Execute SLLW: rd = sign_extend((rs1 << (rs2 & 0x1F))[31:0])
 
     Left shift the lower 32 bits of rs1 by the amount in the lower
     5 bits of rs2, sign-extend the 32-bit result to 64 bits.  RV64 only.
 
     Parameters:
-        operand_values: dict with keys ``rd``, ``rs1``, and ``rs2``.
+        operand_values: OperandValues with keys ``rd``, ``rs1``, and ``rs2``.
         state: Current architectural state.
         pc: Program counter of this instruction.
 
@@ -280,14 +281,14 @@ def execute_sllw(operand_values: dict, state: State, pc: int) -> ChangeRecord:
     return changes
 
 
-def execute_slliw(operand_values: dict, state: State, pc: int) -> ChangeRecord:
+def execute_slliw(operand_values: OperandValues, state: State, pc: int) -> ChangeRecord:
     """Execute SLLIW: rd = sign_extend((rs1 << (imm & 0x1F))[31:0])
 
     Left shift the lower 32 bits of rs1 by the immediate (lower 5 bits),
     sign-extend the 32-bit result to 64 bits.  RV64 only.
 
     Parameters:
-        operand_values: dict with keys ``rd``, ``rs1``, and ``imm``.
+        operand_values: OperandValues with keys ``rd``, ``rs1``, and ``imm``.
         state: Current architectural state.
         pc: Program counter of this instruction.
 
@@ -321,7 +322,7 @@ def execute_slliw(operand_values: dict, state: State, pc: int) -> ChangeRecord:
     return changes
 
 
-def execute_srlw(operand_values: dict, state: State, pc: int) -> ChangeRecord:
+def execute_srlw(operand_values: OperandValues, state: State, pc: int) -> ChangeRecord:
     """Execute SRLW: rd = sign_extend((rs1 >> (rs2 & 0x1F))[31:0]) (logical)
 
     Logical right shift the lower 32 bits of rs1 by the amount in the
@@ -329,7 +330,7 @@ def execute_srlw(operand_values: dict, state: State, pc: int) -> ChangeRecord:
     RV64 only.
 
     Parameters:
-        operand_values: dict with keys ``rd``, ``rs1``, and ``rs2``.
+        operand_values: OperandValues with keys ``rd``, ``rs1``, and ``rs2``.
         state: Current architectural state.
         pc: Program counter of this instruction.
 
@@ -366,14 +367,14 @@ def execute_srlw(operand_values: dict, state: State, pc: int) -> ChangeRecord:
     return changes
 
 
-def execute_srliw(operand_values: dict, state: State, pc: int) -> ChangeRecord:
+def execute_srliw(operand_values: OperandValues, state: State, pc: int) -> ChangeRecord:
     """Execute SRLIW: rd = sign_extend((rs1 >> (imm & 0x1F))[31:0]) (logical)
 
     Logical right shift the lower 32 bits of rs1 by the immediate (lower
     5 bits), sign-extend the 32-bit result to 64 bits.  RV64 only.
 
     Parameters:
-        operand_values: dict with keys ``rd``, ``rs1``, and ``imm``.
+        operand_values: OperandValues with keys ``rd``, ``rs1``, and ``imm``.
         state: Current architectural state.
         pc: Program counter of this instruction.
 
@@ -407,7 +408,7 @@ def execute_srliw(operand_values: dict, state: State, pc: int) -> ChangeRecord:
     return changes
 
 
-def execute_sraw(operand_values: dict, state: State, pc: int) -> ChangeRecord:
+def execute_sraw(operand_values: OperandValues, state: State, pc: int) -> ChangeRecord:
     """Execute SRAW: rd = sign_extend((rs1 >> (rs2 & 0x1F))[31:0]) (arithmetic)
 
     Arithmetic right shift the lower 32 bits of rs1 by the amount in the
@@ -415,7 +416,7 @@ def execute_sraw(operand_values: dict, state: State, pc: int) -> ChangeRecord:
     RV64 only.
 
     Parameters:
-        operand_values: dict with keys ``rd``, ``rs1``, and ``rs2``.
+        operand_values: OperandValues with keys ``rd``, ``rs1``, and ``rs2``.
         state: Current architectural state.
         pc: Program counter of this instruction.
 
@@ -459,14 +460,14 @@ def execute_sraw(operand_values: dict, state: State, pc: int) -> ChangeRecord:
     return changes
 
 
-def execute_sraiw(operand_values: dict, state: State, pc: int) -> ChangeRecord:
+def execute_sraiw(operand_values: OperandValues, state: State, pc: int) -> ChangeRecord:
     """Execute SRAIW: rd = sign_extend((rs1 >> (imm & 0x1F))[31:0]) (arithmetic)
 
     Arithmetic right shift the lower 32 bits of rs1 by the immediate
     (lower 5 bits), sign-extend the 32-bit result to 64 bits.  RV64 only.
 
     Parameters:
-        operand_values: dict with keys ``rd``, ``rs1``, and ``imm``.
+        operand_values: OperandValues with keys ``rd``, ``rs1``, and ``imm``.
         state: Current architectural state.
         pc: Program counter of this instruction.
 

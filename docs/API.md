@@ -5,6 +5,8 @@
 
 # RISC-V Model API Reference
 
+[Docs Home](README.md)
+
 The public API is the `Lome` class and the change-tracking types it uses.
 
 ## Package

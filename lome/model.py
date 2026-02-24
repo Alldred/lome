@@ -1,35 +1,7 @@
 # SPDX-License-Identifier: MIT
 # Copyright (c) 2026 Stuart Alldred.
 
-"""Main RISC-V functional model interface.
-
-The :class:`Lome` class is the primary public API.  It wraps a
-:class:`~lome.state.State`, an Eumos :class:`~eumos.decoder.Decoder`,
-and an instruction executor.  It provides:
-
-* **Instruction execution** -- :meth:`~Lome.execute` and
-  :meth:`~Lome.speculate`.
-* **Architectural register access** -- :meth:`~Lome.get_gpr`,
-  :meth:`~Lome.set_gpr`, :meth:`~Lome.get_csr`,
-  :meth:`~Lome.set_csr`, etc.  These honour read-only flags and
-  trigger CSR side-effect hooks.
-* **Raw register access (peek / poke)** -- :meth:`~Lome.peek_gpr`,
-  :meth:`~Lome.poke_gpr`, :meth:`~Lome.peek_csr`,
-  :meth:`~Lome.poke_csr`, etc.  Useful for test setup, debugging,
-  and checkpoint restore.
-* **State serialisation** -- :meth:`~Lome.export_state` /
-  :meth:`~Lome.restore_state` for JSON round-trips.
-
-Example -- quick start::
-
-    from eumos import Eumos
-    from lome import Lome
-
-    isa   = Eumos()
-    model = Lome(isa)
-    model.poke_gpr(1, 10)
-    model.get_gpr(1)  # => 10
-"""
+"""Main public interface for the RISC-V functional model."""
 
 from __future__ import annotations
 
@@ -48,39 +20,7 @@ from lome.state import State
 
 
 class Lome:
-    """RISC-V functional model for instruction execution, speculation, and change tracking.
-
-    This is the primary public interface for the model.  Create an instance,
-    optionally pre-load state with :meth:`poke_gpr` / :meth:`poke_csr` /
-    :meth:`poke_pc`, then call :meth:`execute` to step through instructions.
-
-    Examples
-    --------
-    Create a model and execute an ``ADDI`` instruction:
-
-    >>> # model = Lome(isa)
-    >>> # addi x1, x0, 42
-    >>> instr = 0x13 | (1 << 7) | (0 << 12) | (0 << 15) | (42 << 20)
-    >>> changes = model.execute(instr)
-    >>> model.get_gpr(1)
-    42
-    >>> model.get_pc()
-    4
-
-    Speculation (dry-run):
-
-    >>> spec = model.speculate(instr)
-    >>> model.get_gpr(1)  # unchanged
-    42
-
-    JSON round-trip:
-
-    >>> data = model.export_state()
-    >>> # model2 = Lome(isa)
-    >>> model2.restore_state(data)
-    >>> model2.get_gpr(1)
-    42
-    """
+    """RISC-V functional model with execution, speculation, and state access APIs."""
 
     # ---------------------------------------------------------------- init
 
@@ -123,34 +63,7 @@ class Lome:
         instruction_bytes: Union[int, bytes],
         speculate: bool = False,
     ) -> Optional[ChangeRecord]:
-        """Execute an instruction.
-
-        Parameters
-        ----------
-        instruction_bytes : int or bytes
-            32-bit instruction word.  If *bytes*, the first four bytes are
-            read in **little-endian** order.
-        speculate : bool, optional
-            If ``True``, execute without modifying state (default ``False``).
-
-        Returns
-        -------
-        ChangeRecord or None
-            Record of all changes (or would-be changes in speculation
-            mode).  Returns ``None`` only if the raw bytes cannot be
-            decoded at all.
-
-        Examples
-        --------
-        >>> # m = Lome(isa)
-        >>> # addi x1, x0, 7
-        >>> instr = 0x13 | (1 << 7) | (0 << 12) | (0 << 15) | (7 << 20)
-        >>> changes = m.execute(instr)
-        >>> m.get_gpr(1)
-        7
-        >>> m.get_pc()
-        4
-        """
+        """Execute one instruction and return its change record."""
         # Convert bytes to int if needed
         if isinstance(instruction_bytes, bytes):
             if len(instruction_bytes) < 4:
@@ -175,7 +88,14 @@ class Lome:
 
         # Update PC if not speculating
         if not speculate and changes:
-            if changes.pc_change:
+            has_exception = (
+                changes.exception is not None or changes.exception_code is not None
+            )
+            if has_exception:
+                # Trap redirection is handled by a higher-level component.
+                # Keep architectural PC unchanged on exception records.
+                pass
+            elif changes.pc_change:
                 new_pc, _ = changes.pc_change
                 self._state.set_pc(new_pc)
             else:
@@ -186,33 +106,7 @@ class Lome:
         return changes
 
     def speculate(self, instruction_bytes: Union[int, bytes]) -> Optional[ChangeRecord]:
-        """Execute an instruction in speculation mode (no state changes).
-
-        This is a convenience wrapper around ``execute(..., speculate=True)``.
-
-        Parameters
-        ----------
-        instruction_bytes : int or bytes
-            32-bit instruction word.
-
-        Returns
-        -------
-        ChangeRecord or None
-            Record showing what **would** change.
-
-        Examples
-        --------
-        >>> # m = Lome(isa)
-        >>> m.poke_gpr(1, 10)
-        0
-        >>> # addi x2, x1, 5
-        >>> instr = 0x13 | (2 << 7) | (0 << 12) | (1 << 15) | (5 << 20)
-        >>> spec = m.speculate(instr)
-        >>> spec.gpr_writes[0].value
-        15
-        >>> m.get_gpr(2)  # state unchanged
-        0
-        """
+        """Execute one instruction in dry-run mode."""
         return self.execute(instruction_bytes, speculate=True)
 
     def tick(
@@ -221,29 +115,7 @@ class Lome:
         *,
         speculate: bool = False,
     ) -> Optional[ChangeRecord]:
-        """Fetch and execute a single instruction at the current PC.
-
-        Parameters
-        ----------
-        fetch_instr : callable
-            Function ``fetch_instr(pc) -> int | bytes`` that returns the
-            32-bit instruction word (int) or 4-byte little-endian sequence.
-        speculate : bool, optional
-            If ``True``, execute in speculation mode without modifying state.
-
-        Returns
-        -------
-        ChangeRecord or None
-            As per :meth:`execute`.
-
-        Examples
-        --------
-        >>> # model = Lome(isa)
-        >>> def fetch(pc: int) -> int:
-        ...     return 0x13  # placeholder
-        ...
-        >>> changes = model.tick(fetch)
-        """
+        """Fetch and execute a single instruction at the current PC."""
         pc = self.get_pc()
         instr = fetch_instr(pc)
         return self.execute(instr, speculate=speculate)
