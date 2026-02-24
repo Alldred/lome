@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from typing import Optional
 
-from lome.changes import ChangeRecord, GPRWrite, MemoryAccess
+from lome.changes import ChangeRecord, GPRRead, GPRWrite, MemoryAccess
 from lome.memory import MemoryInterface
 from lome.state import State
 
@@ -56,19 +56,21 @@ def execute_lb(
 
         # lb x1, 0(x2)  — load sign-extended byte from address in x2
     """
+    changes = ChangeRecord()
     rd = operand_values.get("rd")
     rs1_idx = operand_values.get("rs1")
     imm = operand_values.get("imm")
 
     rs1_val = state.get_gpr(rs1_idx)
+    if rs1_idx is not None:
+        changes.gpr_reads.append(GPRRead(register=rs1_idx, value=rs1_val))
     addr = rs1_val + imm
 
     value = memory.load(addr, 1) if memory else 0
     result = _sign_extend(value, 8)
 
-    changes = ChangeRecord()
     changes.memory_accesses.append(
-        MemoryAccess(address=addr, value=None, size=1, is_write=False)
+        MemoryAccess(address=addr, value=value, size=1, is_write=False)
     )
     old_value = state.set_gpr(rd, result)
     changes.gpr_writes.append(GPRWrite(register=rd, value=result, old_value=old_value))
@@ -99,19 +101,21 @@ def execute_lh(
 
         # lh x1, 4(x2)  — load sign-extended halfword from x2+4
     """
+    changes = ChangeRecord()
     rd = operand_values.get("rd")
     rs1_idx = operand_values.get("rs1")
     imm = operand_values.get("imm")
 
     rs1_val = state.get_gpr(rs1_idx)
+    if rs1_idx is not None:
+        changes.gpr_reads.append(GPRRead(register=rs1_idx, value=rs1_val))
     addr = rs1_val + imm
 
     value = memory.load(addr, 2) if memory else 0
     result = _sign_extend(value, 16)
 
-    changes = ChangeRecord()
     changes.memory_accesses.append(
-        MemoryAccess(address=addr, value=None, size=2, is_write=False)
+        MemoryAccess(address=addr, value=value, size=2, is_write=False)
     )
     old_value = state.set_gpr(rd, result)
     changes.gpr_writes.append(GPRWrite(register=rd, value=result, old_value=old_value))
@@ -142,19 +146,21 @@ def execute_lw(
 
         # lw x1, 8(x2)  — load sign-extended word from x2+8
     """
+    changes = ChangeRecord()
     rd = operand_values.get("rd")
     rs1_idx = operand_values.get("rs1")
     imm = operand_values.get("imm")
 
     rs1_val = state.get_gpr(rs1_idx)
+    if rs1_idx is not None:
+        changes.gpr_reads.append(GPRRead(register=rs1_idx, value=rs1_val))
     addr = rs1_val + imm
 
     value = memory.load(addr, 4) if memory else 0
     result = _sign_extend(value, 32)
 
-    changes = ChangeRecord()
     changes.memory_accesses.append(
-        MemoryAccess(address=addr, value=None, size=4, is_write=False)
+        MemoryAccess(address=addr, value=value, size=4, is_write=False)
     )
     old_value = state.set_gpr(rd, result)
     changes.gpr_writes.append(GPRWrite(register=rd, value=result, old_value=old_value))
@@ -185,19 +191,21 @@ def execute_lbu(
 
         # lbu x1, 0(x2)  — load zero-extended byte from address in x2
     """
+    changes = ChangeRecord()
     rd = operand_values.get("rd")
     rs1_idx = operand_values.get("rs1")
     imm = operand_values.get("imm")
 
     rs1_val = state.get_gpr(rs1_idx)
+    if rs1_idx is not None:
+        changes.gpr_reads.append(GPRRead(register=rs1_idx, value=rs1_val))
     addr = rs1_val + imm
 
     value = memory.load(addr, 1) if memory else 0
     result = value & 0xFF  # Zero extend
 
-    changes = ChangeRecord()
     changes.memory_accesses.append(
-        MemoryAccess(address=addr, value=None, size=1, is_write=False)
+        MemoryAccess(address=addr, value=value, size=1, is_write=False)
     )
     old_value = state.set_gpr(rd, result)
     changes.gpr_writes.append(GPRWrite(register=rd, value=result, old_value=old_value))
@@ -228,19 +236,21 @@ def execute_lhu(
 
         # lhu x1, 2(x2)  — load zero-extended halfword from x2+2
     """
+    changes = ChangeRecord()
     rd = operand_values.get("rd")
     rs1_idx = operand_values.get("rs1")
     imm = operand_values.get("imm")
 
     rs1_val = state.get_gpr(rs1_idx)
+    if rs1_idx is not None:
+        changes.gpr_reads.append(GPRRead(register=rs1_idx, value=rs1_val))
     addr = rs1_val + imm
 
     value = memory.load(addr, 2) if memory else 0
     result = value & 0xFFFF  # Zero extend
 
-    changes = ChangeRecord()
     changes.memory_accesses.append(
-        MemoryAccess(address=addr, value=None, size=2, is_write=False)
+        MemoryAccess(address=addr, value=value, size=2, is_write=False)
     )
     old_value = state.set_gpr(rd, result)
     changes.gpr_writes.append(GPRWrite(register=rd, value=result, old_value=old_value))
@@ -271,18 +281,20 @@ def execute_ld(
 
         # ld x1, 16(x2)  — load doubleword from x2+16
     """
+    changes = ChangeRecord()
     rd = operand_values.get("rd")
     rs1_idx = operand_values.get("rs1")
     imm = operand_values.get("imm")
 
     rs1_val = state.get_gpr(rs1_idx)
+    if rs1_idx is not None:
+        changes.gpr_reads.append(GPRRead(register=rs1_idx, value=rs1_val))
     addr = rs1_val + imm
 
     result = memory.load(addr, 8) if memory else 0
 
-    changes = ChangeRecord()
     changes.memory_accesses.append(
-        MemoryAccess(address=addr, value=None, size=8, is_write=False)
+        MemoryAccess(address=addr, value=result, size=8, is_write=False)
     )
     old_value = state.set_gpr(rd, result)
     changes.gpr_writes.append(GPRWrite(register=rd, value=result, old_value=old_value))
@@ -313,19 +325,21 @@ def execute_lwu(
 
         # lwu x1, 4(x2)  — load zero-extended word from x2+4
     """
+    changes = ChangeRecord()
     rd = operand_values.get("rd")
     rs1_idx = operand_values.get("rs1")
     imm = operand_values.get("imm")
 
     rs1_val = state.get_gpr(rs1_idx)
+    if rs1_idx is not None:
+        changes.gpr_reads.append(GPRRead(register=rs1_idx, value=rs1_val))
     addr = rs1_val + imm
 
     value = memory.load(addr, 4) if memory else 0
     result = value & 0xFFFFFFFF  # Zero extend
 
-    changes = ChangeRecord()
     changes.memory_accesses.append(
-        MemoryAccess(address=addr, value=None, size=4, is_write=False)
+        MemoryAccess(address=addr, value=value, size=4, is_write=False)
     )
     old_value = state.set_gpr(rd, result)
     changes.gpr_writes.append(GPRWrite(register=rd, value=result, old_value=old_value))
@@ -367,6 +381,10 @@ def execute_sb(
     if memory is not None:
         memory.store(addr, value, 1)
     changes = ChangeRecord()
+    if rs1_idx is not None:
+        changes.gpr_reads.append(GPRRead(register=rs1_idx, value=rs1_val))
+    if rs2_idx is not None:
+        changes.gpr_reads.append(GPRRead(register=rs2_idx, value=rs2_val))
     changes.memory_accesses.append(
         MemoryAccess(address=addr, value=value, size=1, is_write=True)
     )
@@ -409,6 +427,10 @@ def execute_sh(
     if memory is not None:
         memory.store(addr, value, 2)
     changes = ChangeRecord()
+    if rs1_idx is not None:
+        changes.gpr_reads.append(GPRRead(register=rs1_idx, value=rs1_val))
+    if rs2_idx is not None:
+        changes.gpr_reads.append(GPRRead(register=rs2_idx, value=rs2_val))
     changes.memory_accesses.append(
         MemoryAccess(address=addr, value=value, size=2, is_write=True)
     )
@@ -451,6 +473,10 @@ def execute_sw(
     if memory is not None:
         memory.store(addr, value, 4)
     changes = ChangeRecord()
+    if rs1_idx is not None:
+        changes.gpr_reads.append(GPRRead(register=rs1_idx, value=rs1_val))
+    if rs2_idx is not None:
+        changes.gpr_reads.append(GPRRead(register=rs2_idx, value=rs2_val))
     changes.memory_accesses.append(
         MemoryAccess(address=addr, value=value, size=4, is_write=True)
     )
@@ -494,6 +520,10 @@ def execute_sd(
         memory.store(addr, value, 8)
 
     changes = ChangeRecord()
+    if rs1_idx is not None:
+        changes.gpr_reads.append(GPRRead(register=rs1_idx, value=rs1_val))
+    if rs2_idx is not None:
+        changes.gpr_reads.append(GPRRead(register=rs2_idx, value=rs2_val))
     changes.memory_accesses.append(
         MemoryAccess(address=addr, value=value, size=8, is_write=True)
     )

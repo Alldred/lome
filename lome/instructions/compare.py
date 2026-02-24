@@ -5,7 +5,7 @@
 
 from __future__ import annotations
 
-from lome.changes import ChangeRecord, GPRWrite
+from lome.changes import ChangeRecord, GPRRead, GPRWrite
 from lome.state import State
 
 
@@ -27,12 +27,17 @@ def execute_slt(operand_values: dict, state: State, pc: int) -> ChangeRecord:
 
         # slt x1, x2, x3  — x1 = 1 if x2 < x3 (signed), else 0
     """
+    changes = ChangeRecord()
     rd = operand_values.get("rd")
     rs1_idx = operand_values.get("rs1")
     rs2_idx = operand_values.get("rs2")
 
     rs1_val = state.get_gpr(rs1_idx)
     rs2_val = state.get_gpr(rs2_idx)
+    if rs1_idx is not None:
+        changes.gpr_reads.append(GPRRead(register=rs1_idx, value=rs1_val))
+    if rs2_idx is not None:
+        changes.gpr_reads.append(GPRRead(register=rs2_idx, value=rs2_val))
     # Signed comparison: treat as signed integers
     rs1_signed = (
         rs1_val if rs1_val < 0x8000000000000000 else rs1_val - 0x10000000000000000
@@ -41,8 +46,6 @@ def execute_slt(operand_values: dict, state: State, pc: int) -> ChangeRecord:
         rs2_val if rs2_val < 0x8000000000000000 else rs2_val - 0x10000000000000000
     )
     result = 1 if rs1_signed < rs2_signed else 0
-
-    changes = ChangeRecord()
     old_value = state.set_gpr(rd, result)
     changes.gpr_writes.append(GPRWrite(register=rd, value=result, old_value=old_value))
     return changes
@@ -66,19 +69,20 @@ def execute_slti(operand_values: dict, state: State, pc: int) -> ChangeRecord:
 
         # slti x1, x2, 10  — x1 = 1 if x2 < 10 (signed), else 0
     """
+    changes = ChangeRecord()
     rd = operand_values.get("rd")
     rs1_idx = operand_values.get("rs1")
     imm = operand_values.get("imm")
 
     rs1_val = state.get_gpr(rs1_idx)
+    if rs1_idx is not None:
+        changes.gpr_reads.append(GPRRead(register=rs1_idx, value=rs1_val))
     # Signed comparison: treat as signed integers
     rs1_signed = (
         rs1_val if rs1_val < 0x8000000000000000 else rs1_val - 0x10000000000000000
     )
     imm_signed = imm if imm < 0x8000000000000000 else imm - 0x10000000000000000
     result = 1 if rs1_signed < imm_signed else 0
-
-    changes = ChangeRecord()
     old_value = state.set_gpr(rd, result)
     changes.gpr_writes.append(GPRWrite(register=rd, value=result, old_value=old_value))
     return changes
@@ -102,16 +106,19 @@ def execute_sltu(operand_values: dict, state: State, pc: int) -> ChangeRecord:
 
         # sltu x1, x2, x3  — x1 = 1 if x2 < x3 (unsigned), else 0
     """
+    changes = ChangeRecord()
     rd = operand_values.get("rd")
     rs1_idx = operand_values.get("rs1")
     rs2_idx = operand_values.get("rs2")
 
     rs1_val = state.get_gpr(rs1_idx)
     rs2_val = state.get_gpr(rs2_idx)
+    if rs1_idx is not None:
+        changes.gpr_reads.append(GPRRead(register=rs1_idx, value=rs1_val))
+    if rs2_idx is not None:
+        changes.gpr_reads.append(GPRRead(register=rs2_idx, value=rs2_val))
     # Unsigned comparison
     result = 1 if rs1_val < rs2_val else 0
-
-    changes = ChangeRecord()
     old_value = state.set_gpr(rd, result)
     changes.gpr_writes.append(GPRWrite(register=rd, value=result, old_value=old_value))
     return changes
@@ -135,17 +142,18 @@ def execute_sltiu(operand_values: dict, state: State, pc: int) -> ChangeRecord:
 
         # sltiu x1, x2, 5  — x1 = 1 if x2 < 5 (unsigned), else 0
     """
+    changes = ChangeRecord()
     rd = operand_values.get("rd")
     rs1_idx = operand_values.get("rs1")
     imm = operand_values.get("imm")
 
     rs1_val = state.get_gpr(rs1_idx)
+    if rs1_idx is not None:
+        changes.gpr_reads.append(GPRRead(register=rs1_idx, value=rs1_val))
     # Treat immediate as unsigned (zero-extend)
     imm_unsigned = imm & 0xFFFFFFFFFFFFFFFF
     # Unsigned comparison
     result = 1 if rs1_val < imm_unsigned else 0
-
-    changes = ChangeRecord()
     old_value = state.set_gpr(rd, result)
     changes.gpr_writes.append(GPRWrite(register=rd, value=result, old_value=old_value))
     return changes
