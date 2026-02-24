@@ -259,13 +259,15 @@ def execute_sllw(operand_values: dict, state: State, pc: int) -> ChangeRecord:
     rs1_idx = operand_values.get("rs1")
     rs2_idx = operand_values.get("rs2")
 
-    rs1_val = state.get_gpr(rs1_idx) & 0xFFFFFFFF
-    rs2_val = state.get_gpr(rs2_idx)
+    rs1_full = state.get_gpr(rs1_idx)
+    rs2_full = state.get_gpr(rs2_idx)
     if rs1_idx is not None:
-        changes.gpr_reads.append(GPRRead(register=rs1_idx, value=rs1_val))
+        changes.gpr_reads.append(GPRRead(register=rs1_idx, value=rs1_full))
     if rs2_idx is not None:
-        changes.gpr_reads.append(GPRRead(register=rs2_idx, value=rs2_val))
-    shamt = rs2_val & 0x1F  # Lower 5 bits for 32-bit shift
+        changes.gpr_reads.append(GPRRead(register=rs2_idx, value=rs2_full))
+
+    rs1_val = rs1_full & 0xFFFFFFFF
+    shamt = rs2_full & 0x1F  # Lower 5 bits for 32-bit shift
     result_32 = (rs1_val << shamt) & 0xFFFFFFFF
     # Sign extend from 32 bits
     if result_32 & 0x80000000:
@@ -301,9 +303,11 @@ def execute_slliw(operand_values: dict, state: State, pc: int) -> ChangeRecord:
     rs1_idx = operand_values.get("rs1")
     imm = operand_values.get("imm")
 
-    rs1_val = state.get_gpr(rs1_idx) & 0xFFFFFFFF
+    rs1_full = state.get_gpr(rs1_idx)
     if rs1_idx is not None:
-        changes.gpr_reads.append(GPRRead(register=rs1_idx, value=rs1_val))
+        changes.gpr_reads.append(GPRRead(register=rs1_idx, value=rs1_full))
+
+    rs1_val = rs1_full & 0xFFFFFFFF
     shamt = imm & 0x1F  # Lower 5 bits for 32-bit shift
     result_32 = (rs1_val << shamt) & 0xFFFFFFFF
     # Sign extend from 32 bits
@@ -341,13 +345,15 @@ def execute_srlw(operand_values: dict, state: State, pc: int) -> ChangeRecord:
     rs1_idx = operand_values.get("rs1")
     rs2_idx = operand_values.get("rs2")
 
-    rs1_val = state.get_gpr(rs1_idx) & 0xFFFFFFFF
-    rs2_val = state.get_gpr(rs2_idx)
+    rs1_full = state.get_gpr(rs1_idx)
+    rs2_full = state.get_gpr(rs2_idx)
     if rs1_idx is not None:
-        changes.gpr_reads.append(GPRRead(register=rs1_idx, value=rs1_val))
+        changes.gpr_reads.append(GPRRead(register=rs1_idx, value=rs1_full))
     if rs2_idx is not None:
-        changes.gpr_reads.append(GPRRead(register=rs2_idx, value=rs2_val))
-    shamt = rs2_val & 0x1F  # Lower 5 bits for 32-bit shift
+        changes.gpr_reads.append(GPRRead(register=rs2_idx, value=rs2_full))
+
+    rs1_val = rs1_full & 0xFFFFFFFF
+    shamt = rs2_full & 0x1F  # Lower 5 bits for 32-bit shift
     result_32 = (rs1_val >> shamt) & 0xFFFFFFFF
     # Sign extend from 32 bits
     if result_32 & 0x80000000:
@@ -383,9 +389,11 @@ def execute_srliw(operand_values: dict, state: State, pc: int) -> ChangeRecord:
     rs1_idx = operand_values.get("rs1")
     imm = operand_values.get("imm")
 
-    rs1_val = state.get_gpr(rs1_idx) & 0xFFFFFFFF
+    rs1_full = state.get_gpr(rs1_idx)
     if rs1_idx is not None:
-        changes.gpr_reads.append(GPRRead(register=rs1_idx, value=rs1_val))
+        changes.gpr_reads.append(GPRRead(register=rs1_idx, value=rs1_full))
+
+    rs1_val = rs1_full & 0xFFFFFFFF
     shamt = imm & 0x1F  # Lower 5 bits for 32-bit shift
     result_32 = (rs1_val >> shamt) & 0xFFFFFFFF
     # Sign extend from 32 bits
@@ -423,13 +431,15 @@ def execute_sraw(operand_values: dict, state: State, pc: int) -> ChangeRecord:
     rs1_idx = operand_values.get("rs1")
     rs2_idx = operand_values.get("rs2")
 
-    rs1_val = state.get_gpr(rs1_idx) & 0xFFFFFFFF
-    rs2_val = state.get_gpr(rs2_idx)
+    rs1_full = state.get_gpr(rs1_idx)
+    rs2_full = state.get_gpr(rs2_idx)
     if rs1_idx is not None:
-        changes.gpr_reads.append(GPRRead(register=rs1_idx, value=rs1_val))
+        changes.gpr_reads.append(GPRRead(register=rs1_idx, value=rs1_full))
     if rs2_idx is not None:
-        changes.gpr_reads.append(GPRRead(register=rs2_idx, value=rs2_val))
-    shamt = rs2_val & 0x1F  # Lower 5 bits for 32-bit shift
+        changes.gpr_reads.append(GPRRead(register=rs2_idx, value=rs2_full))
+
+    rs1_val = rs1_full & 0xFFFFFFFF
+    shamt = rs2_full & 0x1F  # Lower 5 bits for 32-bit shift
     # Arithmetic right shift on 32-bit value
     if rs1_val & 0x80000000:
         # Negative number, preserve sign
@@ -472,9 +482,11 @@ def execute_sraiw(operand_values: dict, state: State, pc: int) -> ChangeRecord:
     rs1_idx = operand_values.get("rs1")
     imm = operand_values.get("imm")
 
-    rs1_val = state.get_gpr(rs1_idx) & 0xFFFFFFFF
+    rs1_full = state.get_gpr(rs1_idx)
     if rs1_idx is not None:
-        changes.gpr_reads.append(GPRRead(register=rs1_idx, value=rs1_val))
+        changes.gpr_reads.append(GPRRead(register=rs1_idx, value=rs1_full))
+
+    rs1_val = rs1_full & 0xFFFFFFFF
     shamt = imm & 0x1F  # Lower 5 bits for 32-bit shift
     # Arithmetic right shift on 32-bit value
     if rs1_val & 0x80000000:

@@ -114,12 +114,16 @@ def execute_addw(operand_values: dict, state: State, pc: int) -> ChangeRecord:
     rd = operand_values.get("rd")
     rs1_idx = operand_values.get("rs1")
     rs2_idx = operand_values.get("rs2")
-    rs1_val = state.get_gpr(rs1_idx) & 0xFFFFFFFF
-    rs2_val = state.get_gpr(rs2_idx) & 0xFFFFFFFF
+
+    rs1_full = state.get_gpr(rs1_idx)
+    rs2_full = state.get_gpr(rs2_idx)
     if rs1_idx is not None:
-        changes.gpr_reads.append(GPRRead(register=rs1_idx, value=rs1_val))
+        changes.gpr_reads.append(GPRRead(register=rs1_idx, value=rs1_full))
     if rs2_idx is not None:
-        changes.gpr_reads.append(GPRRead(register=rs2_idx, value=rs2_val))
+        changes.gpr_reads.append(GPRRead(register=rs2_idx, value=rs2_full))
+
+    rs1_val = rs1_full & 0xFFFFFFFF
+    rs2_val = rs2_full & 0xFFFFFFFF
     result_32 = (rs1_val + rs2_val) & 0xFFFFFFFF
     if result_32 & 0x80000000:
         result = result_32 | 0xFFFFFFFF00000000
@@ -148,9 +152,12 @@ def execute_addiw(operand_values: dict, state: State, pc: int) -> ChangeRecord:
     rd = operand_values.get("rd")
     rs1_idx = operand_values.get("rs1")
     imm = operand_values.get("imm")
-    rs1_val = state.get_gpr(rs1_idx) & 0xFFFFFFFF
+
+    rs1_full = state.get_gpr(rs1_idx)
     if rs1_idx is not None:
-        changes.gpr_reads.append(GPRRead(register=rs1_idx, value=rs1_val))
+        changes.gpr_reads.append(GPRRead(register=rs1_idx, value=rs1_full))
+
+    rs1_val = rs1_full & 0xFFFFFFFF
     result_32 = (rs1_val + imm) & 0xFFFFFFFF
     if result_32 & 0x80000000:
         result = result_32 | 0xFFFFFFFF00000000
@@ -179,12 +186,16 @@ def execute_subw(operand_values: dict, state: State, pc: int) -> ChangeRecord:
     rd = operand_values.get("rd")
     rs1_idx = operand_values.get("rs1")
     rs2_idx = operand_values.get("rs2")
-    rs1_val = state.get_gpr(rs1_idx) & 0xFFFFFFFF
-    rs2_val = state.get_gpr(rs2_idx) & 0xFFFFFFFF
+
+    rs1_full = state.get_gpr(rs1_idx)
+    rs2_full = state.get_gpr(rs2_idx)
     if rs1_idx is not None:
-        changes.gpr_reads.append(GPRRead(register=rs1_idx, value=rs1_val))
+        changes.gpr_reads.append(GPRRead(register=rs1_idx, value=rs1_full))
     if rs2_idx is not None:
-        changes.gpr_reads.append(GPRRead(register=rs2_idx, value=rs2_val))
+        changes.gpr_reads.append(GPRRead(register=rs2_idx, value=rs2_full))
+
+    rs1_val = rs1_full & 0xFFFFFFFF
+    rs2_val = rs2_full & 0xFFFFFFFF
     result_32 = (rs1_val - rs2_val) & 0xFFFFFFFF
     if result_32 & 0x80000000:
         result = result_32 | 0xFFFFFFFF00000000
