@@ -8,6 +8,7 @@ from __future__ import annotations
 from lome.changes import BranchInfo, ChangeRecord
 from lome.instructions.common import read_gpr, signed64
 from lome.state import State
+from lome.types import OperandValues
 
 
 def _branch_changes(
@@ -19,14 +20,14 @@ def _branch_changes(
     return changes
 
 
-def execute_beq(operand_values: dict, state: State, pc: int) -> ChangeRecord:
+def execute_beq(operand_values: OperandValues, state: State, pc: int) -> ChangeRecord:
     """Execute BEQ: if (rs1 == rs2) pc += imm
 
     Branch to *pc + imm* when registers rs1 and rs2 are equal; otherwise
     fall through to *pc + 4*.
 
     Parameters:
-        operand_values: dict with keys ``rs1``, ``rs2``, and ``imm``.
+        operand_values: OperandValues with keys ``rs1``, ``rs2``, and ``imm``.
         state: Current architectural state.
         pc: Program counter of this instruction.
 
@@ -48,14 +49,14 @@ def execute_beq(operand_values: dict, state: State, pc: int) -> ChangeRecord:
     return _branch_changes(pc, imm, taken, "eq", changes)
 
 
-def execute_bne(operand_values: dict, state: State, pc: int) -> ChangeRecord:
+def execute_bne(operand_values: OperandValues, state: State, pc: int) -> ChangeRecord:
     """Execute BNE: if (rs1 != rs2) pc += imm
 
     Branch to *pc + imm* when registers rs1 and rs2 are not equal;
     otherwise fall through to *pc + 4*.
 
     Parameters:
-        operand_values: dict with keys ``rs1``, ``rs2``, and ``imm``.
+        operand_values: OperandValues with keys ``rs1``, ``rs2``, and ``imm``.
         state: Current architectural state.
         pc: Program counter of this instruction.
 
@@ -77,14 +78,14 @@ def execute_bne(operand_values: dict, state: State, pc: int) -> ChangeRecord:
     return _branch_changes(pc, imm, taken, "ne", changes)
 
 
-def execute_blt(operand_values: dict, state: State, pc: int) -> ChangeRecord:
+def execute_blt(operand_values: OperandValues, state: State, pc: int) -> ChangeRecord:
     """Execute BLT: if (rs1 < rs2) pc += imm (signed comparison)
 
     Branch to *pc + imm* when the signed value in rs1 is less than the
     signed value in rs2; otherwise fall through to *pc + 4*.
 
     Parameters:
-        operand_values: dict with keys ``rs1``, ``rs2``, and ``imm``.
+        operand_values: OperandValues with keys ``rs1``, ``rs2``, and ``imm``.
         state: Current architectural state.
         pc: Program counter of this instruction.
 
@@ -108,14 +109,14 @@ def execute_blt(operand_values: dict, state: State, pc: int) -> ChangeRecord:
     return _branch_changes(pc, imm, taken, "lt", changes)
 
 
-def execute_bge(operand_values: dict, state: State, pc: int) -> ChangeRecord:
+def execute_bge(operand_values: OperandValues, state: State, pc: int) -> ChangeRecord:
     """Execute BGE: if (rs1 >= rs2) pc += imm (signed comparison)
 
     Branch to *pc + imm* when the signed value in rs1 is greater than or
     equal to the signed value in rs2; otherwise fall through to *pc + 4*.
 
     Parameters:
-        operand_values: dict with keys ``rs1``, ``rs2``, and ``imm``.
+        operand_values: OperandValues with keys ``rs1``, ``rs2``, and ``imm``.
         state: Current architectural state.
         pc: Program counter of this instruction.
 
@@ -139,14 +140,14 @@ def execute_bge(operand_values: dict, state: State, pc: int) -> ChangeRecord:
     return _branch_changes(pc, imm, taken, "ge", changes)
 
 
-def execute_bltu(operand_values: dict, state: State, pc: int) -> ChangeRecord:
+def execute_bltu(operand_values: OperandValues, state: State, pc: int) -> ChangeRecord:
     """Execute BLTU: if (rs1 < rs2) pc += imm (unsigned comparison)
 
     Branch to *pc + imm* when the unsigned value in rs1 is less than the
     unsigned value in rs2; otherwise fall through to *pc + 4*.
 
     Parameters:
-        operand_values: dict with keys ``rs1``, ``rs2``, and ``imm``.
+        operand_values: OperandValues with keys ``rs1``, ``rs2``, and ``imm``.
         state: Current architectural state.
         pc: Program counter of this instruction.
 
@@ -168,14 +169,14 @@ def execute_bltu(operand_values: dict, state: State, pc: int) -> ChangeRecord:
     return _branch_changes(pc, imm, taken, "ltu", changes)
 
 
-def execute_bgeu(operand_values: dict, state: State, pc: int) -> ChangeRecord:
+def execute_bgeu(operand_values: OperandValues, state: State, pc: int) -> ChangeRecord:
     """Execute BGEU: if (rs1 >= rs2) pc += imm (unsigned comparison)
 
     Branch to *pc + imm* when the unsigned value in rs1 is greater than or
     equal to the unsigned value in rs2; otherwise fall through to *pc + 4*.
 
     Parameters:
-        operand_values: dict with keys ``rs1``, ``rs2``, and ``imm``.
+        operand_values: OperandValues with keys ``rs1``, ``rs2``, and ``imm``.
         state: Current architectural state.
         pc: Program counter of this instruction.
 

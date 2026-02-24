@@ -8,15 +8,16 @@ from __future__ import annotations
 from lome.changes import ChangeRecord
 from lome.instructions.common import read_gpr, write_gpr
 from lome.state import State
+from lome.types import OperandValues
 
 
-def execute_and(operand_values: dict, state: State, pc: int) -> ChangeRecord:
+def execute_and(operand_values: OperandValues, state: State, pc: int) -> ChangeRecord:
     """Execute AND: rd = rs1 & rs2
 
     Perform bitwise AND of rs1 and rs2, storing the result in rd.
 
     Parameters:
-        operand_values: dict with keys ``rd``, ``rs1``, and ``rs2``.
+        operand_values: OperandValues with keys ``rd``, ``rs1``, and ``rs2``.
         state: Current architectural state.
         pc: Program counter of this instruction.
 
@@ -40,14 +41,14 @@ def execute_and(operand_values: dict, state: State, pc: int) -> ChangeRecord:
     return changes
 
 
-def execute_andi(operand_values: dict, state: State, pc: int) -> ChangeRecord:
+def execute_andi(operand_values: OperandValues, state: State, pc: int) -> ChangeRecord:
     """Execute ANDI: rd = rs1 & imm
 
     Perform bitwise AND of rs1 and the sign-extended immediate, storing
     the result in rd.
 
     Parameters:
-        operand_values: dict with keys ``rd``, ``rs1``, and ``imm``.
+        operand_values: OperandValues with keys ``rd``, ``rs1``, and ``imm``.
         state: Current architectural state.
         pc: Program counter of this instruction.
 
@@ -70,13 +71,13 @@ def execute_andi(operand_values: dict, state: State, pc: int) -> ChangeRecord:
     return changes
 
 
-def execute_or(operand_values: dict, state: State, pc: int) -> ChangeRecord:
+def execute_or(operand_values: OperandValues, state: State, pc: int) -> ChangeRecord:
     """Execute OR: rd = rs1 | rs2
 
     Perform bitwise OR of rs1 and rs2, storing the result in rd.
 
     Parameters:
-        operand_values: dict with keys ``rd``, ``rs1``, and ``rs2``.
+        operand_values: OperandValues with keys ``rd``, ``rs1``, and ``rs2``.
         state: Current architectural state.
         pc: Program counter of this instruction.
 
@@ -100,14 +101,14 @@ def execute_or(operand_values: dict, state: State, pc: int) -> ChangeRecord:
     return changes
 
 
-def execute_ori(operand_values: dict, state: State, pc: int) -> ChangeRecord:
+def execute_ori(operand_values: OperandValues, state: State, pc: int) -> ChangeRecord:
     """Execute ORI: rd = rs1 | imm
 
     Perform bitwise OR of rs1 and the sign-extended immediate, storing
     the result in rd.
 
     Parameters:
-        operand_values: dict with keys ``rd``, ``rs1``, and ``imm``.
+        operand_values: OperandValues with keys ``rd``, ``rs1``, and ``imm``.
         state: Current architectural state.
         pc: Program counter of this instruction.
 
@@ -130,13 +131,13 @@ def execute_ori(operand_values: dict, state: State, pc: int) -> ChangeRecord:
     return changes
 
 
-def execute_xor(operand_values: dict, state: State, pc: int) -> ChangeRecord:
+def execute_xor(operand_values: OperandValues, state: State, pc: int) -> ChangeRecord:
     """Execute XOR: rd = rs1 ^ rs2
 
     Perform bitwise exclusive-OR of rs1 and rs2, storing the result in rd.
 
     Parameters:
-        operand_values: dict with keys ``rd``, ``rs1``, and ``rs2``.
+        operand_values: OperandValues with keys ``rd``, ``rs1``, and ``rs2``.
         state: Current architectural state.
         pc: Program counter of this instruction.
 
@@ -160,7 +161,7 @@ def execute_xor(operand_values: dict, state: State, pc: int) -> ChangeRecord:
     return changes
 
 
-def execute_xori(operand_values: dict, state: State, pc: int) -> ChangeRecord:
+def execute_xori(operand_values: OperandValues, state: State, pc: int) -> ChangeRecord:
     """Execute XORI: rd = rs1 ^ imm
 
     Perform bitwise exclusive-OR of rs1 and the sign-extended immediate,
@@ -168,7 +169,7 @@ def execute_xori(operand_values: dict, state: State, pc: int) -> ChangeRecord:
     bitwise NOT.
 
     Parameters:
-        operand_values: dict with keys ``rd``, ``rs1``, and ``imm``.
+        operand_values: OperandValues with keys ``rd``, ``rs1``, and ``imm``.
         state: Current architectural state.
         pc: Program counter of this instruction.
 

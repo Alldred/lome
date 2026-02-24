@@ -8,9 +8,10 @@ from __future__ import annotations
 from lome.changes import ChangeRecord
 from lome.instructions.common import read_gpr, sext32, write_gpr
 from lome.state import State
+from lome.types import OperandValues
 
 
-def execute_add(operand_values: dict, state: State, pc: int) -> ChangeRecord:
+def execute_add(operand_values: OperandValues, state: State, pc: int) -> ChangeRecord:
     """Execute ADD: rd = rs1 + rs2
 
     Parameters:
@@ -35,7 +36,7 @@ def execute_add(operand_values: dict, state: State, pc: int) -> ChangeRecord:
     return changes
 
 
-def execute_addi(operand_values: dict, state: State, pc: int) -> ChangeRecord:
+def execute_addi(operand_values: OperandValues, state: State, pc: int) -> ChangeRecord:
     """Execute ADDI: rd = rs1 + imm
 
     Parameters:
@@ -59,7 +60,7 @@ def execute_addi(operand_values: dict, state: State, pc: int) -> ChangeRecord:
     return changes
 
 
-def execute_sub(operand_values: dict, state: State, pc: int) -> ChangeRecord:
+def execute_sub(operand_values: OperandValues, state: State, pc: int) -> ChangeRecord:
     """Execute SUB: rd = rs1 - rs2
 
     Parameters:
@@ -84,7 +85,7 @@ def execute_sub(operand_values: dict, state: State, pc: int) -> ChangeRecord:
     return changes
 
 
-def execute_addw(operand_values: dict, state: State, pc: int) -> ChangeRecord:
+def execute_addw(operand_values: OperandValues, state: State, pc: int) -> ChangeRecord:
     """Execute ADDW: rd = sign_extend((rs1 + rs2)[31:0])
 
     Parameters:
@@ -113,7 +114,7 @@ def execute_addw(operand_values: dict, state: State, pc: int) -> ChangeRecord:
     return changes
 
 
-def execute_addiw(operand_values: dict, state: State, pc: int) -> ChangeRecord:
+def execute_addiw(operand_values: OperandValues, state: State, pc: int) -> ChangeRecord:
     """Execute ADDIW: rd = sign_extend((rs1 + imm)[31:0])
 
     Parameters:
@@ -140,7 +141,7 @@ def execute_addiw(operand_values: dict, state: State, pc: int) -> ChangeRecord:
     return changes
 
 
-def execute_subw(operand_values: dict, state: State, pc: int) -> ChangeRecord:
+def execute_subw(operand_values: OperandValues, state: State, pc: int) -> ChangeRecord:
     """Execute SUBW: rd = sign_extend((rs1 - rs2)[31:0])
 
     Parameters:

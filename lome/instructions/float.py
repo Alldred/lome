@@ -19,6 +19,7 @@ from lome.float_utils import (
 )
 from lome.memory import MemoryInterface
 from lome.state import State
+from lome.types import OperandValues
 
 _MASK_32 = 0xFFFF_FFFF
 _MASK_64 = 0xFFFF_FFFF_FFFF_FFFF
@@ -30,7 +31,7 @@ _MASK_64 = 0xFFFF_FFFF_FFFF_FFFF
 
 
 def execute_flw(
-    operand_values: dict,
+    operand_values: OperandValues,
     state: State,
     pc: int,
     *,
@@ -56,7 +57,7 @@ def execute_flw(
 
 
 def execute_fsw(
-    operand_values: dict,
+    operand_values: OperandValues,
     state: State,
     pc: int,
     *,
@@ -81,7 +82,7 @@ def execute_fsw(
 
 
 def execute_fld(
-    operand_values: dict,
+    operand_values: OperandValues,
     state: State,
     pc: int,
     *,
@@ -107,7 +108,7 @@ def execute_fld(
 
 
 def execute_fsd(
-    operand_values: dict,
+    operand_values: OperandValues,
     state: State,
     pc: int,
     *,
@@ -136,7 +137,7 @@ def execute_fsd(
 # ---------------------------------------------------------------------------
 
 
-def _fadd_s(operand_values: dict, state: State) -> ChangeRecord:
+def _fadd_s(operand_values: OperandValues, state: State) -> ChangeRecord:
     rd = operand_values.get("rd")
     rs1 = operand_values.get("rs1")
     rs2 = operand_values.get("rs2")
@@ -151,7 +152,7 @@ def _fadd_s(operand_values: dict, state: State) -> ChangeRecord:
     return changes
 
 
-def _fadd_d(operand_values: dict, state: State) -> ChangeRecord:
+def _fadd_d(operand_values: OperandValues, state: State) -> ChangeRecord:
     rd = operand_values.get("rd")
     rs1 = operand_values.get("rs1")
     rs2 = operand_values.get("rs2")
@@ -166,15 +167,19 @@ def _fadd_d(operand_values: dict, state: State) -> ChangeRecord:
     return changes
 
 
-def execute_fadd_s(operand_values: dict, state: State, pc: int) -> ChangeRecord:
+def execute_fadd_s(
+    operand_values: OperandValues, state: State, pc: int
+) -> ChangeRecord:
     return _fadd_s(operand_values, state)
 
 
-def execute_fadd_d(operand_values: dict, state: State, pc: int) -> ChangeRecord:
+def execute_fadd_d(
+    operand_values: OperandValues, state: State, pc: int
+) -> ChangeRecord:
     return _fadd_d(operand_values, state)
 
 
-def _fsub_s(operand_values: dict, state: State) -> ChangeRecord:
+def _fsub_s(operand_values: OperandValues, state: State) -> ChangeRecord:
     rd = operand_values.get("rd")
     rs1 = operand_values.get("rs1")
     rs2 = operand_values.get("rs2")
@@ -189,7 +194,7 @@ def _fsub_s(operand_values: dict, state: State) -> ChangeRecord:
     return changes
 
 
-def _fsub_d(operand_values: dict, state: State) -> ChangeRecord:
+def _fsub_d(operand_values: OperandValues, state: State) -> ChangeRecord:
     rd = operand_values.get("rd")
     rs1 = operand_values.get("rs1")
     rs2 = operand_values.get("rs2")
@@ -204,15 +209,19 @@ def _fsub_d(operand_values: dict, state: State) -> ChangeRecord:
     return changes
 
 
-def execute_fsub_s(operand_values: dict, state: State, pc: int) -> ChangeRecord:
+def execute_fsub_s(
+    operand_values: OperandValues, state: State, pc: int
+) -> ChangeRecord:
     return _fsub_s(operand_values, state)
 
 
-def execute_fsub_d(operand_values: dict, state: State, pc: int) -> ChangeRecord:
+def execute_fsub_d(
+    operand_values: OperandValues, state: State, pc: int
+) -> ChangeRecord:
     return _fsub_d(operand_values, state)
 
 
-def _fmul_s(operand_values: dict, state: State) -> ChangeRecord:
+def _fmul_s(operand_values: OperandValues, state: State) -> ChangeRecord:
     rd = operand_values.get("rd")
     rs1, rs2 = operand_values.get("rs1"), operand_values.get("rs2")
     a = bits_to_float_s(state.get_fpr(rs1))
@@ -226,7 +235,7 @@ def _fmul_s(operand_values: dict, state: State) -> ChangeRecord:
     return changes
 
 
-def _fmul_d(operand_values: dict, state: State) -> ChangeRecord:
+def _fmul_d(operand_values: OperandValues, state: State) -> ChangeRecord:
     rd = operand_values.get("rd")
     rs1, rs2 = operand_values.get("rs1"), operand_values.get("rs2")
     a = bits_to_float_d(state.get_fpr(rs1))
@@ -240,15 +249,19 @@ def _fmul_d(operand_values: dict, state: State) -> ChangeRecord:
     return changes
 
 
-def execute_fmul_s(operand_values: dict, state: State, pc: int) -> ChangeRecord:
+def execute_fmul_s(
+    operand_values: OperandValues, state: State, pc: int
+) -> ChangeRecord:
     return _fmul_s(operand_values, state)
 
 
-def execute_fmul_d(operand_values: dict, state: State, pc: int) -> ChangeRecord:
+def execute_fmul_d(
+    operand_values: OperandValues, state: State, pc: int
+) -> ChangeRecord:
     return _fmul_d(operand_values, state)
 
 
-def _fdiv_s(operand_values: dict, state: State) -> ChangeRecord:
+def _fdiv_s(operand_values: OperandValues, state: State) -> ChangeRecord:
     rd = operand_values.get("rd")
     rs1, rs2 = operand_values.get("rs1"), operand_values.get("rs2")
     a = bits_to_float_s(state.get_fpr(rs1))
@@ -264,7 +277,7 @@ def _fdiv_s(operand_values: dict, state: State) -> ChangeRecord:
     return changes
 
 
-def _fdiv_d(operand_values: dict, state: State) -> ChangeRecord:
+def _fdiv_d(operand_values: OperandValues, state: State) -> ChangeRecord:
     rd = operand_values.get("rd")
     rs1, rs2 = operand_values.get("rs1"), operand_values.get("rs2")
     a = bits_to_float_d(state.get_fpr(rs1))
@@ -280,15 +293,19 @@ def _fdiv_d(operand_values: dict, state: State) -> ChangeRecord:
     return changes
 
 
-def execute_fdiv_s(operand_values: dict, state: State, pc: int) -> ChangeRecord:
+def execute_fdiv_s(
+    operand_values: OperandValues, state: State, pc: int
+) -> ChangeRecord:
     return _fdiv_s(operand_values, state)
 
 
-def execute_fdiv_d(operand_values: dict, state: State, pc: int) -> ChangeRecord:
+def execute_fdiv_d(
+    operand_values: OperandValues, state: State, pc: int
+) -> ChangeRecord:
     return _fdiv_d(operand_values, state)
 
 
-def _fsqrt_s(operand_values: dict, state: State) -> ChangeRecord:
+def _fsqrt_s(operand_values: OperandValues, state: State) -> ChangeRecord:
     rd = operand_values.get("rd")
     rs1 = operand_values.get("rs1")
     a = bits_to_float_s(state.get_fpr(rs1))
@@ -301,7 +318,7 @@ def _fsqrt_s(operand_values: dict, state: State) -> ChangeRecord:
     return changes
 
 
-def _fsqrt_d(operand_values: dict, state: State) -> ChangeRecord:
+def _fsqrt_d(operand_values: OperandValues, state: State) -> ChangeRecord:
     rd = operand_values.get("rd")
     rs1 = operand_values.get("rs1")
     a = bits_to_float_d(state.get_fpr(rs1))
@@ -314,11 +331,15 @@ def _fsqrt_d(operand_values: dict, state: State) -> ChangeRecord:
     return changes
 
 
-def execute_fsqrt_s(operand_values: dict, state: State, pc: int) -> ChangeRecord:
+def execute_fsqrt_s(
+    operand_values: OperandValues, state: State, pc: int
+) -> ChangeRecord:
     return _fsqrt_s(operand_values, state)
 
 
-def execute_fsqrt_d(operand_values: dict, state: State, pc: int) -> ChangeRecord:
+def execute_fsqrt_d(
+    operand_values: OperandValues, state: State, pc: int
+) -> ChangeRecord:
     return _fsqrt_d(operand_values, state)
 
 
@@ -328,7 +349,7 @@ def execute_fsqrt_d(operand_values: dict, state: State, pc: int) -> ChangeRecord
 # ---------------------------------------------------------------------------
 
 
-def _fmadd_s(operand_values: dict, state: State) -> ChangeRecord:
+def _fmadd_s(operand_values: OperandValues, state: State) -> ChangeRecord:
     rd = operand_values.get("rd")
     rs1, rs2, rs3 = (
         operand_values.get("rs1"),
@@ -347,7 +368,7 @@ def _fmadd_s(operand_values: dict, state: State) -> ChangeRecord:
     return changes
 
 
-def _fmadd_d(operand_values: dict, state: State) -> ChangeRecord:
+def _fmadd_d(operand_values: OperandValues, state: State) -> ChangeRecord:
     rd = operand_values.get("rd")
     rs1, rs2, rs3 = (
         operand_values.get("rs1"),
@@ -366,15 +387,19 @@ def _fmadd_d(operand_values: dict, state: State) -> ChangeRecord:
     return changes
 
 
-def execute_fmadd_s(operand_values: dict, state: State, pc: int) -> ChangeRecord:
+def execute_fmadd_s(
+    operand_values: OperandValues, state: State, pc: int
+) -> ChangeRecord:
     return _fmadd_s(operand_values, state)
 
 
-def execute_fmadd_d(operand_values: dict, state: State, pc: int) -> ChangeRecord:
+def execute_fmadd_d(
+    operand_values: OperandValues, state: State, pc: int
+) -> ChangeRecord:
     return _fmadd_d(operand_values, state)
 
 
-def _fmsub_s(operand_values: dict, state: State) -> ChangeRecord:
+def _fmsub_s(operand_values: OperandValues, state: State) -> ChangeRecord:
     rd = operand_values.get("rd")
     rs1, rs2, rs3 = (
         operand_values.get("rs1"),
@@ -393,7 +418,7 @@ def _fmsub_s(operand_values: dict, state: State) -> ChangeRecord:
     return changes
 
 
-def _fmsub_d(operand_values: dict, state: State) -> ChangeRecord:
+def _fmsub_d(operand_values: OperandValues, state: State) -> ChangeRecord:
     rd = operand_values.get("rd")
     rs1, rs2, rs3 = (
         operand_values.get("rs1"),
@@ -412,15 +437,19 @@ def _fmsub_d(operand_values: dict, state: State) -> ChangeRecord:
     return changes
 
 
-def execute_fmsub_s(operand_values: dict, state: State, pc: int) -> ChangeRecord:
+def execute_fmsub_s(
+    operand_values: OperandValues, state: State, pc: int
+) -> ChangeRecord:
     return _fmsub_s(operand_values, state)
 
 
-def execute_fmsub_d(operand_values: dict, state: State, pc: int) -> ChangeRecord:
+def execute_fmsub_d(
+    operand_values: OperandValues, state: State, pc: int
+) -> ChangeRecord:
     return _fmsub_d(operand_values, state)
 
 
-def _fnmadd_s(operand_values: dict, state: State) -> ChangeRecord:
+def _fnmadd_s(operand_values: OperandValues, state: State) -> ChangeRecord:
     rd = operand_values.get("rd")
     rs1, rs2, rs3 = (
         operand_values.get("rs1"),
@@ -439,7 +468,7 @@ def _fnmadd_s(operand_values: dict, state: State) -> ChangeRecord:
     return changes
 
 
-def _fnmadd_d(operand_values: dict, state: State) -> ChangeRecord:
+def _fnmadd_d(operand_values: OperandValues, state: State) -> ChangeRecord:
     rd = operand_values.get("rd")
     rs1, rs2, rs3 = (
         operand_values.get("rs1"),
@@ -458,15 +487,19 @@ def _fnmadd_d(operand_values: dict, state: State) -> ChangeRecord:
     return changes
 
 
-def execute_fnmadd_s(operand_values: dict, state: State, pc: int) -> ChangeRecord:
+def execute_fnmadd_s(
+    operand_values: OperandValues, state: State, pc: int
+) -> ChangeRecord:
     return _fnmadd_s(operand_values, state)
 
 
-def execute_fnmadd_d(operand_values: dict, state: State, pc: int) -> ChangeRecord:
+def execute_fnmadd_d(
+    operand_values: OperandValues, state: State, pc: int
+) -> ChangeRecord:
     return _fnmadd_d(operand_values, state)
 
 
-def _fnmsub_s(operand_values: dict, state: State) -> ChangeRecord:
+def _fnmsub_s(operand_values: OperandValues, state: State) -> ChangeRecord:
     rd = operand_values.get("rd")
     rs1, rs2, rs3 = (
         operand_values.get("rs1"),
@@ -485,7 +518,7 @@ def _fnmsub_s(operand_values: dict, state: State) -> ChangeRecord:
     return changes
 
 
-def _fnmsub_d(operand_values: dict, state: State) -> ChangeRecord:
+def _fnmsub_d(operand_values: OperandValues, state: State) -> ChangeRecord:
     rd = operand_values.get("rd")
     rs1, rs2, rs3 = (
         operand_values.get("rs1"),
@@ -504,11 +537,15 @@ def _fnmsub_d(operand_values: dict, state: State) -> ChangeRecord:
     return changes
 
 
-def execute_fnmsub_s(operand_values: dict, state: State, pc: int) -> ChangeRecord:
+def execute_fnmsub_s(
+    operand_values: OperandValues, state: State, pc: int
+) -> ChangeRecord:
     return _fnmsub_s(operand_values, state)
 
 
-def execute_fnmsub_d(operand_values: dict, state: State, pc: int) -> ChangeRecord:
+def execute_fnmsub_d(
+    operand_values: OperandValues, state: State, pc: int
+) -> ChangeRecord:
     return _fnmsub_d(operand_values, state)
 
 
@@ -526,7 +563,7 @@ def _sign_bits_d(bits: int) -> int:
 
 
 def _fsgnj_s(
-    operand_values: dict, state: State, neg: bool = False, xor: bool = False
+    operand_values: OperandValues, state: State, neg: bool = False, xor: bool = False
 ) -> ChangeRecord:
     rd = operand_values.get("rd")
     rs1 = operand_values.get("rs1")
@@ -547,7 +584,7 @@ def _fsgnj_s(
 
 
 def _fsgnj_d(
-    operand_values: dict, state: State, neg: bool = False, xor: bool = False
+    operand_values: OperandValues, state: State, neg: bool = False, xor: bool = False
 ) -> ChangeRecord:
     rd = operand_values.get("rd")
     rs1 = operand_values.get("rs1")
@@ -567,27 +604,39 @@ def _fsgnj_d(
     return changes
 
 
-def execute_fsgnj_s(operand_values: dict, state: State, pc: int) -> ChangeRecord:
+def execute_fsgnj_s(
+    operand_values: OperandValues, state: State, pc: int
+) -> ChangeRecord:
     return _fsgnj_s(operand_values, state, neg=False, xor=False)
 
 
-def execute_fsgnj_d(operand_values: dict, state: State, pc: int) -> ChangeRecord:
+def execute_fsgnj_d(
+    operand_values: OperandValues, state: State, pc: int
+) -> ChangeRecord:
     return _fsgnj_d(operand_values, state, neg=False, xor=False)
 
 
-def execute_fsgnjn_s(operand_values: dict, state: State, pc: int) -> ChangeRecord:
+def execute_fsgnjn_s(
+    operand_values: OperandValues, state: State, pc: int
+) -> ChangeRecord:
     return _fsgnj_s(operand_values, state, neg=True, xor=False)
 
 
-def execute_fsgnjn_d(operand_values: dict, state: State, pc: int) -> ChangeRecord:
+def execute_fsgnjn_d(
+    operand_values: OperandValues, state: State, pc: int
+) -> ChangeRecord:
     return _fsgnj_d(operand_values, state, neg=True, xor=False)
 
 
-def execute_fsgnjx_s(operand_values: dict, state: State, pc: int) -> ChangeRecord:
+def execute_fsgnjx_s(
+    operand_values: OperandValues, state: State, pc: int
+) -> ChangeRecord:
     return _fsgnj_s(operand_values, state, neg=False, xor=True)
 
 
-def execute_fsgnjx_d(operand_values: dict, state: State, pc: int) -> ChangeRecord:
+def execute_fsgnjx_d(
+    operand_values: OperandValues, state: State, pc: int
+) -> ChangeRecord:
     return _fsgnj_d(operand_values, state, neg=False, xor=True)
 
 
@@ -596,7 +645,7 @@ def execute_fsgnjx_d(operand_values: dict, state: State, pc: int) -> ChangeRecor
 # ---------------------------------------------------------------------------
 
 
-def _fmin_s(operand_values: dict, state: State) -> ChangeRecord:
+def _fmin_s(operand_values: OperandValues, state: State) -> ChangeRecord:
     rd, rs1, rs2 = (
         operand_values.get("rd"),
         operand_values.get("rs1"),
@@ -618,7 +667,7 @@ def _fmin_s(operand_values: dict, state: State) -> ChangeRecord:
     return changes
 
 
-def _fmin_d(operand_values: dict, state: State) -> ChangeRecord:
+def _fmin_d(operand_values: OperandValues, state: State) -> ChangeRecord:
     rd, rs1, rs2 = (
         operand_values.get("rd"),
         operand_values.get("rs1"),
@@ -640,15 +689,19 @@ def _fmin_d(operand_values: dict, state: State) -> ChangeRecord:
     return changes
 
 
-def execute_fmin_s(operand_values: dict, state: State, pc: int) -> ChangeRecord:
+def execute_fmin_s(
+    operand_values: OperandValues, state: State, pc: int
+) -> ChangeRecord:
     return _fmin_s(operand_values, state)
 
 
-def execute_fmin_d(operand_values: dict, state: State, pc: int) -> ChangeRecord:
+def execute_fmin_d(
+    operand_values: OperandValues, state: State, pc: int
+) -> ChangeRecord:
     return _fmin_d(operand_values, state)
 
 
-def _fmax_s(operand_values: dict, state: State) -> ChangeRecord:
+def _fmax_s(operand_values: OperandValues, state: State) -> ChangeRecord:
     rd, rs1, rs2 = (
         operand_values.get("rd"),
         operand_values.get("rs1"),
@@ -670,7 +723,7 @@ def _fmax_s(operand_values: dict, state: State) -> ChangeRecord:
     return changes
 
 
-def _fmax_d(operand_values: dict, state: State) -> ChangeRecord:
+def _fmax_d(operand_values: OperandValues, state: State) -> ChangeRecord:
     rd, rs1, rs2 = (
         operand_values.get("rd"),
         operand_values.get("rs1"),
@@ -692,11 +745,15 @@ def _fmax_d(operand_values: dict, state: State) -> ChangeRecord:
     return changes
 
 
-def execute_fmax_s(operand_values: dict, state: State, pc: int) -> ChangeRecord:
+def execute_fmax_s(
+    operand_values: OperandValues, state: State, pc: int
+) -> ChangeRecord:
     return _fmax_s(operand_values, state)
 
 
-def execute_fmax_d(operand_values: dict, state: State, pc: int) -> ChangeRecord:
+def execute_fmax_d(
+    operand_values: OperandValues, state: State, pc: int
+) -> ChangeRecord:
     return _fmax_d(operand_values, state)
 
 
@@ -705,7 +762,7 @@ def execute_fmax_d(operand_values: dict, state: State, pc: int) -> ChangeRecord:
 # ---------------------------------------------------------------------------
 
 
-def execute_feq_s(operand_values: dict, state: State, pc: int) -> ChangeRecord:
+def execute_feq_s(operand_values: OperandValues, state: State, pc: int) -> ChangeRecord:
     rd = operand_values.get("rd")
     rs1, rs2 = operand_values.get("rs1"), operand_values.get("rs2")
     a = bits_to_float_s(state.get_fpr(rs1))
@@ -717,7 +774,7 @@ def execute_feq_s(operand_values: dict, state: State, pc: int) -> ChangeRecord:
     return changes
 
 
-def execute_feq_d(operand_values: dict, state: State, pc: int) -> ChangeRecord:
+def execute_feq_d(operand_values: OperandValues, state: State, pc: int) -> ChangeRecord:
     rd = operand_values.get("rd")
     rs1, rs2 = operand_values.get("rs1"), operand_values.get("rs2")
     a = bits_to_float_d(state.get_fpr(rs1))
@@ -729,7 +786,7 @@ def execute_feq_d(operand_values: dict, state: State, pc: int) -> ChangeRecord:
     return changes
 
 
-def execute_fle_s(operand_values: dict, state: State, pc: int) -> ChangeRecord:
+def execute_fle_s(operand_values: OperandValues, state: State, pc: int) -> ChangeRecord:
     rd = operand_values.get("rd")
     rs1, rs2 = operand_values.get("rs1"), operand_values.get("rs2")
     a = bits_to_float_s(state.get_fpr(rs1))
@@ -741,7 +798,7 @@ def execute_fle_s(operand_values: dict, state: State, pc: int) -> ChangeRecord:
     return changes
 
 
-def execute_fle_d(operand_values: dict, state: State, pc: int) -> ChangeRecord:
+def execute_fle_d(operand_values: OperandValues, state: State, pc: int) -> ChangeRecord:
     rd = operand_values.get("rd")
     rs1, rs2 = operand_values.get("rs1"), operand_values.get("rs2")
     a = bits_to_float_d(state.get_fpr(rs1))
@@ -753,7 +810,7 @@ def execute_fle_d(operand_values: dict, state: State, pc: int) -> ChangeRecord:
     return changes
 
 
-def execute_flt_s(operand_values: dict, state: State, pc: int) -> ChangeRecord:
+def execute_flt_s(operand_values: OperandValues, state: State, pc: int) -> ChangeRecord:
     rd = operand_values.get("rd")
     rs1, rs2 = operand_values.get("rs1"), operand_values.get("rs2")
     a = bits_to_float_s(state.get_fpr(rs1))
@@ -765,7 +822,7 @@ def execute_flt_s(operand_values: dict, state: State, pc: int) -> ChangeRecord:
     return changes
 
 
-def execute_flt_d(operand_values: dict, state: State, pc: int) -> ChangeRecord:
+def execute_flt_d(operand_values: OperandValues, state: State, pc: int) -> ChangeRecord:
     rd = operand_values.get("rd")
     rs1, rs2 = operand_values.get("rs1"), operand_values.get("rs2")
     a = bits_to_float_d(state.get_fpr(rs1))
@@ -782,7 +839,9 @@ def execute_flt_d(operand_values: dict, state: State, pc: int) -> ChangeRecord:
 # ---------------------------------------------------------------------------
 
 
-def execute_fmv_w_x(operand_values: dict, state: State, pc: int) -> ChangeRecord:
+def execute_fmv_w_x(
+    operand_values: OperandValues, state: State, pc: int
+) -> ChangeRecord:
     rd = operand_values.get("rd")
     rs1 = operand_values.get("rs1")
     raw = state.get_gpr(rs1)
@@ -795,7 +854,9 @@ def execute_fmv_w_x(operand_values: dict, state: State, pc: int) -> ChangeRecord
     return changes
 
 
-def execute_fmv_d_x(operand_values: dict, state: State, pc: int) -> ChangeRecord:
+def execute_fmv_d_x(
+    operand_values: OperandValues, state: State, pc: int
+) -> ChangeRecord:
     rd = operand_values.get("rd")
     rs1 = operand_values.get("rs1")
     raw = state.get_gpr(rs1)
@@ -808,7 +869,9 @@ def execute_fmv_d_x(operand_values: dict, state: State, pc: int) -> ChangeRecord
     return changes
 
 
-def execute_fmv_x_w(operand_values: dict, state: State, pc: int) -> ChangeRecord:
+def execute_fmv_x_w(
+    operand_values: OperandValues, state: State, pc: int
+) -> ChangeRecord:
     rd = operand_values.get("rd")
     rs1 = operand_values.get("rs1")
     bits = state.get_fpr(rs1) & _MASK_32
@@ -821,7 +884,9 @@ def execute_fmv_x_w(operand_values: dict, state: State, pc: int) -> ChangeRecord
     return changes
 
 
-def execute_fmv_x_d(operand_values: dict, state: State, pc: int) -> ChangeRecord:
+def execute_fmv_x_d(
+    operand_values: OperandValues, state: State, pc: int
+) -> ChangeRecord:
     rd = operand_values.get("rd")
     rs1 = operand_values.get("rs1")
     bits = state.get_fpr(rs1) & _MASK_64
@@ -836,7 +901,9 @@ def execute_fmv_x_d(operand_values: dict, state: State, pc: int) -> ChangeRecord
 # ---------------------------------------------------------------------------
 
 
-def execute_fcvt_s_w(operand_values: dict, state: State, pc: int) -> ChangeRecord:
+def execute_fcvt_s_w(
+    operand_values: OperandValues, state: State, pc: int
+) -> ChangeRecord:
     rd = operand_values.get("rd")
     rs1 = operand_values.get("rs1")
     x = state.get_gpr(rs1)
@@ -853,7 +920,9 @@ def execute_fcvt_s_w(operand_values: dict, state: State, pc: int) -> ChangeRecor
     return changes
 
 
-def execute_fcvt_s_wu(operand_values: dict, state: State, pc: int) -> ChangeRecord:
+def execute_fcvt_s_wu(
+    operand_values: OperandValues, state: State, pc: int
+) -> ChangeRecord:
     rd = operand_values.get("rd")
     rs1 = operand_values.get("rs1")
     raw = state.get_gpr(rs1)
@@ -869,7 +938,9 @@ def execute_fcvt_s_wu(operand_values: dict, state: State, pc: int) -> ChangeReco
     return changes
 
 
-def execute_fcvt_s_l(operand_values: dict, state: State, pc: int) -> ChangeRecord:
+def execute_fcvt_s_l(
+    operand_values: OperandValues, state: State, pc: int
+) -> ChangeRecord:
     rd = operand_values.get("rd")
     rs1 = operand_values.get("rs1")
     raw = state.get_gpr(rs1)
@@ -887,7 +958,9 @@ def execute_fcvt_s_l(operand_values: dict, state: State, pc: int) -> ChangeRecor
     return changes
 
 
-def execute_fcvt_s_lu(operand_values: dict, state: State, pc: int) -> ChangeRecord:
+def execute_fcvt_s_lu(
+    operand_values: OperandValues, state: State, pc: int
+) -> ChangeRecord:
     rd = operand_values.get("rd")
     rs1 = operand_values.get("rs1")
     raw = state.get_gpr(rs1)
@@ -903,7 +976,9 @@ def execute_fcvt_s_lu(operand_values: dict, state: State, pc: int) -> ChangeReco
     return changes
 
 
-def execute_fcvt_d_w(operand_values: dict, state: State, pc: int) -> ChangeRecord:
+def execute_fcvt_d_w(
+    operand_values: OperandValues, state: State, pc: int
+) -> ChangeRecord:
     rd = operand_values.get("rd")
     rs1 = operand_values.get("rs1")
     x = state.get_gpr(rs1)
@@ -920,7 +995,9 @@ def execute_fcvt_d_w(operand_values: dict, state: State, pc: int) -> ChangeRecor
     return changes
 
 
-def execute_fcvt_d_wu(operand_values: dict, state: State, pc: int) -> ChangeRecord:
+def execute_fcvt_d_wu(
+    operand_values: OperandValues, state: State, pc: int
+) -> ChangeRecord:
     rd = operand_values.get("rd")
     rs1 = operand_values.get("rs1")
     raw = state.get_gpr(rs1)
@@ -936,7 +1013,9 @@ def execute_fcvt_d_wu(operand_values: dict, state: State, pc: int) -> ChangeReco
     return changes
 
 
-def execute_fcvt_d_l(operand_values: dict, state: State, pc: int) -> ChangeRecord:
+def execute_fcvt_d_l(
+    operand_values: OperandValues, state: State, pc: int
+) -> ChangeRecord:
     rd = operand_values.get("rd")
     rs1 = operand_values.get("rs1")
     raw = state.get_gpr(rs1)
@@ -954,7 +1033,9 @@ def execute_fcvt_d_l(operand_values: dict, state: State, pc: int) -> ChangeRecor
     return changes
 
 
-def execute_fcvt_d_lu(operand_values: dict, state: State, pc: int) -> ChangeRecord:
+def execute_fcvt_d_lu(
+    operand_values: OperandValues, state: State, pc: int
+) -> ChangeRecord:
     rd = operand_values.get("rd")
     rs1 = operand_values.get("rs1")
     raw = state.get_gpr(rs1)
@@ -970,7 +1051,9 @@ def execute_fcvt_d_lu(operand_values: dict, state: State, pc: int) -> ChangeReco
     return changes
 
 
-def execute_fcvt_w_s(operand_values: dict, state: State, pc: int) -> ChangeRecord:
+def execute_fcvt_w_s(
+    operand_values: OperandValues, state: State, pc: int
+) -> ChangeRecord:
     rd = operand_values.get("rd")
     rs1 = operand_values.get("rs1")
     f = bits_to_float_s(state.get_fpr(rs1))
@@ -991,7 +1074,9 @@ def execute_fcvt_w_s(operand_values: dict, state: State, pc: int) -> ChangeRecor
     return changes
 
 
-def execute_fcvt_wu_s(operand_values: dict, state: State, pc: int) -> ChangeRecord:
+def execute_fcvt_wu_s(
+    operand_values: OperandValues, state: State, pc: int
+) -> ChangeRecord:
     rd = operand_values.get("rd")
     rs1 = operand_values.get("rs1")
     f = bits_to_float_s(state.get_fpr(rs1))
@@ -1010,7 +1095,9 @@ def execute_fcvt_wu_s(operand_values: dict, state: State, pc: int) -> ChangeReco
     return changes
 
 
-def execute_fcvt_w_d(operand_values: dict, state: State, pc: int) -> ChangeRecord:
+def execute_fcvt_w_d(
+    operand_values: OperandValues, state: State, pc: int
+) -> ChangeRecord:
     rd = operand_values.get("rd")
     rs1 = operand_values.get("rs1")
     f = bits_to_float_d(state.get_fpr(rs1))
@@ -1031,7 +1118,9 @@ def execute_fcvt_w_d(operand_values: dict, state: State, pc: int) -> ChangeRecor
     return changes
 
 
-def execute_fcvt_wu_d(operand_values: dict, state: State, pc: int) -> ChangeRecord:
+def execute_fcvt_wu_d(
+    operand_values: OperandValues, state: State, pc: int
+) -> ChangeRecord:
     rd = operand_values.get("rd")
     rs1 = operand_values.get("rs1")
     f = bits_to_float_d(state.get_fpr(rs1))
@@ -1050,7 +1139,9 @@ def execute_fcvt_wu_d(operand_values: dict, state: State, pc: int) -> ChangeReco
     return changes
 
 
-def execute_fcvt_l_s(operand_values: dict, state: State, pc: int) -> ChangeRecord:
+def execute_fcvt_l_s(
+    operand_values: OperandValues, state: State, pc: int
+) -> ChangeRecord:
     rd = operand_values.get("rd")
     rs1 = operand_values.get("rs1")
     f = bits_to_float_s(state.get_fpr(rs1))
@@ -1069,7 +1160,9 @@ def execute_fcvt_l_s(operand_values: dict, state: State, pc: int) -> ChangeRecor
     return changes
 
 
-def execute_fcvt_lu_s(operand_values: dict, state: State, pc: int) -> ChangeRecord:
+def execute_fcvt_lu_s(
+    operand_values: OperandValues, state: State, pc: int
+) -> ChangeRecord:
     rd = operand_values.get("rd")
     rs1 = operand_values.get("rs1")
     f = bits_to_float_s(state.get_fpr(rs1))
@@ -1087,7 +1180,9 @@ def execute_fcvt_lu_s(operand_values: dict, state: State, pc: int) -> ChangeReco
     return changes
 
 
-def execute_fcvt_l_d(operand_values: dict, state: State, pc: int) -> ChangeRecord:
+def execute_fcvt_l_d(
+    operand_values: OperandValues, state: State, pc: int
+) -> ChangeRecord:
     rd = operand_values.get("rd")
     rs1 = operand_values.get("rs1")
     f = bits_to_float_d(state.get_fpr(rs1))
@@ -1106,7 +1201,9 @@ def execute_fcvt_l_d(operand_values: dict, state: State, pc: int) -> ChangeRecor
     return changes
 
 
-def execute_fcvt_lu_d(operand_values: dict, state: State, pc: int) -> ChangeRecord:
+def execute_fcvt_lu_d(
+    operand_values: OperandValues, state: State, pc: int
+) -> ChangeRecord:
     rd = operand_values.get("rd")
     rs1 = operand_values.get("rs1")
     f = bits_to_float_d(state.get_fpr(rs1))
@@ -1124,7 +1221,9 @@ def execute_fcvt_lu_d(operand_values: dict, state: State, pc: int) -> ChangeReco
     return changes
 
 
-def execute_fcvt_s_d(operand_values: dict, state: State, pc: int) -> ChangeRecord:
+def execute_fcvt_s_d(
+    operand_values: OperandValues, state: State, pc: int
+) -> ChangeRecord:
     rd = operand_values.get("rd")
     rs1 = operand_values.get("rs1")
     f = bits_to_float_d(state.get_fpr(rs1))
@@ -1137,7 +1236,9 @@ def execute_fcvt_s_d(operand_values: dict, state: State, pc: int) -> ChangeRecor
     return changes
 
 
-def execute_fcvt_d_s(operand_values: dict, state: State, pc: int) -> ChangeRecord:
+def execute_fcvt_d_s(
+    operand_values: OperandValues, state: State, pc: int
+) -> ChangeRecord:
     rd = operand_values.get("rd")
     rs1 = operand_values.get("rs1")
     f = bits_to_float_s(state.get_fpr(rs1))
@@ -1202,7 +1303,9 @@ def _fclass_d(bits: int) -> int:
     return mask
 
 
-def execute_fclass_s(operand_values: dict, state: State, pc: int) -> ChangeRecord:
+def execute_fclass_s(
+    operand_values: OperandValues, state: State, pc: int
+) -> ChangeRecord:
     rd = operand_values.get("rd")
     rs1 = operand_values.get("rs1")
     bits = state.get_fpr(rs1) & _MASK_32
@@ -1213,7 +1316,9 @@ def execute_fclass_s(operand_values: dict, state: State, pc: int) -> ChangeRecor
     return changes
 
 
-def execute_fclass_d(operand_values: dict, state: State, pc: int) -> ChangeRecord:
+def execute_fclass_d(
+    operand_values: OperandValues, state: State, pc: int
+) -> ChangeRecord:
     rd = operand_values.get("rd")
     rs1 = operand_values.get("rs1")
     bits = state.get_fpr(rs1) & _MASK_64

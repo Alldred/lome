@@ -19,7 +19,7 @@ Example -- direct use (normally called by :class:`Lome`)::
 
 from __future__ import annotations
 
-from typing import Any, Optional
+from typing import Any, Callable, Optional
 
 from lome.changes import ChangeRecord
 from lome.instructions import (
@@ -38,6 +38,7 @@ from lome.instructions import (
 from lome.memory import MemoryInterface
 from lome.ras import RASModel
 from lome.state import State
+from lome.types import OperandValues
 
 _LOAD_STORE_MNEMONICS: frozenset[str] = frozenset(
     {
@@ -64,7 +65,10 @@ _JUMP_MNEMONICS: frozenset[str] = frozenset({"jal", "jalr"})
 # Handler table
 # ---------------------------------------------------------------------------
 
-_INSTRUCTION_HANDLERS: dict[str, Any] = {
+InstructionHandler = Callable[..., ChangeRecord]
+
+
+_INSTRUCTION_HANDLERS: dict[str, InstructionHandler] = {
     # Arithmetic
     "add": arithmetic.execute_add,
     "addi": arithmetic.execute_addi,
@@ -282,4 +286,5 @@ def execute_instruction(
 
     # Normal execution -- state is mutated in-place.
     # Note: PC advancement is handled by the model, not here.
-    return handler(instruction_instance.operand_values, state, pc, **kwargs)
+    operand_values: OperandValues = instruction_instance.operand_values
+    return handler(operand_values, state, pc, **kwargs)

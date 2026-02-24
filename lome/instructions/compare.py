@@ -8,16 +8,17 @@ from __future__ import annotations
 from lome.changes import ChangeRecord
 from lome.instructions.common import read_gpr, signed64, write_gpr
 from lome.state import State
+from lome.types import OperandValues
 
 
-def execute_slt(operand_values: dict, state: State, pc: int) -> ChangeRecord:
+def execute_slt(operand_values: OperandValues, state: State, pc: int) -> ChangeRecord:
     """Execute SLT: rd = (rs1 < rs2) ? 1 : 0 (signed comparison)
 
     Set rd to 1 if the signed value in rs1 is less than the signed value
     in rs2, otherwise set rd to 0.
 
     Parameters:
-        operand_values: dict with keys ``rd``, ``rs1``, and ``rs2``.
+        operand_values: OperandValues with keys ``rd``, ``rs1``, and ``rs2``.
         state: Current architectural state.
         pc: Program counter of this instruction.
 
@@ -42,14 +43,14 @@ def execute_slt(operand_values: dict, state: State, pc: int) -> ChangeRecord:
     return changes
 
 
-def execute_slti(operand_values: dict, state: State, pc: int) -> ChangeRecord:
+def execute_slti(operand_values: OperandValues, state: State, pc: int) -> ChangeRecord:
     """Execute SLTI: rd = (rs1 < imm) ? 1 : 0 (signed comparison)
 
     Set rd to 1 if the signed value in rs1 is less than the sign-extended
     immediate, otherwise set rd to 0.
 
     Parameters:
-        operand_values: dict with keys ``rd``, ``rs1``, and ``imm``.
+        operand_values: OperandValues with keys ``rd``, ``rs1``, and ``imm``.
         state: Current architectural state.
         pc: Program counter of this instruction.
 
@@ -73,14 +74,14 @@ def execute_slti(operand_values: dict, state: State, pc: int) -> ChangeRecord:
     return changes
 
 
-def execute_sltu(operand_values: dict, state: State, pc: int) -> ChangeRecord:
+def execute_sltu(operand_values: OperandValues, state: State, pc: int) -> ChangeRecord:
     """Execute SLTU: rd = (rs1 < rs2) ? 1 : 0 (unsigned comparison)
 
     Set rd to 1 if the unsigned value in rs1 is less than the unsigned
     value in rs2, otherwise set rd to 0.
 
     Parameters:
-        operand_values: dict with keys ``rd``, ``rs1``, and ``rs2``.
+        operand_values: OperandValues with keys ``rd``, ``rs1``, and ``rs2``.
         state: Current architectural state.
         pc: Program counter of this instruction.
 
@@ -103,14 +104,14 @@ def execute_sltu(operand_values: dict, state: State, pc: int) -> ChangeRecord:
     return changes
 
 
-def execute_sltiu(operand_values: dict, state: State, pc: int) -> ChangeRecord:
+def execute_sltiu(operand_values: OperandValues, state: State, pc: int) -> ChangeRecord:
     """Execute SLTIU: rd = (rs1 < imm) ? 1 : 0 (unsigned comparison)
 
     Set rd to 1 if the unsigned value in rs1 is less than the
     zero-extended immediate, otherwise set rd to 0.
 
     Parameters:
-        operand_values: dict with keys ``rd``, ``rs1``, and ``imm``.
+        operand_values: OperandValues with keys ``rd``, ``rs1``, and ``imm``.
         state: Current architectural state.
         pc: Program counter of this instruction.
 

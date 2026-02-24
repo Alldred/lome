@@ -15,6 +15,8 @@ from typing import TYPE_CHECKING
 
 from eumos.constants import R_DYN, RNE
 
+from lome.types import OperandValues
+
 if TYPE_CHECKING:
     from lome.state import State
 
@@ -56,7 +58,7 @@ def get_rounding_mode(state: "State") -> int:
     return int(frm) & 0x7
 
 
-def effective_rounding_mode(operand_values: dict, state: "State") -> int:
+def effective_rounding_mode(operand_values: OperandValues, state: "State") -> int:
     """Resolve rounding mode: if instruction rm is 7 (dynamic), use frm from state; else use rm."""
     rm = operand_values.get("rm", RNE)
     if rm == R_DYN:

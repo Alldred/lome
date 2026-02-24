@@ -14,6 +14,7 @@ from typing import Optional
 from lome.changes import ChangeRecord, GPRRead, GPRWrite, MemoryAccess
 from lome.memory import MemoryInterface
 from lome.state import State
+from lome.types import OperandValues
 
 
 def _sign_extend(value: int, bits: int) -> int:
@@ -33,7 +34,7 @@ def _sign_extend(value: int, bits: int) -> int:
 
 
 def execute_lb(
-    operand_values: dict,
+    operand_values: OperandValues,
     state: State,
     pc: int,
     *,
@@ -45,7 +46,7 @@ def execute_lb(
     64 bits, and write the result to rd.
 
     Parameters:
-        operand_values: dict with keys ``rd``, ``rs1``, and ``imm``.
+        operand_values: OperandValues with keys ``rd``, ``rs1``, and ``imm``.
         state: Current architectural state.
         pc: Program counter of this instruction.
 
@@ -78,7 +79,7 @@ def execute_lb(
 
 
 def execute_lh(
-    operand_values: dict,
+    operand_values: OperandValues,
     state: State,
     pc: int,
     *,
@@ -90,7 +91,7 @@ def execute_lh(
     sign-extend it to 64 bits, and write the result to rd.
 
     Parameters:
-        operand_values: dict with keys ``rd``, ``rs1``, and ``imm``.
+        operand_values: OperandValues with keys ``rd``, ``rs1``, and ``imm``.
         state: Current architectural state.
         pc: Program counter of this instruction.
 
@@ -123,7 +124,7 @@ def execute_lh(
 
 
 def execute_lw(
-    operand_values: dict,
+    operand_values: OperandValues,
     state: State,
     pc: int,
     *,
@@ -135,7 +136,7 @@ def execute_lw(
     it to 64 bits, and write the result to rd.
 
     Parameters:
-        operand_values: dict with keys ``rd``, ``rs1``, and ``imm``.
+        operand_values: OperandValues with keys ``rd``, ``rs1``, and ``imm``.
         state: Current architectural state.
         pc: Program counter of this instruction.
 
@@ -168,7 +169,7 @@ def execute_lw(
 
 
 def execute_lbu(
-    operand_values: dict,
+    operand_values: OperandValues,
     state: State,
     pc: int,
     *,
@@ -180,7 +181,7 @@ def execute_lbu(
     64 bits, and write the result to rd.
 
     Parameters:
-        operand_values: dict with keys ``rd``, ``rs1``, and ``imm``.
+        operand_values: OperandValues with keys ``rd``, ``rs1``, and ``imm``.
         state: Current architectural state.
         pc: Program counter of this instruction.
 
@@ -213,7 +214,7 @@ def execute_lbu(
 
 
 def execute_lhu(
-    operand_values: dict,
+    operand_values: OperandValues,
     state: State,
     pc: int,
     *,
@@ -225,7 +226,7 @@ def execute_lhu(
     zero-extend it to 64 bits, and write the result to rd.
 
     Parameters:
-        operand_values: dict with keys ``rd``, ``rs1``, and ``imm``.
+        operand_values: OperandValues with keys ``rd``, ``rs1``, and ``imm``.
         state: Current architectural state.
         pc: Program counter of this instruction.
 
@@ -258,7 +259,7 @@ def execute_lhu(
 
 
 def execute_ld(
-    operand_values: dict,
+    operand_values: OperandValues,
     state: State,
     pc: int,
     *,
@@ -270,7 +271,7 @@ def execute_ld(
     write the result to rd.  RV64 only.
 
     Parameters:
-        operand_values: dict with keys ``rd``, ``rs1``, and ``imm``.
+        operand_values: OperandValues with keys ``rd``, ``rs1``, and ``imm``.
         state: Current architectural state.
         pc: Program counter of this instruction.
 
@@ -302,7 +303,7 @@ def execute_ld(
 
 
 def execute_lwu(
-    operand_values: dict,
+    operand_values: OperandValues,
     state: State,
     pc: int,
     *,
@@ -314,7 +315,7 @@ def execute_lwu(
     it to 64 bits, and write the result to rd.  RV64 only.
 
     Parameters:
-        operand_values: dict with keys ``rd``, ``rs1``, and ``imm``.
+        operand_values: OperandValues with keys ``rd``, ``rs1``, and ``imm``.
         state: Current architectural state.
         pc: Program counter of this instruction.
 
@@ -347,7 +348,7 @@ def execute_lwu(
 
 
 def execute_sb(
-    operand_values: dict,
+    operand_values: OperandValues,
     state: State,
     pc: int,
     *,
@@ -358,7 +359,7 @@ def execute_sb(
     Store the lowest byte of rs2 to memory at address *rs1 + imm*.
 
     Parameters:
-        operand_values: dict with keys ``rs1``, ``rs2``, and ``imm``.
+        operand_values: OperandValues with keys ``rs1``, ``rs2``, and ``imm``.
         state: Current architectural state.
         pc: Program counter of this instruction.
 
@@ -392,7 +393,7 @@ def execute_sb(
 
 
 def execute_sh(
-    operand_values: dict,
+    operand_values: OperandValues,
     state: State,
     pc: int,
     *,
@@ -404,7 +405,7 @@ def execute_sh(
     *rs1 + imm*.
 
     Parameters:
-        operand_values: dict with keys ``rs1``, ``rs2``, and ``imm``.
+        operand_values: OperandValues with keys ``rs1``, ``rs2``, and ``imm``.
         state: Current architectural state.
         pc: Program counter of this instruction.
 
@@ -438,7 +439,7 @@ def execute_sh(
 
 
 def execute_sw(
-    operand_values: dict,
+    operand_values: OperandValues,
     state: State,
     pc: int,
     *,
@@ -450,7 +451,7 @@ def execute_sw(
     *rs1 + imm*.
 
     Parameters:
-        operand_values: dict with keys ``rs1``, ``rs2``, and ``imm``.
+        operand_values: OperandValues with keys ``rs1``, ``rs2``, and ``imm``.
         state: Current architectural state.
         pc: Program counter of this instruction.
 
@@ -484,7 +485,7 @@ def execute_sw(
 
 
 def execute_sd(
-    operand_values: dict,
+    operand_values: OperandValues,
     state: State,
     pc: int,
     *,
@@ -496,7 +497,7 @@ def execute_sd(
     *rs1 + imm*.  RV64 only.
 
     Parameters:
-        operand_values: dict with keys ``rs1``, ``rs2``, and ``imm``.
+        operand_values: OperandValues with keys ``rs1``, ``rs2``, and ``imm``.
         state: Current architectural state.
         pc: Program counter of this instruction.
 

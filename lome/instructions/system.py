@@ -7,16 +7,17 @@ from __future__ import annotations
 
 from lome.changes import ChangeRecord, CSRRead, CSRWrite, GPRRead, GPRWrite
 from lome.state import State
+from lome.types import OperandValues
 
 
-def execute_csrrw(operand_values: dict, state: State, pc: int) -> ChangeRecord:
+def execute_csrrw(operand_values: OperandValues, state: State, pc: int) -> ChangeRecord:
     """Execute CSRRW: rd = CSR[imm]; CSR[imm] = rs1
 
     Atomically read the CSR into rd and write the value of rs1 into the
     CSR.  CSR Read/Write.
 
     Parameters:
-        operand_values: dict with keys ``rd``, ``rs1``, and ``imm`` (CSR address).
+        operand_values: OperandValues with keys ``rd``, ``rs1``, and ``imm`` (CSR address).
         state: Current architectural state.
         pc: Program counter of this instruction.
 
@@ -60,14 +61,14 @@ def execute_csrrw(operand_values: dict, state: State, pc: int) -> ChangeRecord:
     return changes
 
 
-def execute_csrrs(operand_values: dict, state: State, pc: int) -> ChangeRecord:
+def execute_csrrs(operand_values: OperandValues, state: State, pc: int) -> ChangeRecord:
     """Execute CSRRS: rd = CSR[imm]; CSR[imm] = CSR[imm] | rs1
 
     Read the CSR into rd, then set bits in the CSR that are set in rs1.
     If rs1 is x0 this is a pure read (``csrr``).
 
     Parameters:
-        operand_values: dict with keys ``rd``, ``rs1``, and ``imm`` (CSR address).
+        operand_values: OperandValues with keys ``rd``, ``rs1``, and ``imm`` (CSR address).
         state: Current architectural state.
         pc: Program counter of this instruction.
 
@@ -116,14 +117,14 @@ def execute_csrrs(operand_values: dict, state: State, pc: int) -> ChangeRecord:
     return changes
 
 
-def execute_csrrc(operand_values: dict, state: State, pc: int) -> ChangeRecord:
+def execute_csrrc(operand_values: OperandValues, state: State, pc: int) -> ChangeRecord:
     """Execute CSRRC: rd = CSR[imm]; CSR[imm] = CSR[imm] & ~rs1
 
     Read the CSR into rd, then clear bits in the CSR that are set in rs1.
     If rs1 is x0 this is a pure read.
 
     Parameters:
-        operand_values: dict with keys ``rd``, ``rs1``, and ``imm`` (CSR address).
+        operand_values: OperandValues with keys ``rd``, ``rs1``, and ``imm`` (CSR address).
         state: Current architectural state.
         pc: Program counter of this instruction.
 
@@ -172,14 +173,16 @@ def execute_csrrc(operand_values: dict, state: State, pc: int) -> ChangeRecord:
     return changes
 
 
-def execute_csrrwi(operand_values: dict, state: State, pc: int) -> ChangeRecord:
+def execute_csrrwi(
+    operand_values: OperandValues, state: State, pc: int
+) -> ChangeRecord:
     """Execute CSRRWI: rd = CSR[imm]; CSR[imm] = zimm (zero-extended immediate)
 
     Atomically read the CSR into rd and write the zero-extended 5-bit
     immediate into the CSR.
 
     Parameters:
-        operand_values: dict with keys ``rd``, ``rs1`` (contains zimm), and
+        operand_values: OperandValues with keys ``rd``, ``rs1`` (contains zimm), and
             ``imm`` (CSR address).
         state: Current architectural state.
         pc: Program counter of this instruction.
@@ -218,14 +221,16 @@ def execute_csrrwi(operand_values: dict, state: State, pc: int) -> ChangeRecord:
     return changes
 
 
-def execute_csrrsi(operand_values: dict, state: State, pc: int) -> ChangeRecord:
+def execute_csrrsi(
+    operand_values: OperandValues, state: State, pc: int
+) -> ChangeRecord:
     """Execute CSRRSI: rd = CSR[imm]; CSR[imm] = CSR[imm] | zimm
 
     Read the CSR into rd, then set bits in the CSR corresponding to the
     zero-extended 5-bit immediate.  No write if zimm is zero.
 
     Parameters:
-        operand_values: dict with keys ``rd``, ``rs1`` (contains zimm), and
+        operand_values: OperandValues with keys ``rd``, ``rs1`` (contains zimm), and
             ``imm`` (CSR address).
         state: Current architectural state.
         pc: Program counter of this instruction.
@@ -269,14 +274,16 @@ def execute_csrrsi(operand_values: dict, state: State, pc: int) -> ChangeRecord:
     return changes
 
 
-def execute_csrrci(operand_values: dict, state: State, pc: int) -> ChangeRecord:
+def execute_csrrci(
+    operand_values: OperandValues, state: State, pc: int
+) -> ChangeRecord:
     """Execute CSRRCI: rd = CSR[imm]; CSR[imm] = CSR[imm] & ~zimm
 
     Read the CSR into rd, then clear bits in the CSR corresponding to the
     zero-extended 5-bit immediate.  No write if zimm is zero.
 
     Parameters:
-        operand_values: dict with keys ``rd``, ``rs1`` (contains zimm), and
+        operand_values: OperandValues with keys ``rd``, ``rs1`` (contains zimm), and
             ``imm`` (CSR address).
         state: Current architectural state.
         pc: Program counter of this instruction.
@@ -320,14 +327,14 @@ def execute_csrrci(operand_values: dict, state: State, pc: int) -> ChangeRecord:
     return changes
 
 
-def execute_lui(operand_values: dict, state: State, pc: int) -> ChangeRecord:
+def execute_lui(operand_values: OperandValues, state: State, pc: int) -> ChangeRecord:
     """Execute LUI: rd = imm << 12
 
     Load the 20-bit immediate into the upper bits of rd (bits 31:12),
     zeroing bits 11:0 and sign-extending to 64 bits.
 
     Parameters:
-        operand_values: dict with keys ``rd`` and ``imm``.
+        operand_values: OperandValues with keys ``rd`` and ``imm``.
         state: Current architectural state.
         pc: Program counter of this instruction.
 
@@ -349,14 +356,14 @@ def execute_lui(operand_values: dict, state: State, pc: int) -> ChangeRecord:
     return changes
 
 
-def execute_auipc(operand_values: dict, state: State, pc: int) -> ChangeRecord:
+def execute_auipc(operand_values: OperandValues, state: State, pc: int) -> ChangeRecord:
     """Execute AUIPC: rd = pc + (imm << 12)
 
     Add the upper immediate (shifted left 12 bits) to the PC and store
     the result in rd.  Used for PC-relative addressing.
 
     Parameters:
-        operand_values: dict with keys ``rd`` and ``imm``.
+        operand_values: OperandValues with keys ``rd`` and ``imm``.
         state: Current architectural state.
         pc: Program counter of this instruction.
 
@@ -378,14 +385,14 @@ def execute_auipc(operand_values: dict, state: State, pc: int) -> ChangeRecord:
     return changes
 
 
-def execute_ecall(operand_values: dict, state: State, pc: int) -> ChangeRecord:
+def execute_ecall(operand_values: OperandValues, state: State, pc: int) -> ChangeRecord:
     """Execute ECALL: Environment call
 
     Raise an environment-call exception to request a service from the
     execution environment (e.g. OS syscall).
 
     Parameters:
-        operand_values: dict (unused — ECALL has no operands).
+        operand_values: OperandValues (unused — ECALL has no operands).
         state: Current architectural state.
         pc: Program counter of this instruction.
 
@@ -408,13 +415,15 @@ def execute_ecall(operand_values: dict, state: State, pc: int) -> ChangeRecord:
     return changes
 
 
-def execute_ebreak(operand_values: dict, state: State, pc: int) -> ChangeRecord:
+def execute_ebreak(
+    operand_values: OperandValues, state: State, pc: int
+) -> ChangeRecord:
     """Execute EBREAK: Environment breakpoint
 
     Raise a breakpoint exception, typically used by debuggers.
 
     Parameters:
-        operand_values: dict (unused — EBREAK has no operands).
+        operand_values: OperandValues (unused — EBREAK has no operands).
         state: Current architectural state.
         pc: Program counter of this instruction.
 
@@ -433,14 +442,14 @@ def execute_ebreak(operand_values: dict, state: State, pc: int) -> ChangeRecord:
     return changes
 
 
-def execute_mret(operand_values: dict, state: State, pc: int) -> ChangeRecord:
+def execute_mret(operand_values: OperandValues, state: State, pc: int) -> ChangeRecord:
     """Execute MRET: Return from machine mode trap handler
 
     Restore the PC from the ``mepc`` CSR and return to the interrupted
     context.
 
     Parameters:
-        operand_values: dict (unused — MRET has no operands).
+        operand_values: OperandValues (unused — MRET has no operands).
         state: Current architectural state.
         pc: Program counter of this instruction.
 
@@ -460,7 +469,7 @@ def execute_mret(operand_values: dict, state: State, pc: int) -> ChangeRecord:
     return changes
 
 
-def execute_fence(operand_values: dict, state: State, pc: int) -> ChangeRecord:
+def execute_fence(operand_values: OperandValues, state: State, pc: int) -> ChangeRecord:
     """Execute FENCE: Memory and I/O ordering
 
     Ensure that all memory and I/O operations before the fence are
@@ -468,7 +477,7 @@ def execute_fence(operand_values: dict, state: State, pc: int) -> ChangeRecord:
     model since memory ordering is not modeled.
 
     Parameters:
-        operand_values: dict (fence fields are not currently decoded).
+        operand_values: OperandValues (fence fields are not currently decoded).
         state: Current architectural state.
         pc: Program counter of this instruction.
 
@@ -484,14 +493,16 @@ def execute_fence(operand_values: dict, state: State, pc: int) -> ChangeRecord:
     return changes
 
 
-def execute_fence_tso(operand_values: dict, state: State, pc: int) -> ChangeRecord:
+def execute_fence_tso(
+    operand_values: OperandValues, state: State, pc: int
+) -> ChangeRecord:
     """Execute FENCE.TSO: Total Store Ordering
 
     A stricter fence that enforces total-store-order semantics.  This is
     a no-op in the functional model since memory ordering is not modeled.
 
     Parameters:
-        operand_values: dict (unused).
+        operand_values: OperandValues (unused).
         state: Current architectural state.
         pc: Program counter of this instruction.
 
