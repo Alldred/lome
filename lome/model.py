@@ -175,7 +175,14 @@ class Lome:
 
         # Update PC if not speculating
         if not speculate and changes:
-            if changes.pc_change:
+            has_exception = (
+                changes.exception is not None or changes.exception_code is not None
+            )
+            if has_exception:
+                # Trap redirection is handled by a higher-level component.
+                # Keep architectural PC unchanged on exception records.
+                pass
+            elif changes.pc_change:
                 new_pc, _ = changes.pc_change
                 self._state.set_pc(new_pc)
             else:
