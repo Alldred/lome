@@ -48,7 +48,7 @@ def execute_flw(
     if rs1_idx is not None:
         changes.gpr_reads.append(GPRRead(register=rs1_idx, value=base))
     changes.memory_accesses.append(
-        MemoryAccess(address=addr, value=None, size=4, is_write=False)
+        MemoryAccess(address=addr, value=value, size=4, is_write=False)
     )
     old = state.set_fpr(rd, value)
     changes.fpr_writes.append(FPRWrite(register=rd, value=value, old_value=old))
@@ -99,7 +99,7 @@ def execute_fld(
     if rs1_idx is not None:
         changes.gpr_reads.append(GPRRead(register=rs1_idx, value=base))
     changes.memory_accesses.append(
-        MemoryAccess(address=addr, value=None, size=8, is_write=False)
+        MemoryAccess(address=addr, value=value, size=8, is_write=False)
     )
     old = state.set_fpr(rd, value)
     changes.fpr_writes.append(FPRWrite(register=rd, value=value, old_value=old))

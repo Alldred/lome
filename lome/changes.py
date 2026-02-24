@@ -117,6 +117,25 @@ class CSRWrite:
 
 
 @dataclass
+class CSRRead:
+    """Record of a single CSR read operation.
+
+    Attributes
+    ----------
+    address : int
+        12-bit CSR address.
+    name : str or None
+        Human-readable CSR name, if known.
+    value : int
+        Value read.
+    """
+
+    address: int
+    name: Optional[str]
+    value: int
+
+
+@dataclass
 class FPRWrite:
     """Record of a single FPR write operation.
 
@@ -139,6 +158,22 @@ class FPRWrite:
     register: int
     value: int
     old_value: int
+
+
+@dataclass
+class FPRRead:
+    """Record of a single FPR read operation.
+
+    Attributes
+    ----------
+    register : int
+        FPR index (0-31).
+    value : int
+        Value read (64-bit bits).
+    """
+
+    register: int
+    value: int
 
 
 @dataclass
@@ -215,8 +250,12 @@ class ChangeRecord:
         GPR read operations.
     gpr_writes : list[GPRWrite]
         GPR write operations.
+    fpr_reads : list[FPRRead]
+        FPR read operations.
     fpr_writes : list[FPRWrite]
         FPR write operations.
+    csr_reads : list[CSRRead]
+        CSR read operations.
     csr_writes : list[CSRWrite]
         CSR write operations.
     pc_change : tuple[int, int] or None
@@ -245,7 +284,9 @@ class ChangeRecord:
 
     gpr_reads: List[GPRRead] = field(default_factory=list)
     gpr_writes: List[GPRWrite] = field(default_factory=list)
+    fpr_reads: List[FPRRead] = field(default_factory=list)
     fpr_writes: List[FPRWrite] = field(default_factory=list)
+    csr_reads: List[CSRRead] = field(default_factory=list)
     csr_writes: List[CSRWrite] = field(default_factory=list)
     pc_change: Optional[Tuple[int, int]] = None  # (new_pc, old_pc)
     memory_accesses: List[MemoryAccess] = field(default_factory=list)
@@ -269,7 +310,9 @@ class ChangeRecord:
         return (
             len(self.gpr_reads) > 0
             or len(self.gpr_writes) > 0
+            or len(self.fpr_reads) > 0
             or len(self.fpr_writes) > 0
+            or len(self.csr_reads) > 0
             or len(self.csr_writes) > 0
             or self.pc_change is not None
             or len(self.memory_accesses) > 0
@@ -293,6 +336,20 @@ class ChangeRecord:
         {5: 10}
         """
         return {r.register: r.value for r in self.gpr_reads}
+
+    def get_fpr_reads(self) -> Dict[int, int]:
+        """Return FPR reads as ``{register: value}``.
+
+        If the same register is read multiple times, the last value wins.
+        """
+        return {r.register: r.value for r in self.fpr_reads}
+
+    def get_csr_reads(self) -> Dict[int, int]:
+        """Return CSR reads as ``{address: value}``.
+
+        If the same CSR is read multiple times, the last value wins.
+        """
+        return {r.address: r.value for r in self.csr_reads}
 
     def get_gpr_changes(self) -> Dict[int, Tuple[int, int]]:
         """Return GPR changes as ``{register: (new_value, old_value)}``.
@@ -373,9 +430,10 @@ class ChangeRecord:
         Returns
         -------
         dict
-            Keys: ``gpr_reads``, ``gpr_writes``, ``fpr_writes``,
-            ``csr_writes``, ``pc_change``, ``memory_accesses``,
-            ``branch_info``, ``exception``, ``exception_code``.
+            Keys: ``gpr_reads``, ``gpr_writes``, ``fpr_reads``,
+            ``fpr_writes``, ``csr_reads``, ``csr_writes``,
+            ``pc_change``, ``memory_accesses``, ``branch_info``,
+            ``exception``, ``exception_code``.
 
         Examples
         --------
@@ -409,6 +467,13 @@ class ChangeRecord:
                 }
                 for w in self.fpr_writes
             ],
+            "fpr_reads": [
+                {
+                    "register": r.register,
+                    "value": r.value,
+                }
+                for r in self.fpr_reads
+            ],
             "csr_writes": [
                 {
                     "address": w.address,
@@ -417,6 +482,14 @@ class ChangeRecord:
                     "old_value": w.old_value,
                 }
                 for w in self.csr_writes
+            ],
+            "csr_reads": [
+                {
+                    "address": r.address,
+                    "name": r.name,
+                    "value": r.value,
+                }
+                for r in self.csr_reads
             ],
             "pc_change": self.pc_change,
             "memory_accesses": [
@@ -461,6 +534,10 @@ class ChangeRecord:
         result: Dict = {}
         if self.gpr_reads:
             result["gpr_reads"] = self.get_gpr_reads()
+        if self.fpr_reads:
+            result["fpr_reads"] = self.get_fpr_reads()
+        if self.csr_reads:
+            result["csr_reads"] = self.get_csr_reads()
         if self.gpr_writes:
             result["gpr_changes"] = {
                 reg: new for reg, (new, _) in self.get_gpr_changes().items()

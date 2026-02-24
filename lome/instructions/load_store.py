@@ -70,7 +70,7 @@ def execute_lb(
     result = _sign_extend(value, 8)
 
     changes.memory_accesses.append(
-        MemoryAccess(address=addr, value=None, size=1, is_write=False)
+        MemoryAccess(address=addr, value=value, size=1, is_write=False)
     )
     old_value = state.set_gpr(rd, result)
     changes.gpr_writes.append(GPRWrite(register=rd, value=result, old_value=old_value))
@@ -115,7 +115,7 @@ def execute_lh(
     result = _sign_extend(value, 16)
 
     changes.memory_accesses.append(
-        MemoryAccess(address=addr, value=None, size=2, is_write=False)
+        MemoryAccess(address=addr, value=value, size=2, is_write=False)
     )
     old_value = state.set_gpr(rd, result)
     changes.gpr_writes.append(GPRWrite(register=rd, value=result, old_value=old_value))
@@ -160,7 +160,7 @@ def execute_lw(
     result = _sign_extend(value, 32)
 
     changes.memory_accesses.append(
-        MemoryAccess(address=addr, value=None, size=4, is_write=False)
+        MemoryAccess(address=addr, value=value, size=4, is_write=False)
     )
     old_value = state.set_gpr(rd, result)
     changes.gpr_writes.append(GPRWrite(register=rd, value=result, old_value=old_value))
@@ -205,7 +205,7 @@ def execute_lbu(
     result = value & 0xFF  # Zero extend
 
     changes.memory_accesses.append(
-        MemoryAccess(address=addr, value=None, size=1, is_write=False)
+        MemoryAccess(address=addr, value=value, size=1, is_write=False)
     )
     old_value = state.set_gpr(rd, result)
     changes.gpr_writes.append(GPRWrite(register=rd, value=result, old_value=old_value))
@@ -250,7 +250,7 @@ def execute_lhu(
     result = value & 0xFFFF  # Zero extend
 
     changes.memory_accesses.append(
-        MemoryAccess(address=addr, value=None, size=2, is_write=False)
+        MemoryAccess(address=addr, value=value, size=2, is_write=False)
     )
     old_value = state.set_gpr(rd, result)
     changes.gpr_writes.append(GPRWrite(register=rd, value=result, old_value=old_value))
@@ -294,7 +294,7 @@ def execute_ld(
     result = memory.load(addr, 8) if memory else 0
 
     changes.memory_accesses.append(
-        MemoryAccess(address=addr, value=None, size=8, is_write=False)
+        MemoryAccess(address=addr, value=result, size=8, is_write=False)
     )
     old_value = state.set_gpr(rd, result)
     changes.gpr_writes.append(GPRWrite(register=rd, value=result, old_value=old_value))
@@ -339,7 +339,7 @@ def execute_lwu(
     result = value & 0xFFFFFFFF  # Zero extend
 
     changes.memory_accesses.append(
-        MemoryAccess(address=addr, value=None, size=4, is_write=False)
+        MemoryAccess(address=addr, value=value, size=4, is_write=False)
     )
     old_value = state.set_gpr(rd, result)
     changes.gpr_writes.append(GPRWrite(register=rd, value=result, old_value=old_value))

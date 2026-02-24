@@ -5,7 +5,7 @@
 
 from __future__ import annotations
 
-from lome.changes import ChangeRecord, CSRWrite, GPRRead, GPRWrite
+from lome.changes import ChangeRecord, CSRRead, CSRWrite, GPRRead, GPRWrite
 from lome.state import State
 
 
@@ -37,11 +37,15 @@ def execute_csrrw(operand_values: dict, state: State, pc: int) -> ChangeRecord:
     changes = ChangeRecord()
     if rs1_idx is not None:
         changes.gpr_reads.append(GPRRead(register=rs1_idx, value=rs1_val))
+    csr_def = state.get_csr_def(csr_addr)
+    csr_name = csr_def.name if csr_def else None
+    if csr_val is not None:
+        changes.csr_reads.append(
+            CSRRead(address=csr_addr, name=csr_name, value=csr_val)
+        )
     # Write CSR
     old_csr_val = state.set_csr(csr_addr, rs1_val)
     if old_csr_val is not None:
-        csr_def = state.get_csr_def(csr_addr)
-        csr_name = csr_def.name if csr_def else None
         changes.csr_writes.append(
             CSRWrite(
                 address=csr_addr, name=csr_name, value=rs1_val, old_value=old_csr_val
@@ -84,13 +88,17 @@ def execute_csrrs(operand_values: dict, state: State, pc: int) -> ChangeRecord:
     changes = ChangeRecord()
     if rs1_idx is not None:
         changes.gpr_reads.append(GPRRead(register=rs1_idx, value=rs1_val))
+    csr_def = state.get_csr_def(csr_addr)
+    csr_name = csr_def.name if csr_def else None
+    if csr_val is not None:
+        changes.csr_reads.append(
+            CSRRead(address=csr_addr, name=csr_name, value=csr_val)
+        )
     # Update CSR (only if rs1 != 0)
     if rs1_val != 0 and csr_val is not None:
         new_csr_val = csr_val | rs1_val
         old_csr_val = state.set_csr(csr_addr, new_csr_val)
         if old_csr_val is not None:
-            csr_def = state.get_csr_def(csr_addr)
-            csr_name = csr_def.name if csr_def else None
             changes.csr_writes.append(
                 CSRWrite(
                     address=csr_addr,
@@ -136,13 +144,17 @@ def execute_csrrc(operand_values: dict, state: State, pc: int) -> ChangeRecord:
     changes = ChangeRecord()
     if rs1_idx is not None:
         changes.gpr_reads.append(GPRRead(register=rs1_idx, value=rs1_val))
+    csr_def = state.get_csr_def(csr_addr)
+    csr_name = csr_def.name if csr_def else None
+    if csr_val is not None:
+        changes.csr_reads.append(
+            CSRRead(address=csr_addr, name=csr_name, value=csr_val)
+        )
     # Update CSR (only if rs1 != 0)
     if rs1_val != 0 and csr_val is not None:
         new_csr_val = csr_val & ~rs1_val
         old_csr_val = state.set_csr(csr_addr, new_csr_val)
         if old_csr_val is not None:
-            csr_def = state.get_csr_def(csr_addr)
-            csr_name = csr_def.name if csr_def else None
             changes.csr_writes.append(
                 CSRWrite(
                     address=csr_addr,
