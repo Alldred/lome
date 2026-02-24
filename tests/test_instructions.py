@@ -252,14 +252,15 @@ class TestSystem:
         assert not changes.gpr_writes
 
     def test_ecall_sets_exception_and_change_record(self, model):
-        """ECALL triggers environment_call exception; change record is serialisable."""
+        """ECALL triggers environment_call exception; PC is set to MTVEC trap base."""
         ecall = 0x00000073  # RISC-V ECALL: opcode 0x73, imm=0
-        initial_pc = model.get_pc()
+        trap_base = 0x8000
+        model.poke_csr(0x305, trap_base)  # mtvec base (mode 0 = direct)
         changes = model.execute(ecall)
         assert changes is not None
         assert changes.exception == "environment_call"
         assert changes.pc_change is not None
-        assert model.get_pc() == initial_pc
+        assert model.get_pc() == trap_base
         d = changes.to_simple_dict()
         assert d.get("exception") == "environment_call"
         assert "pc_change" in d
@@ -267,15 +268,16 @@ class TestSystem:
         assert detailed["exception"] == "environment_call"
 
     def test_ebreak_sets_exception_code_and_serialisation(self, model):
-        """EBREAK sets exception_code (mcause 3 = Breakpoint) and serialises."""
+        """EBREAK sets exception_code (mcause 3 = Breakpoint); PC set to MTVEC base."""
         ebreak = 0x00100073
-        initial_pc = model.get_pc()
+        trap_base = 0x9000
+        model.poke_csr(0x305, trap_base)  # mtvec
         changes = model.execute(ebreak)
         assert changes is not None
         assert changes.exception == "breakpoint"
         assert changes.exception_code == 3  # RISC-V mcause: Breakpoint
         assert changes.pc_change is not None
-        assert model.get_pc() == initial_pc
+        assert model.get_pc() == trap_base
         d = changes.to_simple_dict()
         assert d.get("exception") == "breakpoint"
         assert d.get("exception_code") == 3

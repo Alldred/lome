@@ -92,9 +92,27 @@ class Lome:
                 changes.exception is not None or changes.exception_code is not None
             )
             if has_exception:
-                # Trap redirection is handled by a higher-level component.
-                # Keep architectural PC unchanged on exception records.
-                pass
+                # Set PC from MTVEC (RISC-V): base (4-byte aligned), mode in bits 1:0.
+                # Mode 0 (direct): all traps → base. Mode 1 (vectored): sync exceptions → base;
+                # interrupts (mcause high bit set) → base + 4 * cause_code.
+                mtvec = self._state.get_csr_by_name("mtvec") or self._state.get_csr(
+                    0x305
+                )
+                if mtvec is not None:
+                    base = (mtvec >> 2) << 2
+                    mode = mtvec & 3
+                    cause = (
+                        changes.exception_code
+                        if changes.exception_code is not None
+                        else 0
+                    )
+                    # Interrupt bit: mcause bit 31 (32-bit) or 63 (64-bit)
+                    is_interrupt = bool(cause & (1 << 31)) or bool(cause & (1 << 63))
+                    if mode == 1 and is_interrupt:
+                        cause_code = cause & 0x3FF  # vector index
+                        self._state.set_pc(base + 4 * cause_code)
+                    else:
+                        self._state.set_pc(base)
             elif changes.pc_change:
                 new_pc, _ = changes.pc_change
                 self._state.set_pc(new_pc)

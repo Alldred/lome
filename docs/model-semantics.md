@@ -25,8 +25,7 @@
 After each non-speculative execution:
 
 - If `ChangeRecord` includes an exception (`exception` or `exception_code`):
-  - model PC remains unchanged
-  - trap redirection is expected at a higher level
+  - PC is set from MTVEC. Base = 4-byte-aligned MTVEC base; mode = MTVEC bits 1:0. **Direct mode (0)**: PC = base. **Vectored mode (1)**: synchronous exceptions → PC = base; interrupts (mcause high bit set) → PC = base + 4 × cause code. If MTVEC is not present in the ISA, PC is left unchanged.
 - Else if `pc_change` exists:
   - PC is set to `pc_change[0]`
 - Else:
