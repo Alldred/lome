@@ -6,9 +6,6 @@ readme = "README.md"
 license = "MIT"
 dependencies = [
     "eumos @ git+ssh://git@github.com/Alldred/eumos.git",
-    "pre-commit",
-    "pykwalify",
-    "PyYAML",
 ]
 authors = [
     { name = "Stuart Alldred", email = "stuartalldred@gmail.com" },
@@ -16,7 +13,7 @@ authors = [
 requires-python = ">= 3.13"
 
 [project.optional-dependencies]
-dev = ["pytest", "pytest-cov"]
+dev = ["pytest", "pytest-cov", "pre-commit", "pykwalify", "PyYAML"]
 
 [tool.pytest.ini_options]
 pythonpath = ["lome"]
