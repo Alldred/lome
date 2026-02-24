@@ -1,43 +1,7 @@
 # SPDX-License-Identifier: MIT
 # Copyright (c) 2026 Stuart Alldred.
 
-"""State management for RISC-V functional model: GPRs, CSRs, and PC.
-
-This module provides the :class:`State` class, which holds all architectural
-state for a RISC-V hart: 32 general-purpose registers (GPRs), control and
-status registers (CSRs), and the program counter (PC).
-
-Two access levels are provided for every register kind:
-
-* **get / set** -- architectural access that enforces read-only constraints
-  and triggers any side effects associated with the access (e.g. a write to
-  ``mstatus`` automatically mirrors the relevant bits into ``sstatus``).
-* **peek / poke** -- raw access for debugging, test setup, and state
-  restore.  No side effects are triggered and read-only flags are ignored.
-
-State can be serialised to a JSON-compatible ``dict`` with
-:meth:`State.export_state` and restored with :meth:`State.restore_state`.
-
-Example -- basic register manipulation::
-
-    from eumos import Eumos
-    from lome.state import State
-
-    isa = Eumos()
-    s = State(isa)
-
-    s.set_gpr(1, 42)        # architectural write
-    s.get_gpr(1)             # => 42
-    s.peek_gpr(0)            # raw read -- x0 in storage
-    s.poke_gpr(1, 99)        # raw write -- no side effects
-
-Example -- JSON round-trip::
-
-    data = s.export_state()
-    s2 = State(isa)
-    s2.restore_state(data)
-    assert s2.get_gpr(1) == s.get_gpr(1)
-"""
+"""Architectural state container for GPRs, FPRs, CSRs, and PC."""
 
 from __future__ import annotations
 
@@ -69,25 +33,7 @@ _NUM_FPRS: int = 32
 
 
 class State:
-    """Manages RISC-V architectural state: GPRs, CSRs, and PC.
-
-    GPR and CSR definitions come from an :class:`~eumos.Eumos` instance
-    and determine register names, widths, reset values and access modes.
-
-    Parameters
-    ----------
-    eumos : Eumos
-        Shared Eumos ISA instance.
-
-    Examples
-    --------
-    >>> from eumos import Eumos
-    >>> state = State(eumos=Eumos())
-    >>> state.get_pc()
-    0
-    >>> state.get_gpr(0)   # x0 is hardwired to zero
-    0
-    """
+    """Manages architectural register/CSR/PC state for a single hart."""
 
     # ------------------------------------------------------------------ init
 
