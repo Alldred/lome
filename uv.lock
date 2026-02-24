@@ -147,25 +147,25 @@ version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
     { name = "eumos" },
-    { name = "pre-commit" },
-    { name = "pykwalify" },
-    { name = "pyyaml" },
 ]
 
 [package.optional-dependencies]
 dev = [
+    { name = "pre-commit" },
+    { name = "pykwalify" },
     { name = "pytest" },
     { name = "pytest-cov" },
+    { name = "pyyaml" },
 ]
 
 [package.metadata]
 requires-dist = [
     { name = "eumos", git = "ssh://git@github.com/Alldred/eumos.git" },
-    { name = "pre-commit" },
-    { name = "pykwalify" },
+    { name = "pre-commit", marker = "extra == 'dev'" },
+    { name = "pykwalify", marker = "extra == 'dev'" },
     { name = "pytest", marker = "extra == 'dev'" },
     { name = "pytest-cov", marker = "extra == 'dev'" },
-    { name = "pyyaml" },
+    { name = "pyyaml", marker = "extra == 'dev'" },
 ]
 provides-extras = ["dev"]
 
