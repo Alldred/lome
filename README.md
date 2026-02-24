@@ -106,6 +106,18 @@ Summary:
 - **State management**: `reset()`, `export_state()`, `restore_state()`, `export_state_json()`, `from_json()`
 - **Change tracking**: `get_changes()`, `get_branch_info()` → `ChangeRecord.to_simple_dict()` / `.to_detailed_dict()`
 
+## Documentation
+
+Start at **[Docs Home](docs/README.md)**.
+
+- [Getting Started](docs/getting-started.md)
+- [Architecture](docs/architecture.md)
+- [Model Semantics](docs/model-semantics.md)
+- [Instruction Support](docs/instruction-support.md)
+- [Floating-Point Behavior](docs/floating-point.md)
+- [Testing and Development](docs/testing-and-development.md)
+- [API Reference](docs/API.md)
+
 ## Supported Instructions
 
 All instructions currently defined in Eumos:
