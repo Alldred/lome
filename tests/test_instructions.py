@@ -9,6 +9,7 @@ shift, compare, jump, system, CSR, load/store).  All test setup uses
 state injection.
 """
 
+from ._opcode import opc
 
 # ====================================================================
 # Arithmetic
@@ -21,28 +22,28 @@ class TestArithmetic:
     def test_add(self, model):
         model.poke_gpr(1, 10)
         model.poke_gpr(2, 20)
-        add = 0x33 | (3 << 7) | (0 << 12) | (1 << 15) | (2 << 20) | (0 << 25)
+        add = opc("add", rd=3, rs1=1, rs2=2)
         model.execute(add)
         assert model.get_gpr(3) == 30
 
     def test_sub(self, model):
         model.poke_gpr(1, 10)
         model.poke_gpr(2, 20)
-        sub = 0x33 | (3 << 7) | (0 << 12) | (1 << 15) | (2 << 20) | (0x20 << 25)
+        sub = opc("sub", rd=3, rs1=1, rs2=2)
         model.execute(sub)
         assert model.get_gpr(3) == (10 - 20) & 0xFFFFFFFFFFFFFFFF
 
     def test_sub_positive_result(self, model):
         model.poke_gpr(1, 50)
         model.poke_gpr(2, 20)
-        sub = 0x33 | (3 << 7) | (0 << 12) | (1 << 15) | (2 << 20) | (0x20 << 25)
+        sub = opc("sub", rd=3, rs1=1, rs2=2)
         model.execute(sub)
         assert model.get_gpr(3) == 30
 
     def test_addw(self, model):
         model.poke_gpr(1, 10)
         model.poke_gpr(2, 20)
-        addw = 0x3B | (4 << 7) | (0 << 12) | (1 << 15) | (2 << 20) | (0 << 25)
+        addw = opc("addw", rd=4, rs1=1, rs2=2)
         model.execute(addw)
         assert model.get_gpr(4) == 30
 
@@ -50,7 +51,7 @@ class TestArithmetic:
         """ADDW sign-extends 32-bit result to 64 bits."""
         model.poke_gpr(1, 0x7FFFFFFF)
         model.poke_gpr(2, 1)
-        addw = 0x3B | (3 << 7) | (0 << 12) | (1 << 15) | (2 << 20) | (0 << 25)
+        addw = opc("addw", rd=3, rs1=1, rs2=2)
         model.execute(addw)
         result = model.get_gpr(3)
         assert result == 0xFFFFFFFF80000000  # sign-extended
@@ -59,7 +60,7 @@ class TestArithmetic:
         """ADDI with negative immediate (sign-extended by decoder)."""
         model.poke_gpr(1, 100)
         # addi x2, x1, -10 (imm = 0xFF6 as 12-bit two's-complement; sign-extends to ...FFF6)
-        addi = 0x13 | (2 << 7) | (0 << 12) | (1 << 15) | ((-10 & 0xFFF) << 20)
+        addi = opc("addi", rd=2, rs1=1, imm=-10)
         model.execute(addi)
         # The decoder sign-extends, but the raw encoding stores only the 12-bit imm
         # Just verify it produces a valid result
@@ -68,7 +69,7 @@ class TestArithmetic:
     def test_subw(self, model):
         model.poke_gpr(1, 10)
         model.poke_gpr(2, 20)
-        subw = 0x3B | (3 << 7) | (0 << 12) | (1 << 15) | (2 << 20) | (0x20 << 25)
+        subw = opc("subw", rd=3, rs1=1, rs2=2)
         model.execute(subw)
         result = model.get_gpr(3)
         # (10 - 20) = -10, sign-extended from 32 bits
@@ -87,39 +88,39 @@ class TestLogical:
     def test_and(self, model):
         model.poke_gpr(1, 0b1010)
         model.poke_gpr(2, 0b1100)
-        and_instr = 0x33 | (3 << 7) | (7 << 12) | (1 << 15) | (2 << 20) | (0 << 25)
+        and_instr = opc("and", rd=3, rs1=1, rs2=2)
         model.execute(and_instr)
         assert model.get_gpr(3) == 0b1000
 
     def test_or(self, model):
         model.poke_gpr(1, 0b1010)
         model.poke_gpr(2, 0b1100)
-        or_instr = 0x33 | (4 << 7) | (6 << 12) | (1 << 15) | (2 << 20) | (0 << 25)
+        or_instr = opc("or", rd=4, rs1=1, rs2=2)
         model.execute(or_instr)
         assert model.get_gpr(4) == 0b1110
 
     def test_xor(self, model):
         model.poke_gpr(1, 0b1010)
         model.poke_gpr(2, 0b1100)
-        xor_instr = 0x33 | (5 << 7) | (4 << 12) | (1 << 15) | (2 << 20) | (0 << 25)
+        xor_instr = opc("xor", rd=5, rs1=1, rs2=2)
         model.execute(xor_instr)
         assert model.get_gpr(5) == 0b0110
 
     def test_andi(self, model):
         model.poke_gpr(1, 0xFF)
-        andi = 0x13 | (2 << 7) | (7 << 12) | (1 << 15) | (0x0F << 20)
+        andi = opc("andi", rd=2, rs1=1, imm=0x0F)
         model.execute(andi)
         assert model.get_gpr(2) == 0x0F
 
     def test_ori(self, model):
         model.poke_gpr(1, 0xF0)
-        ori = 0x13 | (2 << 7) | (6 << 12) | (1 << 15) | (0x0F << 20)
+        ori = opc("ori", rd=2, rs1=1, imm=0x0F)
         model.execute(ori)
         assert model.get_gpr(2) == 0xFF
 
     def test_xori(self, model):
         model.poke_gpr(1, 0xFF)
-        xori = 0x13 | (2 << 7) | (4 << 12) | (1 << 15) | (0xFF << 20)
+        xori = opc("xori", rd=2, rs1=1, imm=0xFF)
         model.execute(xori)
         assert model.get_gpr(2) == 0  # 0xFF ^ 0xFF = 0
 
@@ -134,22 +135,28 @@ class TestShift:
 
     def test_slli(self, model):
         model.poke_gpr(1, 0x12345678)
-        slli = 0x13 | (2 << 7) | (1 << 12) | (1 << 15) | (4 << 20)
+        slli = opc("slli", rd=2, rs1=1, imm=4)
         model.execute(slli)
         assert model.get_gpr(2) == (0x12345678 << 4) & 0xFFFFFFFFFFFFFFFF
 
     def test_srli(self, model):
         model.poke_gpr(1, 0x12345678)
-        srli = 0x13 | (3 << 7) | (5 << 12) | (1 << 15) | (4 << 20)
+        srli = opc("srli", rd=3, rs1=1, imm=4)
         model.execute(srli)
         assert model.get_gpr(3) == (0x12345678 >> 4) & 0xFFFFFFFFFFFFFFFF
 
     def test_slli_zero_shift(self, model):
         """SLLI with shamt=0 is a NOP-like operation."""
         model.poke_gpr(1, 42)
-        slli = 0x13 | (2 << 7) | (1 << 12) | (1 << 15) | (0 << 20)
+        slli = opc("slli", rd=2, rs1=1, imm=0)
         model.execute(slli)
         assert model.get_gpr(2) == 42
+
+    def test_slli_with_shamt_alias(self, model):
+        model.poke_gpr(1, 0x1234)
+        slli = opc("slli", rd=2, rs1=1, shamt=3)
+        model.execute(slli)
+        assert model.get_gpr(2) == (0x1234 << 3) & 0xFFFFFFFFFFFFFFFF
 
 
 # ====================================================================
@@ -163,21 +170,21 @@ class TestCompare:
     def test_slt_less(self, model):
         model.poke_gpr(1, 10)
         model.poke_gpr(2, 20)
-        slt = 0x33 | (3 << 7) | (2 << 12) | (1 << 15) | (2 << 20) | (0 << 25)
+        slt = opc("slt", rd=3, rs1=1, rs2=2)
         model.execute(slt)
         assert model.get_gpr(3) == 1
 
     def test_slt_not_less(self, model):
         model.poke_gpr(1, 20)
         model.poke_gpr(2, 10)
-        slt = 0x33 | (3 << 7) | (2 << 12) | (1 << 15) | (2 << 20) | (0 << 25)
+        slt = opc("slt", rd=3, rs1=1, rs2=2)
         model.execute(slt)
         assert model.get_gpr(3) == 0
 
     def test_sltu(self, model):
         model.poke_gpr(1, 10)
         model.poke_gpr(2, 20)
-        sltu = 0x33 | (4 << 7) | (3 << 12) | (1 << 15) | (2 << 20) | (0 << 25)
+        sltu = opc("sltu", rd=4, rs1=1, rs2=2)
         model.execute(sltu)
         assert model.get_gpr(4) == 1
 
@@ -185,7 +192,7 @@ class TestCompare:
         """SLT with equal values => 0."""
         model.poke_gpr(1, 10)
         model.poke_gpr(2, 10)
-        slt = 0x33 | (3 << 7) | (2 << 12) | (1 << 15) | (2 << 20) | (0 << 25)
+        slt = opc("slt", rd=3, rs1=1, rs2=2)
         model.execute(slt)
         assert model.get_gpr(3) == 0
 
@@ -201,7 +208,7 @@ class TestJump:
     def test_jal(self, model):
         model.poke_pc(0x1000)
         model.poke_gpr(1, 0x2000)
-        jal = 0x6F | (2 << 7) | (0x40 << 21)
+        jal = opc("jal", rd=2, imm=0x100)
         model.execute(jal)
         assert model.get_gpr(2) == 0x1004  # return address
         assert model.get_pc() == 0x1100  # pc + 0x100
@@ -209,7 +216,7 @@ class TestJump:
     def test_jalr(self, model):
         model.poke_pc(0x1000)
         model.poke_gpr(1, 0x2000)
-        jalr = 0x67 | (3 << 7) | (0 << 12) | (1 << 15) | (0 << 20)
+        jalr = opc("jalr", rd=3, rs1=1, imm=0)
         model.execute(jalr)
         assert model.get_gpr(3) == 0x1004  # return address
         assert model.get_pc() == 0x2000  # (x1 + 0) & ~1
@@ -224,21 +231,20 @@ class TestSystem:
     """Tests for LUI, AUIPC, ECALL, EBREAK, MRET, FENCE."""
 
     def test_lui(self, model):
-        lui = 0x37 | (1 << 7) | (0x12345 << 12)
+        lui = opc("lui", rd=1, imm=0x12345)
         model.execute(lui)
         assert model.get_gpr(1) == (0x12345 << 12) & 0xFFFFFFFFFFFFFFFF
 
     def test_auipc(self, model):
         model.poke_pc(0x1000)
-        auipc = 0x17 | (2 << 7) | (0x10 << 12)
+        auipc = opc("auipc", rd=2, imm=0x10)
         model.execute(auipc)
         assert model.get_gpr(2) == 0x1000 + (0x10 << 12)
 
     def test_mret(self, model):
         """MRET reads mepc and sets PC to it."""
         model.poke_csr("mepc", 0x2000)
-        # mret encoding: 0x30200073
-        mret = 0x30200073
+        mret = opc("mret")
         changes = model.execute(mret)
         assert changes is not None
         assert changes.pc_change is not None
@@ -246,14 +252,14 @@ class TestSystem:
 
     def test_fence_is_nop(self, model):
         """FENCE is a no-op in the functional model."""
-        fence = 0x0000000F
+        fence = opc("fence")
         changes = model.execute(fence)
         assert changes is not None
         assert not changes.gpr_writes
 
     def test_ecall_sets_exception_and_change_record(self, model):
         """ECALL triggers environment_call exception; PC is set to MTVEC trap base."""
-        ecall = 0x00000073  # RISC-V ECALL: opcode 0x73, imm=0
+        ecall = opc("ecall")
         trap_base = 0x8000
         model.poke_csr(0x305, trap_base)  # mtvec base (mode 0 = direct)
         changes = model.execute(ecall)
@@ -269,7 +275,7 @@ class TestSystem:
 
     def test_ebreak_sets_exception_code_and_serialisation(self, model):
         """EBREAK sets exception_code (mcause 3 = Breakpoint); PC set to MTVEC base."""
-        ebreak = 0x00100073
+        ebreak = opc("ebreak")
         trap_base = 0x9000
         model.poke_csr(0x305, trap_base)  # mtvec
         changes = model.execute(ebreak)
@@ -296,7 +302,7 @@ class TestCSRInstructions:
     def test_csrrs(self, model):
         model.poke_gpr(1, 0xABCD)
         model.poke_csr(0x300, 0x1234)  # mstatus
-        csrrs = 0x73 | (2 << 7) | (2 << 12) | (1 << 15) | (0x300 << 20)
+        csrrs = opc("csrrs", rd=2, rs1=1, imm=0x300)
         model.execute(csrrs)
         assert model.get_gpr(2) == 0x1234  # old value
         assert model.get_csr(0x300) == (0x1234 | 0xABCD)
@@ -304,7 +310,7 @@ class TestCSRInstructions:
     def test_csrrc(self, model):
         model.poke_gpr(1, 0x00FF)
         model.poke_csr(0x300, 0x1234)
-        csrrc = 0x73 | (3 << 7) | (3 << 12) | (1 << 15) | (0x300 << 20)
+        csrrc = opc("csrrc", rd=3, rs1=1, imm=0x300)
         model.execute(csrrc)
         assert model.get_gpr(3) == 0x1234  # old value
         assert model.get_csr(0x300) == (0x1234 & ~0x00FF)
@@ -312,7 +318,7 @@ class TestCSRInstructions:
     def test_csrrw(self, model):
         model.poke_gpr(1, 0x5678)
         model.poke_csr(0x300, 0x1234)
-        csrrw = 0x73 | (2 << 7) | (1 << 12) | (1 << 15) | (0x300 << 20)
+        csrrw = opc("csrrw", rd=2, rs1=1, imm=0x300)
         model.execute(csrrw)
         assert model.get_gpr(2) == 0x1234  # old value read to rd
         assert model.get_csr(0x300) == 0x5678  # new value written
@@ -330,7 +336,7 @@ class TestSpeculationPreservesState:
         model.poke_gpr(1, 10)
         model.poke_gpr(2, 20)
         initial_pc = model.get_pc()
-        add = 0x33 | (3 << 7) | (0 << 12) | (1 << 15) | (2 << 20) | (0 << 25)
+        add = opc("add", rd=3, rs1=1, rs2=2)
         spec = model.speculate(add)
         assert model.get_gpr(3) == 0
         assert model.get_pc() == initial_pc
@@ -340,25 +346,6 @@ class TestSpeculationPreservesState:
 # ====================================================================
 # Load/store with MemoryInterface
 # ====================================================================
-
-
-def _i_type(opcode: int, rd: int, funct3: int, rs1: int, imm: int) -> int:
-    """Build I-type instruction: opcode | rd | funct3 | rs1 | imm[11:0]."""
-    return opcode | (rd << 7) | (funct3 << 12) | (rs1 << 15) | ((imm & 0xFFF) << 20)
-
-
-def _s_type(opcode: int, funct3: int, rs1: int, rs2: int, imm: int) -> int:
-    """Build S-type instruction."""
-    imm4_0 = imm & 0x1F
-    imm11_5 = (imm >> 5) & 0x7F
-    return (
-        opcode
-        | (imm4_0 << 7)
-        | (funct3 << 12)
-        | (rs1 << 15)
-        | (rs2 << 20)
-        | (imm11_5 << 25)
-    )
 
 
 class TestLoadStoreWithMemory:
@@ -384,7 +371,7 @@ class TestLoadStoreWithMemory:
         fake._loads[(0x1000, 1)] = 0xFF  # -1 as byte
         model = Lome(eumos, memory=fake)
         model.poke_gpr(1, 0x1000)
-        lb = _i_type(0x03, 2, 0, 1, 0)  # lb x2, 0(x1)
+        lb = opc("lb", rd=2, rs1=1, imm=0)
         model.execute(lb)
         assert model.get_gpr(2) == 0xFFFFFFFFFFFFFFFF  # sign-extended
 
@@ -408,7 +395,7 @@ class TestLoadStoreWithMemory:
         fake._loads[(0x1000, 1)] = 0xFF
         model = Lome(eumos, memory=fake)
         model.poke_gpr(1, 0x1000)
-        lbu = _i_type(0x03, 2, 4, 1, 0)  # lbu x2, 0(x1)
+        lbu = opc("lbu", rd=2, rs1=1, imm=0)
         model.execute(lbu)
         assert model.get_gpr(2) == 0xFF  # zero-extended
 
@@ -432,7 +419,7 @@ class TestLoadStoreWithMemory:
         model = Lome(eumos, memory=fake)
         model.poke_gpr(1, 0x2000)
         model.poke_gpr(2, 0xAB)
-        sb = _s_type(0x23, 0, 1, 2, 4)  # sb x2, 4(x1)
+        sb = opc("sb", rs1=1, rs2=2, imm=4)
         model.execute(sb)
         assert fake.stores == [(0x2004, 0xAB, 1)]
 
@@ -454,13 +441,13 @@ class TestRAS:
         model = Lome(eumos, ras=ras)
         model.poke_pc(0x1000)
         # jal x1, 0x100  -> ra = 0x1004, pc = 0x1100
-        jal = 0x6F | (1 << 7) | (0x40 << 21)  # rd=1 (ra), imm=0x100
+        jal = opc("jal", rd=1, imm=0x100)
         model.execute(jal)
         assert len(ras) == 1
         assert ras.peek(0) == 0x1004
         model.poke_gpr(1, 0x2000)  # ra now holds target for return
         # jalr x0, x1, 0  -> return to (x1)+0, rd=x0 so no push
-        jalr = 0x67 | (0 << 7) | (0 << 12) | (1 << 15) | (0 << 20)
+        jalr = opc("jalr", rd=0, rs1=1, imm=0)
         model.execute(jalr)
         assert len(ras) == 0  # one pop, no push (rd=x0)
         assert model.get_pc() == 0x2000
@@ -474,7 +461,7 @@ class TestRAS:
         model = Lome(eumos, ras=ras)
         model.poke_pc(0x1000)
         # jal x1, 0  (nop jump, return addr 0x1004)
-        jal = 0x6F | (1 << 7) | (0 << 21)
+        jal = opc("jal", rd=1, imm=0)
         model.execute(jal)
         model.poke_pc(0x1004)
         model.execute(jal)  # return addr 0x1008
@@ -482,7 +469,7 @@ class TestRAS:
         assert ras.peek(0) == 0x1008
         assert ras.peek(1) == 0x1004
         model.poke_gpr(1, 0x2000)
-        jalr = 0x67 | (0 << 7) | (0 << 12) | (1 << 15) | (0 << 20)
+        jalr = opc("jalr", rd=0, rs1=1, imm=0)
         model.execute(jalr)
         assert len(ras) == 1
         model.poke_gpr(1, 0x3000)

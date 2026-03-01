@@ -8,6 +8,7 @@ change tracking (simple and detailed dicts), reset, CSR operations, and
 the x0 read-only invariant.
 """
 
+from ._opcode import opc
 
 # ====================================================================
 # Initialisation
@@ -38,7 +39,7 @@ class TestExecution:
 
     def test_execute_addi(self, model):
         """ADDI x1, x0, 42 => x1 = 42, PC = 4."""
-        addi = 0x13 | (1 << 7) | (0 << 12) | (0 << 15) | (42 << 20)
+        addi = opc("addi", rd=1, rs1=0, imm=42)
         changes = model.execute(addi)
         assert changes is not None
         assert model.get_gpr(1) == 42
@@ -48,14 +49,14 @@ class TestExecution:
         """ADD x3, x1, x2 with x1=10, x2=20 => x3=30."""
         model.poke_gpr(1, 10)
         model.poke_gpr(2, 20)
-        add = 0x33 | (3 << 7) | (0 << 12) | (1 << 15) | (2 << 20) | (0 << 25)
+        add = opc("add", rd=3, rs1=1, rs2=2)
         changes = model.execute(add)
         assert changes is not None
         assert model.get_gpr(3) == 30
 
     def test_execute_bytes(self, model):
         """Execute from little-endian bytes."""
-        addi = 0x13 | (1 << 7) | (0 << 12) | (0 << 15) | (7 << 20)
+        addi = opc("addi", rd=1, rs1=0, imm=7)
         instr_bytes = addi.to_bytes(4, byteorder="little")
         changes = model.execute(instr_bytes)
         assert changes is not None
@@ -67,7 +68,7 @@ class TestExecution:
 
     def test_pc_advances_by_4(self, model):
         """Non-branch/jump instructions advance PC by 4."""
-        addi = 0x13 | (1 << 7) | (0 << 12) | (0 << 15) | (1 << 20)
+        addi = opc("addi", rd=1, rs1=0, imm=1)
         model.execute(addi)
         assert model.get_pc() == 4
         model.execute(addi)
@@ -84,14 +85,14 @@ class TestSpeculation:
 
     def test_speculate_returns_changes(self, model):
         model.poke_gpr(1, 10)
-        addi = 0x13 | (2 << 7) | (0 << 12) | (1 << 15) | (5 << 20)
+        addi = opc("addi", rd=2, rs1=1, imm=5)
         spec = model.speculate(addi)
         assert spec is not None
         assert spec.gpr_writes[0].value == 15
 
     def test_speculate_does_not_modify_state(self, model):
         model.poke_gpr(1, 10)
-        addi = 0x13 | (2 << 7) | (0 << 12) | (1 << 15) | (5 << 20)
+        addi = opc("addi", rd=2, rs1=1, imm=5)
         model.speculate(addi)
         assert model.get_gpr(2) == 0  # unchanged
         assert model.get_pc() == 0  # unchanged
@@ -109,7 +110,7 @@ class TestBranches:
         """BEQ x1, x2, offset when x1 == x2 => branch taken."""
         model.poke_gpr(1, 10)
         model.poke_gpr(2, 10)
-        beq = 0x63 | (0 << 12) | (1 << 15) | (2 << 20) | (2 << 8)
+        beq = opc("beq", rs1=1, rs2=2, imm=8)
         changes = model.execute(beq)
         assert changes is not None
         info = model.get_branch_info()
@@ -121,7 +122,7 @@ class TestBranches:
         """BEQ x1, x2, offset when x1 != x2 => not taken, PC+4."""
         model.poke_gpr(1, 10)
         model.poke_gpr(2, 20)
-        beq = 0x63 | (0 << 12) | (1 << 15) | (2 << 20) | (8 << 7)
+        beq = opc("beq", rs1=1, rs2=2, imm=8)
         changes = model.execute(beq)
         assert changes is not None
         info = model.get_branch_info()
@@ -130,7 +131,7 @@ class TestBranches:
         assert model.get_pc() == 4
 
     def test_no_branch_info_for_non_branch(self, model):
-        addi = 0x13 | (1 << 7) | (0 << 12) | (0 << 15) | (1 << 20)
+        addi = opc("addi", rd=1, rs1=0, imm=1)
         model.execute(addi)
         assert model.get_branch_info() is None
 
@@ -144,14 +145,14 @@ class TestChangeTracking:
     """Tests for to_simple_dict / to_detailed_dict."""
 
     def test_simple_dict(self, model):
-        addi = 0x13 | (1 << 7) | (0 << 12) | (0 << 15) | (100 << 20)
+        addi = opc("addi", rd=1, rs1=0, imm=100)
         model.execute(addi)
         d = model.get_changes().to_simple_dict()
         assert "gpr_changes" in d
         assert d["gpr_changes"][1] == 100
 
     def test_detailed_dict(self, model):
-        addi = 0x13 | (1 << 7) | (0 << 12) | (0 << 15) | (100 << 20)
+        addi = opc("addi", rd=1, rs1=0, imm=100)
         model.execute(addi)
         d = model.get_changes().to_detailed_dict()
         assert "gpr_writes" in d
@@ -182,7 +183,7 @@ class TestReset:
         assert model.get_pc() == 0
 
     def test_reset_clears_last_changes(self, model):
-        addi = 0x13 | (1 << 7) | (0 << 12) | (0 << 15) | (1 << 20)
+        addi = opc("addi", rd=1, rs1=0, imm=1)
         model.execute(addi)
         model.reset()
         assert model.get_changes() is None
@@ -198,7 +199,7 @@ class TestCSROperations:
 
     def test_csrrw_instruction(self, model):
         model.poke_gpr(1, 0x1234)
-        csrrw = 0x73 | (2 << 7) | (1 << 12) | (1 << 15) | (0x300 << 20)
+        csrrw = opc("csrrw", rd=2, rs1=1, imm=0x300)
         changes = model.execute(csrrw)
         assert changes is not None
         assert model.get_gpr(2) == 0  # old mstatus
@@ -220,7 +221,7 @@ class TestX0ReadOnly:
     """Tests for x0 behaviour."""
 
     def test_x0_always_zero(self, model):
-        addi = 0x13 | (0 << 7) | (0 << 12) | (0 << 15) | (100 << 20)
+        addi = opc("addi", rd=0, rs1=0, imm=100)
         changes = model.execute(addi)
         assert model.get_gpr(0) == 0
         assert len(changes.gpr_writes) == 1
