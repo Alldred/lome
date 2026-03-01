@@ -4,62 +4,11 @@
 """Additional instruction tests for coverage of branch, shift, compare,
 load/store, and system instruction variants.
 
-These tests encode instructions manually and verify outcomes through
+These tests encode instructions via Eumos and verify outcomes through
 the model's public API.
 """
 
-
-# ====================================================================
-# Helper to build instruction encodings
-# ====================================================================
-
-
-def _r_type(opcode, rd, funct3, rs1, rs2, funct7):
-    """Build R-type instruction: opcode | rd | funct3 | rs1 | rs2 | funct7."""
-    return (
-        opcode | (rd << 7) | (funct3 << 12) | (rs1 << 15) | (rs2 << 20) | (funct7 << 25)
-    )
-
-
-def _i_type(opcode, rd, funct3, rs1, imm):
-    """Build I-type instruction: opcode | rd | funct3 | rs1 | imm[11:0]."""
-    return opcode | (rd << 7) | (funct3 << 12) | (rs1 << 15) | ((imm & 0xFFF) << 20)
-
-
-def _s_type(opcode, funct3, rs1, rs2, imm):
-    """Build S-type instruction."""
-    imm4_0 = imm & 0x1F
-    imm11_5 = (imm >> 5) & 0x7F
-    return (
-        opcode
-        | (imm4_0 << 7)
-        | (funct3 << 12)
-        | (rs1 << 15)
-        | (rs2 << 20)
-        | (imm11_5 << 25)
-    )
-
-
-def _b_type(opcode, funct3, rs1, rs2, imm):
-    """Build B-type instruction (branch). imm is byte offset."""
-    # B-type immediate encoding:
-    # imm[12|10:5] in bits [31|30:25]
-    # imm[4:1|11] in bits [11:8|7]
-    bit12 = (imm >> 12) & 1
-    bit11 = (imm >> 11) & 1
-    bits10_5 = (imm >> 5) & 0x3F
-    bits4_1 = (imm >> 1) & 0xF
-    return (
-        opcode
-        | (bit11 << 7)
-        | (bits4_1 << 8)
-        | (funct3 << 12)
-        | (rs1 << 15)
-        | (rs2 << 20)
-        | (bits10_5 << 25)
-        | (bit12 << 31)
-    )
-
+from ._opcode import opc
 
 # ====================================================================
 # Branch instructions -- BNE, BLT, BGE, BLTU, BGEU
@@ -73,7 +22,7 @@ class TestBranchVariants:
         m = model
         m.poke_gpr(1, 10)
         m.poke_gpr(2, 20)
-        bne = _b_type(0x63, 1, 1, 2, 16)  # funct3=1 = BNE, offset 16
+        bne = opc("bne", rs1=1, rs2=2, imm=16)  # funct3=1 = BNE, offset 16
         changes = m.execute(bne)
         assert changes.branch_info.taken is True
         assert changes.branch_info.condition == "ne"
@@ -82,7 +31,7 @@ class TestBranchVariants:
         m = model
         m.poke_gpr(1, 10)
         m.poke_gpr(2, 10)
-        bne = _b_type(0x63, 1, 1, 2, 16)
+        bne = opc("bne", rs1=1, rs2=2, imm=16)
         changes = m.execute(bne)
         assert changes.branch_info.taken is False
 
@@ -90,7 +39,7 @@ class TestBranchVariants:
         m = model
         m.poke_gpr(1, 5)
         m.poke_gpr(2, 10)
-        blt = _b_type(0x63, 4, 1, 2, 8)  # funct3=4 = BLT
+        blt = opc("blt", rs1=1, rs2=2, imm=8)  # funct3=4 = BLT
         changes = m.execute(blt)
         assert changes.branch_info.taken is True
         assert changes.branch_info.condition == "lt"
@@ -99,7 +48,7 @@ class TestBranchVariants:
         m = model
         m.poke_gpr(1, 20)
         m.poke_gpr(2, 10)
-        blt = _b_type(0x63, 4, 1, 2, 8)
+        blt = opc("blt", rs1=1, rs2=2, imm=8)
         changes = m.execute(blt)
         assert changes.branch_info.taken is False
 
@@ -107,7 +56,7 @@ class TestBranchVariants:
         m = model
         m.poke_gpr(1, 10)
         m.poke_gpr(2, 10)
-        bge = _b_type(0x63, 5, 1, 2, 8)  # funct3=5 = BGE
+        bge = opc("bge", rs1=1, rs2=2, imm=8)  # funct3=5 = BGE
         changes = m.execute(bge)
         assert changes.branch_info.taken is True
         assert changes.branch_info.condition == "ge"
@@ -116,7 +65,7 @@ class TestBranchVariants:
         m = model
         m.poke_gpr(1, 5)
         m.poke_gpr(2, 10)
-        bge = _b_type(0x63, 5, 1, 2, 8)
+        bge = opc("bge", rs1=1, rs2=2, imm=8)
         changes = m.execute(bge)
         assert changes.branch_info.taken is False
 
@@ -124,7 +73,7 @@ class TestBranchVariants:
         m = model
         m.poke_gpr(1, 5)
         m.poke_gpr(2, 10)
-        bltu = _b_type(0x63, 6, 1, 2, 8)  # funct3=6 = BLTU
+        bltu = opc("bltu", rs1=1, rs2=2, imm=8)  # funct3=6 = BLTU
         changes = m.execute(bltu)
         assert changes.branch_info.taken is True
         assert changes.branch_info.condition == "ltu"
@@ -133,7 +82,7 @@ class TestBranchVariants:
         m = model
         m.poke_gpr(1, 20)
         m.poke_gpr(2, 10)
-        bltu = _b_type(0x63, 6, 1, 2, 8)
+        bltu = opc("bltu", rs1=1, rs2=2, imm=8)
         changes = m.execute(bltu)
         assert changes.branch_info.taken is False
 
@@ -141,7 +90,7 @@ class TestBranchVariants:
         m = model
         m.poke_gpr(1, 10)
         m.poke_gpr(2, 10)
-        bgeu = _b_type(0x63, 7, 1, 2, 8)  # funct3=7 = BGEU
+        bgeu = opc("bgeu", rs1=1, rs2=2, imm=8)  # funct3=7 = BGEU
         changes = m.execute(bgeu)
         assert changes.branch_info.taken is True
         assert changes.branch_info.condition == "geu"
@@ -150,7 +99,7 @@ class TestBranchVariants:
         m = model
         m.poke_gpr(1, 5)
         m.poke_gpr(2, 10)
-        bgeu = _b_type(0x63, 7, 1, 2, 8)
+        bgeu = opc("bgeu", rs1=1, rs2=2, imm=8)
         changes = m.execute(bgeu)
         assert changes.branch_info.taken is False
 
@@ -167,7 +116,7 @@ class TestShiftVariants:
         m = model
         m.poke_gpr(1, 0x1)
         m.poke_gpr(2, 4)
-        sll = _r_type(0x33, 3, 1, 1, 2, 0)  # SLL
+        sll = opc("sll", rd=3, rs1=1, rs2=2)  # SLL
         m.execute(sll)
         assert m.get_gpr(3) == 0x10
 
@@ -175,7 +124,7 @@ class TestShiftVariants:
         m = model
         m.poke_gpr(1, 0x100)
         m.poke_gpr(2, 4)
-        srl = _r_type(0x33, 3, 5, 1, 2, 0)  # SRL
+        srl = opc("srl", rd=3, rs1=1, rs2=2)  # SRL
         m.execute(srl)
         assert m.get_gpr(3) == 0x10
 
@@ -184,7 +133,7 @@ class TestShiftVariants:
         # Negative number: SRA should sign-extend
         m.poke_gpr(1, 0xFFFFFFFFFFFFFF00)  # -256
         m.poke_gpr(2, 4)
-        sra = _r_type(0x33, 3, 5, 1, 2, 0x20)  # SRA (funct7=0x20)
+        sra = opc("sra", rd=3, rs1=1, rs2=2)  # SRA (funct7=0x20)
         m.execute(sra)
         result = m.get_gpr(3)
         # -256 >> 4 = -16, which is 0xFFFFFFFFFFFFFFF0 in 64-bit two's complement
@@ -194,7 +143,7 @@ class TestShiftVariants:
         m = model
         m.poke_gpr(1, 0xFFFFFFFFFFFFFF00)  # -256
         # SRAI: I-type with funct7=0x20 in bits [31:25], shamt in bits [24:20]
-        srai = _i_type(0x13, 3, 5, 1, (0x20 << 5) | 4)  # shamt=4, funct7=0x20
+        srai = opc("srai", rd=3, rs1=1, shamt=4)  # shamt=4, funct7=0x20
         m.execute(srai)
         result = m.get_gpr(3)
         assert result & 0x8000000000000000  # should still be negative
@@ -203,14 +152,14 @@ class TestShiftVariants:
         m = model
         m.poke_gpr(1, 0x1)
         m.poke_gpr(2, 4)
-        sllw = _r_type(0x3B, 3, 1, 1, 2, 0)  # SLLW
+        sllw = opc("sllw", rd=3, rs1=1, rs2=2)  # SLLW
         m.execute(sllw)
         assert m.get_gpr(3) == 0x10
 
     def test_slliw(self, model):
         m = model
         m.poke_gpr(1, 0x7FFFFFFF)
-        slliw = _i_type(0x1B, 3, 1, 1, 1)  # SLLIW, shamt=1
+        slliw = opc("slliw", rd=3, rs1=1, shamt=1)  # SLLIW, shamt=1
         m.execute(slliw)
         result = m.get_gpr(3)
         # 0x7FFFFFFF << 1 = 0xFFFFFFFE -> sign-extended to 64 bits
@@ -220,14 +169,14 @@ class TestShiftVariants:
         m = model
         m.poke_gpr(1, 0x100)
         m.poke_gpr(2, 4)
-        srlw = _r_type(0x3B, 3, 5, 1, 2, 0)  # SRLW
+        srlw = opc("srlw", rd=3, rs1=1, rs2=2)  # SRLW
         m.execute(srlw)
         assert m.get_gpr(3) == 0x10
 
     def test_srliw(self, model):
         m = model
         m.poke_gpr(1, 0x80000000)  # bit 31 set
-        srliw = _i_type(0x1B, 3, 5, 1, 1)  # SRLIW, shamt=1
+        srliw = opc("srliw", rd=3, rs1=1, shamt=1)  # SRLIW, shamt=1
         m.execute(srliw)
         assert m.get_gpr(3) == 0x40000000
 
@@ -235,7 +184,7 @@ class TestShiftVariants:
         m = model
         m.poke_gpr(1, 0x80000000)  # bit 31 set (negative in 32-bit)
         m.poke_gpr(2, 4)
-        sraw = _r_type(0x3B, 3, 5, 1, 2, 0x20)  # SRAW
+        sraw = opc("sraw", rd=3, rs1=1, rs2=2)  # SRAW
         m.execute(sraw)
         result = m.get_gpr(3)
         assert result & 0x8000000000000000  # should be sign-extended to negative
@@ -243,7 +192,7 @@ class TestShiftVariants:
     def test_sraiw(self, model):
         m = model
         m.poke_gpr(1, 0x80000000)
-        sraiw = _i_type(0x1B, 3, 5, 1, (0x20 << 5) | 4)  # SRAIW, shamt=4
+        sraiw = opc("sraiw", rd=3, rs1=1, shamt=4)  # SRAIW, shamt=4
         m.execute(sraiw)
         result = m.get_gpr(3)
         assert result & 0x8000000000000000  # sign-extended
@@ -260,28 +209,28 @@ class TestCompareVariants:
     def test_slti_less(self, model):
         m = model
         m.poke_gpr(1, 5)
-        slti = _i_type(0x13, 3, 2, 1, 10)  # SLTI: rd=3, rs1=1, imm=10
+        slti = opc("slti", rd=3, rs1=1, imm=10)  # SLTI: rd=3, rs1=1, imm=10
         m.execute(slti)
         assert m.get_gpr(3) == 1
 
     def test_slti_not_less(self, model):
         m = model
         m.poke_gpr(1, 20)
-        slti = _i_type(0x13, 3, 2, 1, 10)
+        slti = opc("slti", rd=3, rs1=1, imm=10)
         m.execute(slti)
         assert m.get_gpr(3) == 0
 
     def test_sltiu_less(self, model):
         m = model
         m.poke_gpr(1, 5)
-        sltiu = _i_type(0x13, 3, 3, 1, 10)  # SLTIU: funct3=3
+        sltiu = opc("sltiu", rd=3, rs1=1, imm=10)  # SLTIU: funct3=3
         m.execute(sltiu)
         assert m.get_gpr(3) == 1
 
     def test_sltiu_not_less(self, model):
         m = model
         m.poke_gpr(1, 20)
-        sltiu = _i_type(0x13, 3, 3, 1, 10)
+        sltiu = opc("sltiu", rd=3, rs1=1, imm=10)
         m.execute(sltiu)
         assert m.get_gpr(3) == 0
 
@@ -301,7 +250,7 @@ class TestLoadStore:
     def test_lb(self, model):
         m = model
         m.poke_gpr(1, 0x1000)
-        lb = _i_type(0x03, 2, 0, 1, 4)  # LB: rd=2, rs1=1, imm=4
+        lb = opc("lb", rd=2, rs1=1, imm=4)  # LB: rd=2, rs1=1, imm=4
         changes = m.execute(lb)
         assert len(changes.memory_accesses) == 1
         assert changes.memory_accesses[0].address == 0x1004
@@ -311,42 +260,42 @@ class TestLoadStore:
     def test_lh(self, model):
         m = model
         m.poke_gpr(1, 0x1000)
-        lh = _i_type(0x03, 2, 1, 1, 0)  # LH
+        lh = opc("lh", rd=2, rs1=1, imm=0)  # LH
         changes = m.execute(lh)
         assert changes.memory_accesses[0].size == 2
 
     def test_lw(self, model):
         m = model
         m.poke_gpr(1, 0x1000)
-        lw = _i_type(0x03, 2, 2, 1, 0)  # LW
+        lw = opc("lw", rd=2, rs1=1, imm=0)  # LW
         changes = m.execute(lw)
         assert changes.memory_accesses[0].size == 4
 
     def test_ld(self, model):
         m = model
         m.poke_gpr(1, 0x1000)
-        ld = _i_type(0x03, 2, 3, 1, 0)  # LD
+        ld = opc("ld", rd=2, rs1=1, imm=0)  # LD
         changes = m.execute(ld)
         assert changes.memory_accesses[0].size == 8
 
     def test_lbu(self, model):
         m = model
         m.poke_gpr(1, 0x1000)
-        lbu = _i_type(0x03, 2, 4, 1, 0)  # LBU
+        lbu = opc("lbu", rd=2, rs1=1, imm=0)  # LBU
         changes = m.execute(lbu)
         assert changes.memory_accesses[0].size == 1
 
     def test_lhu(self, model):
         m = model
         m.poke_gpr(1, 0x1000)
-        lhu = _i_type(0x03, 2, 5, 1, 0)  # LHU
+        lhu = opc("lhu", rd=2, rs1=1, imm=0)  # LHU
         changes = m.execute(lhu)
         assert changes.memory_accesses[0].size == 2
 
     def test_lwu(self, model):
         m = model
         m.poke_gpr(1, 0x1000)
-        lwu = _i_type(0x03, 2, 6, 1, 0)  # LWU
+        lwu = opc("lwu", rd=2, rs1=1, imm=0)  # LWU
         changes = m.execute(lwu)
         assert changes.memory_accesses[0].size == 4
 
@@ -354,7 +303,7 @@ class TestLoadStore:
         m = model
         m.poke_gpr(1, 0x1000)
         m.poke_gpr(2, 0xFF)
-        sb = _s_type(0x23, 0, 1, 2, 4)  # SB: rs1=1, rs2=2, imm=4
+        sb = opc("sb", rs1=1, rs2=2, imm=4)  # SB: rs1=1, rs2=2, imm=4
         changes = m.execute(sb)
         assert len(changes.memory_accesses) == 1
         assert changes.memory_accesses[0].address == 0x1004
@@ -366,7 +315,7 @@ class TestLoadStore:
         m = model
         m.poke_gpr(1, 0x1000)
         m.poke_gpr(2, 0xFFFF)
-        sh = _s_type(0x23, 1, 1, 2, 0)  # SH
+        sh = opc("sh", rs1=1, rs2=2, imm=0)  # SH
         changes = m.execute(sh)
         assert changes.memory_accesses[0].size == 2
         assert changes.memory_accesses[0].value == 0xFFFF
@@ -375,7 +324,7 @@ class TestLoadStore:
         m = model
         m.poke_gpr(1, 0x1000)
         m.poke_gpr(2, 0xDEADBEEF)
-        sw = _s_type(0x23, 2, 1, 2, 0)  # SW
+        sw = opc("sw", rs1=1, rs2=2, imm=0)  # SW
         changes = m.execute(sw)
         assert changes.memory_accesses[0].size == 4
         assert changes.memory_accesses[0].value == 0xDEADBEEF
@@ -384,7 +333,7 @@ class TestLoadStore:
         m = model
         m.poke_gpr(1, 0x1000)
         m.poke_gpr(2, 0x123456789ABCDEF0)
-        sd = _s_type(0x23, 3, 1, 2, 0)  # SD
+        sd = opc("sd", rs1=1, rs2=2, imm=0)  # SD
         changes = m.execute(sd)
         assert changes.memory_accesses[0].size == 8
         assert changes.memory_accesses[0].value == 0x123456789ABCDEF0
@@ -404,7 +353,7 @@ class TestCSRImmediateVariants:
         m.poke_csr(0x300, 0x1234)
         # csrrwi x2, mstatus, 5
         # funct3=5 for CSRRWI, rs1 field encodes zimm=5
-        csrrwi = _i_type(0x73, 2, 5, 5, 0x300)
+        csrrwi = opc("csrrwi", rd=2, rs1=5, imm=0x300)
         m.execute(csrrwi)
         assert m.get_gpr(2) == 0x1234  # old CSR value
         assert m.get_csr(0x300) == 5  # zimm written
@@ -414,7 +363,7 @@ class TestCSRImmediateVariants:
         m = model
         m.poke_csr(0x300, 0x10)
         # csrrsi x2, mstatus, 3 (zimm=3)
-        csrrsi = _i_type(0x73, 2, 6, 3, 0x300)
+        csrrsi = opc("csrrsi", rd=2, rs1=3, imm=0x300)
         m.execute(csrrsi)
         assert m.get_gpr(2) == 0x10
         assert m.get_csr(0x300) == (0x10 | 3)
@@ -424,7 +373,7 @@ class TestCSRImmediateVariants:
         m = model
         m.poke_csr(0x300, 0xFF)
         # csrrci x2, mstatus, 0x0F (zimm=15)
-        csrrci = _i_type(0x73, 2, 7, 15, 0x300)
+        csrrci = opc("csrrci", rd=2, rs1=15, imm=0x300)
         m.execute(csrrci)
         assert m.get_gpr(2) == 0xFF
         assert m.get_csr(0x300) == (0xFF & ~15)
@@ -441,14 +390,14 @@ class TestArithmeticWordVariants:
     def test_addiw(self, model):
         m = model
         m.poke_gpr(1, 10)
-        addiw = _i_type(0x1B, 2, 0, 1, 5)  # ADDIW: rd=2, rs1=1, imm=5
+        addiw = opc("addiw", rd=2, rs1=1, imm=5)  # ADDIW: rd=2, rs1=1, imm=5
         m.execute(addiw)
         assert m.get_gpr(2) == 15
 
     def test_addiw_sign_extension(self, model):
         m = model
         m.poke_gpr(1, 0x7FFFFFFF)
-        addiw = _i_type(0x1B, 2, 0, 1, 1)  # ADDIW: add 1 -> overflow 32-bit
+        addiw = opc("addiw", rd=2, rs1=1, imm=1)  # ADDIW: add 1 -> overflow 32-bit
         m.execute(addiw)
         result = m.get_gpr(2)
         assert result == 0xFFFFFFFF80000000  # sign-extended
@@ -474,7 +423,7 @@ class TestExecutorEdgeCases:
         m = model
         m.poke_gpr(1, 42)
         # Execute a valid instruction in speculation mode
-        addi = _i_type(0x13, 2, 0, 1, 5)
+        addi = opc("addi", rd=2, rs1=1, imm=5)
         changes = m.speculate(addi)
         assert changes is not None
         assert changes.gpr_writes[0].value == 47  # 42 + 5

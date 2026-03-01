@@ -7,6 +7,8 @@ import json
 
 from lome import Lome
 
+from ._opcode import opc
+
 # ====================================================================
 # GPR peek / poke via model
 # ====================================================================
@@ -130,7 +132,7 @@ class TestModelJSONExportRestore:
 
     def test_restore_clears_last_changes(self, model):
         m = model
-        addi = 0x13 | (1 << 7) | (0 << 12) | (0 << 15) | (5 << 20)
+        addi = opc("addi", rd=1, rs1=0, imm=5)
         m.execute(addi)
         assert m.get_changes() is not None
         m.restore_state(m.export_state())
