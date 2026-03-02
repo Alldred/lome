@@ -6,8 +6,16 @@
 from __future__ import annotations
 
 from lome.changes import ChangeRecord, CSRRead, CSRWrite, GPRRead, GPRWrite
+from lome.instructions.common import sext32
 from lome.state import State
 from lome.types import OperandValues
+
+_MASK_64 = 0xFFFFFFFFFFFFFFFF
+
+
+def _u_imm_sext64(imm20: int) -> int:
+    """Return RV64 sign-extended U-immediate value from an imm[31:12] field."""
+    return sext32((imm20 & 0xFFFFF) << 12)
 
 
 def execute_csrrw(operand_values: OperandValues, state: State, pc: int) -> ChangeRecord:
@@ -348,7 +356,8 @@ def execute_lui(operand_values: OperandValues, state: State, pc: int) -> ChangeR
     rd = operand_values.get("rd")
     imm = operand_values.get("imm")
 
-    result = (imm << 12) & 0xFFFFFFFFFFFFFFFF
+    # RV64 LUI writes sext32(imm[31:12] << 12).
+    result = _u_imm_sext64(imm)
 
     changes = ChangeRecord()
     old_value = state.set_gpr(rd, result)
@@ -377,7 +386,8 @@ def execute_auipc(operand_values: OperandValues, state: State, pc: int) -> Chang
     rd = operand_values.get("rd")
     imm = operand_values.get("imm")
 
-    result = (pc + (imm << 12)) & 0xFFFFFFFFFFFFFFFF
+    # RV64 AUIPC adds the sign-extended U-immediate to PC.
+    result = (pc + _u_imm_sext64(imm)) & _MASK_64
 
     changes = ChangeRecord()
     old_value = state.set_gpr(rd, result)

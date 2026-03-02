@@ -235,11 +235,22 @@ class TestSystem:
         model.execute(lui)
         assert model.get_gpr(1) == (0x12345 << 12) & 0xFFFFFFFFFFFFFFFF
 
+    def test_lui_sign_extends_u_immediate_on_rv64(self, model):
+        lui = opc("lui", rd=31, imm=0xC6D36)
+        model.execute(lui)
+        assert model.get_gpr(31) == 0xFFFFFFFFC6D36000
+
     def test_auipc(self, model):
         model.poke_pc(0x1000)
         auipc = opc("auipc", rd=2, imm=0x10)
         model.execute(auipc)
         assert model.get_gpr(2) == 0x1000 + (0x10 << 12)
+
+    def test_auipc_sign_extends_u_immediate_on_rv64(self, model):
+        model.poke_pc(0x80000320)
+        auipc = opc("auipc", rd=20, imm=0xCA904)
+        model.execute(auipc)
+        assert model.get_gpr(20) == 0x4A904320
 
     def test_mret(self, model):
         """MRET reads mepc and sets PC to it."""
