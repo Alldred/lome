@@ -118,6 +118,14 @@ class TestLogical:
         model.execute(ori)
         assert model.get_gpr(2) == 0xFF
 
+    def test_ori_change_record_uses_u64_value(self, model):
+        # ori x7, x1, -1403 should be represented as an unsigned 64-bit write value.
+        ori = opc("ori", rd=7, rs1=1, imm=-1403)
+        changes = model.execute(ori)
+        assert changes is not None
+        assert changes.gpr_writes
+        assert changes.gpr_writes[0].value == 0xFFFFFFFFFFFFFA85
+
     def test_xori(self, model):
         model.poke_gpr(1, 0xFF)
         xori = opc("xori", rd=2, rs1=1, imm=0xFF)

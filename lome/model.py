@@ -18,6 +18,21 @@ from lome.executor import execute_instruction
 from lome.ras import RASModel
 from lome.state import State
 
+_MASK_64 = 0xFFFF_FFFF_FFFF_FFFF
+
+
+def _u64(value: int) -> int:
+    return int(value) & _MASK_64
+
+
+def _canonicalize_changes(changes: ChangeRecord) -> None:
+    """Normalize integer fields in ChangeRecord to architectural 64-bit form."""
+    for read in changes.gpr_reads:
+        read.value = _u64(read.value)
+    for write in changes.gpr_writes:
+        write.value = _u64(write.value)
+        write.old_value = _u64(write.old_value)
+
 
 class Lome:
     """RISC-V functional model with execution, speculation, and state access APIs."""
@@ -85,6 +100,9 @@ class Lome:
             ras=self._ras,
             speculate=speculate,
         )
+
+        if changes is not None:
+            _canonicalize_changes(changes)
 
         # Update PC if not speculating
         if not speculate and changes:
