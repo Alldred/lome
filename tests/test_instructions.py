@@ -173,7 +173,7 @@ class TestShift:
 
 
 class TestCompare:
-    """Tests for SLT, SLTI, SLTU, SLTIU."""
+    """Tests for SLT, SLTI, SLTU, SLTIU, and CZERO.*."""
 
     def test_slt_less(self, model):
         model.poke_gpr(1, 10)
@@ -203,6 +203,34 @@ class TestCompare:
         slt = opc("slt", rd=3, rs1=1, rs2=2)
         model.execute(slt)
         assert model.get_gpr(3) == 0
+
+    def test_czero_eqz_zeroes_rd_when_rs2_is_zero(self, model):
+        model.poke_gpr(1, 0x1234)
+        model.poke_gpr(2, 0)
+        inst = opc("czero.eqz", rd=3, rs1=1, rs2=2)
+        model.execute(inst)
+        assert model.get_gpr(3) == 0
+
+    def test_czero_eqz_copies_rs1_when_rs2_nonzero(self, model):
+        model.poke_gpr(1, 0x1234)
+        model.poke_gpr(2, 1)
+        inst = opc("czero.eqz", rd=3, rs1=1, rs2=2)
+        model.execute(inst)
+        assert model.get_gpr(3) == 0x1234
+
+    def test_czero_nez_zeroes_rd_when_rs2_nonzero(self, model):
+        model.poke_gpr(1, 0xABCD)
+        model.poke_gpr(2, 7)
+        inst = opc("czero.nez", rd=3, rs1=1, rs2=2)
+        model.execute(inst)
+        assert model.get_gpr(3) == 0
+
+    def test_czero_nez_copies_rs1_when_rs2_zero(self, model):
+        model.poke_gpr(1, 0xABCD)
+        model.poke_gpr(2, 0)
+        inst = opc("czero.nez", rd=3, rs1=1, rs2=2)
+        model.execute(inst)
+        assert model.get_gpr(3) == 0xABCD
 
 
 # ====================================================================

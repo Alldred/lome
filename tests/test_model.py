@@ -224,9 +224,18 @@ class TestX0ReadOnly:
         addi = opc("addi", rd=0, rs1=0, imm=100)
         changes = model.execute(addi)
         assert model.get_gpr(0) == 0
-        assert len(changes.gpr_writes) == 1
-        assert changes.gpr_writes[0].value == 100  # tracked but ignored
+        assert len(changes.gpr_writes) == 0
 
     def test_set_gpr_x0_ignored(self, model):
         model.set_gpr(0, 999)
         assert model.get_gpr(0) == 0
+
+    def test_csrrw_rd_x0_emits_no_gpr_write(self, model):
+        model.poke_gpr(1, 0x1234)
+        model.poke_csr(0x300, 0x55AA)
+        csrrw = opc("csrrw", rd=0, rs1=1, imm=0x300)
+        changes = model.execute(csrrw)
+        assert changes is not None
+        assert model.get_gpr(0) == 0
+        assert model.get_csr("mstatus") == 0x1234
+        assert len(changes.gpr_writes) == 0
