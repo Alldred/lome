@@ -14,7 +14,7 @@ Lome supports instructions currently defined in Eumos for this project.
 - Arithmetic: `ADD`, `ADDI`, `SUB`, `ADDW`, `ADDIW`, `SUBW`
 - Logical: `AND`, `ANDI`, `OR`, `ORI`, `XOR`, `XORI`
 - Shift: `SLL`, `SLLI`, `SRL`, `SRLI`, `SRA`, `SRAI`, `SLLW`, `SLLIW`, `SRLW`, `SRLIW`, `SRAW`, `SRAIW`
-- Compare: `SLT`, `SLTI`, `SLTU`, `SLTIU`
+- Compare/Conditional: `SLT`, `SLTI`, `SLTU`, `SLTIU`, `CZERO.EQZ`, `CZERO.NEZ`
 - Branch: `BEQ`, `BNE`, `BLT`, `BGE`, `BLTU`, `BGEU`
 - Jump: `JAL`, `JALR`
 - Load/Store: `LB`, `LH`, `LW`, `LBU`, `LHU`, `LD`, `LWU`, `SB`, `SH`, `SW`, `SD`, `FLW`, `FSW`, `FLD`, `FSD`

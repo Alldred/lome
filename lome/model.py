@@ -29,6 +29,8 @@ def _canonicalize_changes(changes: ChangeRecord) -> None:
     """Normalize integer fields in ChangeRecord to architectural 64-bit form."""
     for read in changes.gpr_reads:
         read.value = _u64(read.value)
+    # Architectural boundary: writes to x0 are suppressed (treated as no writeback).
+    changes.gpr_writes = [w for w in changes.gpr_writes if int(w.register) != 0]
     for write in changes.gpr_writes:
         write.value = _u64(write.value)
         write.old_value = _u64(write.old_value)

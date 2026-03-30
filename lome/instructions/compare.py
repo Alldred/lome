@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: MIT
 # Copyright (c) 2026 Stuart Alldred.
 
-"""Compare instruction implementations: SLT, SLTI, SLTU, SLTIU."""
+"""Compare instruction implementations: SLT, SLTI, SLTU, SLTIU, CZERO.*."""
 
 from __future__ import annotations
 
@@ -130,5 +130,59 @@ def execute_sltiu(operand_values: OperandValues, state: State, pc: int) -> Chang
     rs1_val = read_gpr(changes, state, rs1_idx)
     imm_unsigned = imm & 0xFFFFFFFFFFFFFFFF
     result = 1 if rs1_val < imm_unsigned else 0
+    write_gpr(changes, state, rd, result)
+    return changes
+
+
+def execute_czero_eqz(
+    operand_values: OperandValues, state: State, pc: int
+) -> ChangeRecord:
+    """Execute CZERO.EQZ: rd = (rs2 == 0) ? 0 : rs1
+
+    Write zero to rd when rs2 is zero; otherwise copy rs1 into rd.
+
+    Parameters:
+        operand_values: OperandValues with keys ``rd``, ``rs1``, and ``rs2``.
+        state: Current architectural state.
+        pc: Program counter of this instruction.
+
+    Returns:
+        ChangeRecord containing the GPR write to rd.
+    """
+    changes = ChangeRecord()
+    rd = operand_values.get("rd")
+    rs1_idx = operand_values.get("rs1")
+    rs2_idx = operand_values.get("rs2")
+
+    rs1_val = read_gpr(changes, state, rs1_idx)
+    rs2_val = read_gpr(changes, state, rs2_idx)
+    result = 0 if rs2_val == 0 else rs1_val
+    write_gpr(changes, state, rd, result)
+    return changes
+
+
+def execute_czero_nez(
+    operand_values: OperandValues, state: State, pc: int
+) -> ChangeRecord:
+    """Execute CZERO.NEZ: rd = (rs2 != 0) ? 0 : rs1
+
+    Write zero to rd when rs2 is non-zero; otherwise copy rs1 into rd.
+
+    Parameters:
+        operand_values: OperandValues with keys ``rd``, ``rs1``, and ``rs2``.
+        state: Current architectural state.
+        pc: Program counter of this instruction.
+
+    Returns:
+        ChangeRecord containing the GPR write to rd.
+    """
+    changes = ChangeRecord()
+    rd = operand_values.get("rd")
+    rs1_idx = operand_values.get("rs1")
+    rs2_idx = operand_values.get("rs2")
+
+    rs1_val = read_gpr(changes, state, rs1_idx)
+    rs2_val = read_gpr(changes, state, rs2_idx)
+    result = 0 if rs2_val != 0 else rs1_val
     write_gpr(changes, state, rd, result)
     return changes

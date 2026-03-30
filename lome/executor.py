@@ -101,6 +101,8 @@ _INSTRUCTION_HANDLERS: dict[str, InstructionHandler] = {
     "slti": compare.execute_slti,
     "sltu": compare.execute_sltu,
     "sltiu": compare.execute_sltiu,
+    "czero.eqz": compare.execute_czero_eqz,
+    "czero.nez": compare.execute_czero_nez,
     # Branch
     "beq": branch.execute_beq,
     "bne": branch.execute_bne,
