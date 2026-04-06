@@ -1,6 +1,6 @@
 [project]
 name = "lome"
-version = "1.0.0"
+version = "1.1.0"
 description = "Python RISC-V functional model"
 readme = "README.md"
 license = "MIT"

@@ -78,6 +78,183 @@ class TestArithmetic:
 
 
 # ====================================================================
+# Multiply/Divide (M extension)
+# ====================================================================
+
+
+class TestMultiplyDivide:
+    """Tests for MUL/DIV/REM instruction variants."""
+
+    def test_mul(self, model):
+        model.poke_gpr(1, 0xFFFF_FFFF_FFFF_FFFF)
+        model.poke_gpr(2, 2)
+        mul = opc("mul", rd=3, rs1=1, rs2=2)
+        model.execute(mul)
+        assert model.get_gpr(3) == 0xFFFF_FFFF_FFFF_FFFE
+
+    def test_mulh(self, model):
+        model.poke_gpr(1, 0xFFFF_FFFF_FFFF_FFFE)  # -2
+        model.poke_gpr(2, 3)
+        mulh = opc("mulh", rd=3, rs1=1, rs2=2)
+        model.execute(mulh)
+        assert model.get_gpr(3) == 0xFFFF_FFFF_FFFF_FFFF
+
+    def test_mulhsu(self, model):
+        model.poke_gpr(1, 0xFFFF_FFFF_FFFF_FFFE)  # -2 (signed)
+        model.poke_gpr(2, 3)  # 3 (unsigned)
+        mulhsu = opc("mulhsu", rd=3, rs1=1, rs2=2)
+        model.execute(mulhsu)
+        assert model.get_gpr(3) == 0xFFFF_FFFF_FFFF_FFFF
+
+    def test_mulhu(self, model):
+        model.poke_gpr(1, 0xFFFF_FFFF_FFFF_FFFF)
+        model.poke_gpr(2, 2)
+        mulhu = opc("mulhu", rd=3, rs1=1, rs2=2)
+        model.execute(mulhu)
+        assert model.get_gpr(3) == 1
+
+    def test_mulw_sign_extends(self, model):
+        model.poke_gpr(1, 0x7FFF_FFFF)
+        model.poke_gpr(2, 2)
+        mulw = opc("mulw", rd=3, rs1=1, rs2=2)
+        model.execute(mulw)
+        assert model.get_gpr(3) == 0xFFFF_FFFF_FFFF_FFFE
+
+    def test_div_truncates_toward_zero(self, model):
+        model.poke_gpr(1, 0xFFFF_FFFF_FFFF_FFEC)  # -20
+        model.poke_gpr(2, 6)
+        div = opc("div", rd=3, rs1=1, rs2=2)
+        model.execute(div)
+        assert model.get_gpr(3) == 0xFFFF_FFFF_FFFF_FFFD  # -3
+
+    def test_div_by_zero(self, model):
+        model.poke_gpr(1, 123)
+        model.poke_gpr(2, 0)
+        div = opc("div", rd=3, rs1=1, rs2=2)
+        model.execute(div)
+        assert model.get_gpr(3) == 0xFFFF_FFFF_FFFF_FFFF
+
+    def test_div_overflow(self, model):
+        model.poke_gpr(1, 0x8000_0000_0000_0000)  # INT64_MIN
+        model.poke_gpr(2, 0xFFFF_FFFF_FFFF_FFFF)  # -1
+        div = opc("div", rd=3, rs1=1, rs2=2)
+        model.execute(div)
+        assert model.get_gpr(3) == 0x8000_0000_0000_0000
+
+    def test_divu(self, model):
+        model.poke_gpr(1, 20)
+        model.poke_gpr(2, 3)
+        divu = opc("divu", rd=3, rs1=1, rs2=2)
+        model.execute(divu)
+        assert model.get_gpr(3) == 6
+
+    def test_divu_by_zero(self, model):
+        model.poke_gpr(1, 20)
+        model.poke_gpr(2, 0)
+        divu = opc("divu", rd=3, rs1=1, rs2=2)
+        model.execute(divu)
+        assert model.get_gpr(3) == 0xFFFF_FFFF_FFFF_FFFF
+
+    def test_divw_sign_extends(self, model):
+        model.poke_gpr(1, 0xFFFF_FFFF_FFFF_FFF0)  # -16
+        model.poke_gpr(2, 5)
+        divw = opc("divw", rd=3, rs1=1, rs2=2)
+        model.execute(divw)
+        assert model.get_gpr(3) == 0xFFFF_FFFF_FFFF_FFFD  # -3
+
+    def test_divw_by_zero(self, model):
+        model.poke_gpr(1, 20)
+        model.poke_gpr(2, 0)
+        divw = opc("divw", rd=3, rs1=1, rs2=2)
+        model.execute(divw)
+        assert model.get_gpr(3) == 0xFFFF_FFFF_FFFF_FFFF
+
+    def test_divw_overflow(self, model):
+        model.poke_gpr(1, 0x8000_0000)  # INT32_MIN in low 32 bits
+        model.poke_gpr(2, 0xFFFF_FFFF_FFFF_FFFF)  # -1
+        divw = opc("divw", rd=3, rs1=1, rs2=2)
+        model.execute(divw)
+        assert model.get_gpr(3) == 0xFFFF_FFFF_8000_0000
+
+    def test_divuw_sign_extends(self, model):
+        model.poke_gpr(1, 0xFFFF_FFFF)
+        model.poke_gpr(2, 1)
+        divuw = opc("divuw", rd=3, rs1=1, rs2=2)
+        model.execute(divuw)
+        assert model.get_gpr(3) == 0xFFFF_FFFF_FFFF_FFFF
+
+    def test_rem_signed(self, model):
+        model.poke_gpr(1, 0xFFFF_FFFF_FFFF_FFEC)  # -20
+        model.poke_gpr(2, 6)
+        rem = opc("rem", rd=3, rs1=1, rs2=2)
+        model.execute(rem)
+        assert model.get_gpr(3) == 0xFFFF_FFFF_FFFF_FFFE  # -2
+
+    def test_rem_by_zero(self, model):
+        model.poke_gpr(1, 0xDEAD_BEEF_1234_5678)
+        model.poke_gpr(2, 0)
+        rem = opc("rem", rd=3, rs1=1, rs2=2)
+        model.execute(rem)
+        assert model.get_gpr(3) == 0xDEAD_BEEF_1234_5678
+
+    def test_rem_overflow(self, model):
+        model.poke_gpr(1, 0x8000_0000_0000_0000)  # INT64_MIN
+        model.poke_gpr(2, 0xFFFF_FFFF_FFFF_FFFF)  # -1
+        rem = opc("rem", rd=3, rs1=1, rs2=2)
+        model.execute(rem)
+        assert model.get_gpr(3) == 0
+
+    def test_remu(self, model):
+        model.poke_gpr(1, 20)
+        model.poke_gpr(2, 3)
+        remu = opc("remu", rd=3, rs1=1, rs2=2)
+        model.execute(remu)
+        assert model.get_gpr(3) == 2
+
+    def test_remu_by_zero(self, model):
+        model.poke_gpr(1, 0x1234)
+        model.poke_gpr(2, 0)
+        remu = opc("remu", rd=3, rs1=1, rs2=2)
+        model.execute(remu)
+        assert model.get_gpr(3) == 0x1234
+
+    def test_remw_sign_extends(self, model):
+        model.poke_gpr(1, 0xFFFF_FFFF_FFFF_FFEC)  # -20
+        model.poke_gpr(2, 6)
+        remw = opc("remw", rd=3, rs1=1, rs2=2)
+        model.execute(remw)
+        assert model.get_gpr(3) == 0xFFFF_FFFF_FFFF_FFFE  # -2
+
+    def test_remw_by_zero(self, model):
+        model.poke_gpr(1, 0x0000_0000_F000_0001)
+        model.poke_gpr(2, 0)
+        remw = opc("remw", rd=3, rs1=1, rs2=2)
+        model.execute(remw)
+        assert model.get_gpr(3) == 0xFFFF_FFFF_F000_0001
+
+    def test_remw_overflow(self, model):
+        model.poke_gpr(1, 0x8000_0000)  # INT32_MIN in low 32 bits
+        model.poke_gpr(2, 0xFFFF_FFFF_FFFF_FFFF)  # -1
+        remw = opc("remw", rd=3, rs1=1, rs2=2)
+        model.execute(remw)
+        assert model.get_gpr(3) == 0
+
+    def test_remuw(self, model):
+        model.poke_gpr(1, 0xFFFF_FFFF)
+        model.poke_gpr(2, 2)
+        remuw = opc("remuw", rd=3, rs1=1, rs2=2)
+        model.execute(remuw)
+        assert model.get_gpr(3) == 1
+
+    def test_remuw_by_zero(self, model):
+        model.poke_gpr(1, 0xFFFF_FFFF_8000_0001)
+        model.poke_gpr(2, 0)
+        remuw = opc("remuw", rd=3, rs1=1, rs2=2)
+        model.execute(remuw)
+        assert model.get_gpr(3) == 0xFFFF_FFFF_8000_0001
+
+
+# ====================================================================
 # Logical
 # ====================================================================
 
