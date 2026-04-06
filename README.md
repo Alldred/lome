@@ -5,11 +5,11 @@
 
 # Lome
 
-Python-based RISC-V functional model for the core instruction set (extension I).
+Python-based RISC-V functional model for core integer instructions plus selected extensions.
 
 ## Features
 
-- **Instruction Execution**: Execute all RISC-V I extension instructions currently defined in Eumos
+- **Instruction Execution**: Execute supported instructions currently defined in Eumos (including I, M, Zicond, F/D, and system operations)
 - **Speculation**: Execute instructions without modifying state to see what would change
 - **Change Tracking**: Track all state modifications (GPRs, CSRs, PC, memory accesses, branches)
 - **Two-Level Access**: Architectural `get`/`set` (with side effects) and raw `peek`/`poke` (for testing & debug)
@@ -123,6 +123,7 @@ Start at **[Docs Home](docs/README.md)**.
 All instructions currently defined in Eumos:
 
 - **Arithmetic**: ADD, ADDI, SUB, ADDW, ADDIW, SUBW
+- **Multiply/Divide (M)**: MUL, MULH, MULHSU, MULHU, MULW, DIV, DIVU, DIVW, DIVUW, REM, REMU, REMW, REMUW
 - **Logical**: AND, ANDI, OR, ORI, XOR, XORI
 - **Shift**: SLL, SLLI, SRL, SRLI, SRA, SRAI, SLLW, SLLIW, SRLW, SRLIW, SRAW, SRAIW
 - **Compare/Conditional**: SLT, SLTI, SLTU, SLTIU, CZERO.EQZ, CZERO.NEZ
@@ -162,7 +163,7 @@ See `examples/basic_usage.py` for comprehensive usage examples including peek/po
 - Additional CSR support as needed
 - Exception handling model
 - Performance counters
-- Support for other RISC-V extensions (M, A, etc.) as they are added to Eumos
+- Support for other RISC-V extensions (A, etc.) as they are added to Eumos
 
 ## License
 

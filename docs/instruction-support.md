@@ -12,6 +12,7 @@ Lome supports instructions currently defined in Eumos for this project.
 ## Supported Groups
 
 - Arithmetic: `ADD`, `ADDI`, `SUB`, `ADDW`, `ADDIW`, `SUBW`
+- Multiply/Divide (M): `MUL`, `MULH`, `MULHSU`, `MULHU`, `MULW`, `DIV`, `DIVU`, `DIVW`, `DIVUW`, `REM`, `REMU`, `REMW`, `REMUW`
 - Logical: `AND`, `ANDI`, `OR`, `ORI`, `XOR`, `XORI`
 - Shift: `SLL`, `SLLI`, `SRL`, `SRLI`, `SRA`, `SRAI`, `SLLW`, `SLLIW`, `SRLW`, `SRLIW`, `SRAW`, `SRAIW`
 - Compare/Conditional: `SLT`, `SLTI`, `SLTU`, `SLTIU`, `CZERO.EQZ`, `CZERO.NEZ`

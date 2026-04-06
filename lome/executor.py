@@ -29,6 +29,7 @@ from lome.instructions import (
     jump,
     load_store,
     logical,
+    multiply_divide,
     shift,
     system,
 )
@@ -76,6 +77,20 @@ _INSTRUCTION_HANDLERS: dict[str, InstructionHandler] = {
     "addw": arithmetic.execute_addw,
     "addiw": arithmetic.execute_addiw,
     "subw": arithmetic.execute_subw,
+    # Multiply/Divide (M extension)
+    "mul": multiply_divide.execute_mul,
+    "mulh": multiply_divide.execute_mulh,
+    "mulhsu": multiply_divide.execute_mulhsu,
+    "mulhu": multiply_divide.execute_mulhu,
+    "mulw": multiply_divide.execute_mulw,
+    "div": multiply_divide.execute_div,
+    "divu": multiply_divide.execute_divu,
+    "divw": multiply_divide.execute_divw,
+    "divuw": multiply_divide.execute_divuw,
+    "rem": multiply_divide.execute_rem,
+    "remu": multiply_divide.execute_remu,
+    "remw": multiply_divide.execute_remw,
+    "remuw": multiply_divide.execute_remuw,
     # Logical
     "and": logical.execute_and,
     "andi": logical.execute_andi,
