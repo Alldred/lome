@@ -107,7 +107,7 @@ sdist = { url = "https://files.pythonhosted.org/packages/a2/55/8f8cab2afd404cf57
 [[package]]
 name = "eumos"
 version = "0.1.0"
-source = { git = "ssh://git@github.com/Alldred/eumos.git#862fb5c7d9810d42937f2750f1c9cd1a78d581c1" }
+source = { git = "ssh://git@github.com/Alldred/eumos.git#f3f49e4192d309785f7b2cbb029ee4a34a5413ab" }
 dependencies = [
     { name = "pre-commit" },
     { name = "pykwalify" },
