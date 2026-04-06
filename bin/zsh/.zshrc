@@ -39,3 +39,11 @@ pre-commit install > /dev/null
 
 # Alias to refresh submodules on demand
 alias gsu='git submodule update --init --recursive'
+
+alias gs='git status'
+alias gcm='git switch main'
+alias gp='git pull'
+alias gb='git branch'
+alias gnb='git switch -c '
+alias ggb='git switch -'
+alias gpar='gcm && gp && ggb && git merge main'
