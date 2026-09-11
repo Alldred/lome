@@ -5,7 +5,7 @@ description = "Python RISC-V functional model"
 readme = "README.md"
 license = "MIT"
 dependencies = [
-    "eumos @ git+ssh://git@github.com/Alldred/eumos.git",
+    "eumos @ git+https://github.com/Alldred/eumos.git",
 ]
 authors = [
     { name = "Stuart Alldred", email = "stuartalldred@gmail.com" },
